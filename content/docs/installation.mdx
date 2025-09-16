@@ -31,21 +31,9 @@ Before installing Keyloom, ensure you have the following:
 The core package is required for all Keyloom installations:
 
 <Tabs items={["npm", "pnpm", "yarn"]}>
-  <Tab value="npm">
-    ```bash
-    npm install @keyloom/core
-    ```
-  </Tab>
-  <Tab value="pnpm">
-    ```bash
-    pnpm add @keyloom/core
-    ```
-  </Tab>
-  <Tab value="yarn">
-    ```bash
-    yarn add @keyloom/core
-    ```
-  </Tab>
+  <Tab value="npm">```bash npm install @keyloom/core ```</Tab>
+  <Tab value="pnpm">```bash pnpm add @keyloom/core ```</Tab>
+  <Tab value="yarn">```bash yarn add @keyloom/core ```</Tab>
 </Tabs>
 
 ### Framework Integration
@@ -55,41 +43,17 @@ Choose the appropriate integration package for your framework:
 #### Next.js
 
 <Tabs items={["npm", "pnpm", "yarn"]}>
-  <Tab value="npm">
-    ```bash
-    npm install @keyloom/core @keyloom/nextjs
-    ```
-  </Tab>
-  <Tab value="pnpm">
-    ```bash
-    pnpm add @keyloom/core @keyloom/nextjs
-    ```
-  </Tab>
-  <Tab value="yarn">
-    ```bash
-    yarn add @keyloom/core @keyloom/nextjs
-    ```
-  </Tab>
+  <Tab value="npm">```bash npm install @keyloom/core @keyloom/nextjs ```</Tab>
+  <Tab value="pnpm">```bash pnpm add @keyloom/core @keyloom/nextjs ```</Tab>
+  <Tab value="yarn">```bash yarn add @keyloom/core @keyloom/nextjs ```</Tab>
 </Tabs>
 
 #### Standalone Server
 
 <Tabs items={["npm", "pnpm", "yarn"]}>
-  <Tab value="npm">
-    ```bash
-    npm install @keyloom/core @keyloom/server
-    ```
-  </Tab>
-  <Tab value="pnpm">
-    ```bash
-    pnpm add @keyloom/core @keyloom/server
-    ```
-  </Tab>
-  <Tab value="yarn">
-    ```bash
-    yarn add @keyloom/core @keyloom/server
-    ```
-  </Tab>
+  <Tab value="npm">```bash npm install @keyloom/core @keyloom/server ```</Tab>
+  <Tab value="pnpm">```bash pnpm add @keyloom/core @keyloom/server ```</Tab>
+  <Tab value="yarn">```bash yarn add @keyloom/core @keyloom/server ```</Tab>
 </Tabs>
 
 ## Database Adapters
@@ -100,19 +64,13 @@ Choose a database adapter based on your database:
 
 <Tabs items={["npm", "pnpm", "yarn"]}>
   <Tab value="npm">
-    ```bash
-    npm install @keyloom/adapters @prisma/client prisma
-    ```
+    ```bash npm install @keyloom/adapters @prisma/client prisma ```
   </Tab>
   <Tab value="pnpm">
-    ```bash
-    pnpm add @keyloom/adapters @prisma/client prisma
-    ```
+    ```bash pnpm add @keyloom/adapters @prisma/client prisma ```
   </Tab>
   <Tab value="yarn">
-    ```bash
-    yarn add @keyloom/adapters @prisma/client prisma
-    ```
+    ```bash yarn add @keyloom/adapters @prisma/client prisma ```
   </Tab>
 </Tabs>
 
@@ -173,21 +131,9 @@ Install OAuth providers as needed:
 Install the CLI tools globally for project initialization and management:
 
 <Tabs items={["npm", "pnpm", "yarn"]}>
-  <Tab value="npm">
-    ```bash
-    npm install -g @keyloom/cli
-    ```
-  </Tab>
-  <Tab value="pnpm">
-    ```bash
-    pnpm add -g @keyloom/cli
-    ```
-  </Tab>
-  <Tab value="yarn">
-    ```bash
-    yarn global add @keyloom/cli
-    ```
-  </Tab>
+  <Tab value="npm">```bash npm install -g @keyloom/cli ```</Tab>
+  <Tab value="pnpm">```bash pnpm add -g @keyloom/cli ```</Tab>
+  <Tab value="yarn">```bash yarn global add @keyloom/cli ```</Tab>
 </Tabs>
 
 Verify the installation:
@@ -204,22 +150,16 @@ For a production Next.js application with Prisma database:
 
 <Tabs items={["npm", "pnpm", "yarn"]}>
   <Tab value="npm">
-    ```bash
-    npm install @keyloom/core @keyloom/nextjs @keyloom/adapters @keyloom/providers @prisma/client prisma
-    npm install -g @keyloom/cli
-    ```
+    ```bash npm install @keyloom/core @keyloom/nextjs @keyloom/adapters
+    @keyloom/providers @prisma/client prisma npm install -g @keyloom/cli ```
   </Tab>
   <Tab value="pnpm">
-    ```bash
-    pnpm add @keyloom/core @keyloom/nextjs @keyloom/adapters @keyloom/providers @prisma/client prisma
-    pnpm add -g @keyloom/cli
-    ```
+    ```bash pnpm add @keyloom/core @keyloom/nextjs @keyloom/adapters
+    @keyloom/providers @prisma/client prisma pnpm add -g @keyloom/cli ```
   </Tab>
   <Tab value="yarn">
-    ```bash
-    yarn add @keyloom/core @keyloom/nextjs @keyloom/adapters @keyloom/providers @prisma/client prisma
-    yarn global add @keyloom/cli
-    ```
+    ```bash yarn add @keyloom/core @keyloom/nextjs @keyloom/adapters
+    @keyloom/providers @prisma/client prisma yarn global add @keyloom/cli ```
   </Tab>
 </Tabs>
 
@@ -229,22 +169,16 @@ For development with memory adapter:
 
 <Tabs items={["npm", "pnpm", "yarn"]}>
   <Tab value="npm">
-    ```bash
-    npm install @keyloom/core @keyloom/nextjs @keyloom/providers
-    npm install -g @keyloom/cli
-    ```
+    ```bash npm install @keyloom/core @keyloom/nextjs @keyloom/providers npm
+    install -g @keyloom/cli ```
   </Tab>
   <Tab value="pnpm">
-    ```bash
-    pnpm add @keyloom/core @keyloom/nextjs @keyloom/providers
-    pnpm add -g @keyloom/cli
-    ```
+    ```bash pnpm add @keyloom/core @keyloom/nextjs @keyloom/providers pnpm add
+    -g @keyloom/cli ```
   </Tab>
   <Tab value="yarn">
-    ```bash
-    yarn add @keyloom/core @keyloom/nextjs @keyloom/providers
-    yarn global add @keyloom/cli
-    ```
+    ```bash yarn add @keyloom/core @keyloom/nextjs @keyloom/providers yarn
+    global add @keyloom/cli ```
   </Tab>
 </Tabs>
 
