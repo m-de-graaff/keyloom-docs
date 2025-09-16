@@ -1,13 +1,130 @@
 ---
-title: Hello World
-description: Your first document
+title: Keyloom Documentation
+description: Modern, type-safe authentication for JavaScript applications
 ---
 
-Welcome to the docs! You can start writing documents in `/content/docs`.
+import { Cards, Card } from "fumadocs-ui/components/card";
 
-## What is Next?
+<div align="center">
+  <img src="/keyloom_banner.png" alt="Keyloom" width="850" height="250" />
+</div>
+
+# Welcome to Keyloom
+
+**Modern, type-safe authentication for JavaScript applications**
+
+Keyloom is a comprehensive authentication library designed for modern JavaScript and TypeScript applications. It provides a secure, flexible, and developer-friendly solution for handling user authentication, session management, and authorization.
+
+## ✨ Key Features
+
+- **🔐 Multiple Auth Providers** - GitHub, Google, Discord, and more OAuth providers
+- **🗄️ Database Agnostic** - Prisma, memory, and custom adapters
+- **⚡ Framework Support** - First-class Next.js integration with edge runtime support
+- **🛡️ Security First** - CSRF protection, secure session management, and rate limiting
+- **📱 Modern Stack** - TypeScript-first with full type safety
+- **🎯 Developer Experience** - Simple configuration, comprehensive examples
+- **🔄 Session Management** - Flexible session strategies with rolling sessions
+- **🚦 Middleware Support** - Route protection and authentication guards
+
+## 🏗️ Architecture
+
+Keyloom is built as a modular monorepo with the following packages:
+
+- **`@keyloom/core`** - Core authentication logic and utilities
+- **`@keyloom/nextjs`** - Next.js integration and middleware
+- **`@keyloom/server`** - Standalone server implementation
+- **`@keyloom/cli`** - Command-line tools and utilities
+- **`@keyloom/adapters`** - Database adapters (Prisma, etc.)
+- **`@keyloom/providers`** - OAuth providers (GitHub, Google, etc.)
+
+## Quick Navigation
 
 <Cards>
-  <Card title="Learn more about Next.js" href="https://nextjs.org/docs" />
-  <Card title="Learn more about Fumadocs" href="https://fumadocs.vercel.app" />
+  <Card
+    title="Installation Guide"
+    href="/installation"
+    description="Get started with Keyloom installation and setup"
+  />
+  <Card
+    title="Getting Started"
+    href="/getting-started"
+    description="Quick start tutorial and basic usage examples"
+  />
+  <Card
+    title="CLI Reference"
+    href="/cli"
+    description="Complete command-line interface documentation"
+  />
+  <Card
+    title="API Reference"
+    href="/api"
+    description="Comprehensive API documentation for all packages"
+  />
+  <Card
+    title="Next.js Integration"
+    href="/nextjs"
+    description="First-class Next.js integration guide"
+  />
+  <Card
+    title="Database Adapters"
+    href="/adapters"
+    description="Database adapters and configuration"
+  />
+  <Card
+    title="OAuth Providers"
+    href="/providers"
+    description="OAuth provider setup and configuration"
+  />
+  <Card
+    title="Advanced Topics"
+    href="/advanced"
+    description="RBAC, security, and performance considerations"
+  />
 </Cards>
+
+## Quick Example
+
+```typescript
+import { createKeyloom, memoryAdapter } from "@keyloom/core";
+import github from "@keyloom/providers/github";
+
+const keyloom = createKeyloom({
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+  session: {
+    strategy: "database",
+    ttlMinutes: 60,
+    rolling: true,
+  },
+  adapter: memoryAdapter(),
+  providers: [
+    github({
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+    }),
+  ],
+  secrets: { authSecret: process.env.AUTH_SECRET! },
+});
+
+// Register a user
+const user = await keyloom.register({
+  email: "user@example.com",
+  password: "secure-password",
+});
+
+// Login
+const session = await keyloom.login({
+  email: "user@example.com",
+  password: "secure-password",
+});
+```
+
+## Community & Support
+
+- **GitHub**: [keyloom/keyloom](https://github.com/keyloom/keyloom)
+- **Issues**: [Report bugs and request features](https://github.com/keyloom/keyloom/issues)
+- **Discussions**: [Community discussions](https://github.com/keyloom/keyloom/discussions)
+- **Security**: For security issues, email keyloom@markdegraaff.com
+
+## License
+
+Keyloom is [MIT licensed](https://github.com/keyloom/keyloom/blob/main/LICENSE).

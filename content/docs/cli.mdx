@@ -1,0 +1,435 @@
+---
+title: CLI Reference
+description: Complete command-line interface documentation for Keyloom
+---
+
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs'
+import { Callout } from 'fumadocs-ui/components/callout'
+
+# CLI Reference
+
+The Keyloom CLI provides powerful tools for initializing, managing, and maintaining your authentication setup.
+
+## Installation
+
+Install the CLI globally to use it across projects:
+
+<Tabs items={['npm', 'pnpm', 'yarn']}>
+  <Tab value="npm">
+    ```bash
+    npm install -g @keyloom/cli
+    ```
+  </Tab>
+  <Tab value="pnpm">
+    ```bash
+    pnpm add -g @keyloom/cli
+    ```
+  </Tab>
+  <Tab value="yarn">
+    ```bash
+    yarn global add @keyloom/cli
+    ```
+  </Tab>
+</Tabs>
+
+Verify installation:
+
+```bash
+keyloom --version
+```
+
+## Commands Overview
+
+The Keyloom CLI provides the following commands:
+
+- [`keyloom init`](#init) - Initialize a new Keyloom project
+- [`keyloom migrate`](#migrate) - Run database migrations
+- [`keyloom routes`](#routes) - Generate route manifests and type definitions
+- [`keyloom doctor`](#doctor) - Diagnose configuration and setup issues
+
+## Global Options
+
+All commands support these global options:
+
+- `--help` - Show help information
+- `--version` - Show version information
+
+## Commands
+
+### `init`
+
+Initialize a new Keyloom project with configuration files and templates.
+
+```bash
+keyloom init [options]
+```
+
+#### Description
+
+The `init` command scaffolds a new Keyloom project by creating:
+
+- `keyloom.config.ts` - Main configuration file
+- API route handlers
+- Middleware setup
+- Environment variable templates
+- Database adapter configuration
+- Provider templates
+- TypeScript definitions
+
+#### Options
+
+<Callout type="info">
+  The `init` command is currently in development. Full implementation coming soon.
+</Callout>
+
+**Planned Options:**
+
+- `--framework <framework>` - Target framework (nextjs, express, fastify)
+- `--adapter <adapter>` - Database adapter (prisma, memory, custom)
+- `--providers <providers>` - OAuth providers to include (github, google, discord)
+- `--typescript` - Generate TypeScript files (default: true)
+- `--force` - Overwrite existing files
+- `--dry-run` - Show what would be created without making changes
+
+#### Examples
+
+```bash
+# Initialize with Next.js and Prisma
+keyloom init --framework nextjs --adapter prisma
+
+# Initialize with specific providers
+keyloom init --providers github,google
+
+# Dry run to see what would be created
+keyloom init --dry-run
+```
+
+#### Generated Files
+
+The `init` command will create:
+
+```
+your-project/
+├── keyloom.config.ts          # Main configuration
+├── app/api/auth/[...keyloom]/
+│   └── route.ts               # Next.js API routes
+├── middleware.ts              # Authentication middleware
+├── .env.example               # Environment variables template
+├── prisma/
+│   └── schema.prisma          # Database schema (if using Prisma)
+└── types/
+    └── keyloom.d.ts           # TypeScript definitions
+```
+
+---
+
+### `migrate`
+
+Run database migrations for your chosen adapter.
+
+```bash
+keyloom migrate [options]
+```
+
+#### Description
+
+The `migrate` command provides adapter-aware database migration runners for various database systems and ORMs.
+
+<Callout type="info">
+  The `migrate` command is currently in development. Full implementation coming soon.
+</Callout>
+
+**Planned Support:**
+
+- **Prisma** - `prisma migrate` integration
+- **Drizzle** - Drizzle migration runner
+- **Raw SQL** - PostgreSQL, MySQL, SQLite
+- **MongoDB** - MongoDB migration scripts
+
+#### Options
+
+**Planned Options:**
+
+- `--adapter <adapter>` - Database adapter to use
+- `--up` - Run pending migrations
+- `--down` - Rollback last migration
+- `--reset` - Reset database and run all migrations
+- `--seed` - Run seed scripts after migration
+- `--dry-run` - Show what migrations would run
+
+#### Examples
+
+```bash
+# Run pending migrations
+keyloom migrate --up
+
+# Reset database and run all migrations
+keyloom migrate --reset
+
+# Run migrations with seeding
+keyloom migrate --up --seed
+```
+
+---
+
+### `routes`
+
+Generate route manifests and TypeScript definitions for authentication routes.
+
+```bash
+keyloom routes [options]
+```
+
+#### Description
+
+The `routes` command scans your project for annotated authentication routes and generates:
+
+- Route manifest files for middleware configuration
+- TypeScript definitions for route types
+- Route validation and type checking
+
+#### Options
+
+- `--out <file>` - Output file for TypeScript definitions
+- `--outJson <file>` - Output file for JSON manifest
+- `--cwd <directory>` - Working directory to scan
+- `--include <glob>` - Include patterns for route scanning
+- `--exclude <glob>` - Exclude patterns for route scanning
+
+#### Examples
+
+```bash
+# Generate routes with default output
+keyloom routes
+
+# Specify custom output files
+keyloom routes --out ./types/routes.ts --outJson ./config/routes.json
+
+# Scan specific directory
+keyloom routes --cwd ./src
+
+# Include/exclude patterns
+keyloom routes --include "app/**/*.ts" --exclude "**/*.test.ts"
+```
+
+#### Route Annotations
+
+Annotate your routes for automatic discovery:
+
+```typescript
+// app/api/auth/login/route.ts
+/**
+ * @keyloom-route /api/auth/login
+ * @keyloom-method POST
+ * @keyloom-visibility public
+ */
+export async function POST(request: Request) {
+  // Login logic
+}
+
+// app/dashboard/page.tsx
+/**
+ * @keyloom-route /dashboard
+ * @keyloom-visibility protected
+ * @keyloom-roles admin,user
+ */
+export default function Dashboard() {
+  // Protected dashboard
+}
+```
+
+#### Generated Output
+
+**TypeScript definitions (`routes.ts`):**
+
+```typescript
+export interface KeyloomRoutes {
+  '/api/auth/login': {
+    method: 'POST';
+    visibility: 'public';
+  };
+  '/dashboard': {
+    visibility: 'protected';
+    roles: ['admin', 'user'];
+  };
+}
+```
+
+**JSON manifest (`routes.json`):**
+
+```json
+{
+  "routes": [
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "visibility": "public"
+    },
+    {
+      "path": "/dashboard",
+      "visibility": "protected",
+      "roles": ["admin", "user"]
+    }
+  ]
+}
+```
+
+---
+
+### `doctor`
+
+Diagnose configuration and setup issues in your Keyloom project.
+
+```bash
+keyloom doctor [options]
+```
+
+#### Description
+
+The `doctor` command performs comprehensive health checks on your Keyloom setup, including:
+
+- Environment variables and secrets validation
+- Cookie policy configuration
+- Base URL reachability
+- Database connectivity
+- Clock synchronization
+- Route manifest validation
+- OAuth provider redirect URLs
+
+<Callout type="info">
+  The `doctor` command is currently in development. Full implementation coming soon.
+</Callout>
+
+#### Options
+
+**Planned Options:**
+
+- `--json` - Output results in JSON format
+- `--strict` - Enable strict validation mode
+- `--fix` - Automatically fix issues where possible
+- `--config <file>` - Specify custom config file path
+
+#### Examples
+
+```bash
+# Run basic health checks
+keyloom doctor
+
+# Output results as JSON
+keyloom doctor --json
+
+# Strict validation mode
+keyloom doctor --strict
+
+# Auto-fix issues
+keyloom doctor --fix
+```
+
+#### Health Checks
+
+**Environment & Secrets:**
+- `AUTH_SECRET` presence and strength
+- Required environment variables
+- Secret rotation recommendations
+
+**Configuration:**
+- Cookie policy validation
+- Session configuration
+- CSRF settings
+
+**Connectivity:**
+- Base URL reachability
+- Database connection
+- OAuth provider endpoints
+
+**Security:**
+- Clock skew detection
+- SSL/TLS configuration
+- CORS settings
+
+**Routes & Middleware:**
+- Route manifest validation
+- Middleware configuration
+- Protected route coverage
+
+#### Sample Output
+
+```bash
+✓ Environment variables configured
+✓ Database connection successful
+✓ OAuth providers reachable
+⚠ AUTH_SECRET could be stronger (recommendation)
+✗ Base URL not reachable from external network
+✗ Clock skew detected (5 seconds)
+
+Issues found: 2 errors, 1 warning
+Run with --fix to automatically resolve fixable issues.
+```
+
+## Configuration File
+
+The CLI commands use your `keyloom.config.ts` file for configuration:
+
+```typescript
+// keyloom.config.ts
+export default {
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+  session: {
+    strategy: "database",
+    ttlMinutes: 60,
+    rolling: true,
+  },
+  adapter: PrismaAdapter(prisma),
+  providers: [
+    github({
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+    }),
+  ],
+  secrets: { authSecret: process.env.AUTH_SECRET! },
+};
+```
+
+## Troubleshooting
+
+### Command Not Found
+
+If `keyloom` command is not found:
+
+1. Ensure global installation: `npm install -g @keyloom/cli`
+2. Check PATH: `echo $PATH`
+3. Reinstall if necessary: `npm uninstall -g @keyloom/cli && npm install -g @keyloom/cli`
+
+### Permission Errors
+
+On Unix systems, you might need to use `sudo`:
+
+```bash
+sudo npm install -g @keyloom/cli
+```
+
+Or configure npm to use a different directory:
+
+```bash
+mkdir ~/.npm-global
+npm config set prefix '~/.npm-global'
+export PATH=~/.npm-global/bin:$PATH
+```
+
+### Version Conflicts
+
+Check for version conflicts:
+
+```bash
+npm list -g @keyloom/cli
+keyloom --version
+```
+
+## Getting Help
+
+For additional help:
+
+- Run `keyloom --help` for general help
+- Run `keyloom <command> --help` for command-specific help
+- Visit the [GitHub Issues](https://github.com/keyloom/keyloom/issues)
+- Join [GitHub Discussions](https://github.com/keyloom/keyloom/discussions)

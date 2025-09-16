@@ -1,0 +1,347 @@
+---
+title: Installation Guide
+description: Complete installation guide for Keyloom authentication library
+---
+
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs'
+import { Callout } from 'fumadocs-ui/components/callout'
+
+# Installation Guide
+
+This guide covers all the ways to install and set up Keyloom in your project.
+
+## Prerequisites
+
+Before installing Keyloom, ensure you have the following:
+
+- **Node.js** >= 18.17.0
+- **TypeScript** >= 5.4 (recommended)
+- A package manager: **npm**, **pnpm**, or **yarn**
+
+<Callout type="info">
+  Keyloom is built with TypeScript and provides full type safety. While you can use it with JavaScript, TypeScript is highly recommended for the best developer experience.
+</Callout>
+
+## Quick Installation
+
+### Core Package
+
+The core package is required for all Keyloom installations:
+
+<Tabs items={['npm', 'pnpm', 'yarn']}>
+  <Tab value="npm">
+    ```bash
+    npm install @keyloom/core
+    ```
+  </Tab>
+  <Tab value="pnpm">
+    ```bash
+    pnpm add @keyloom/core
+    ```
+  </Tab>
+  <Tab value="yarn">
+    ```bash
+    yarn add @keyloom/core
+    ```
+  </Tab>
+</Tabs>
+
+### Framework Integration
+
+Choose the appropriate integration package for your framework:
+
+#### Next.js
+
+<Tabs items={['npm', 'pnpm', 'yarn']}>
+  <Tab value="npm">
+    ```bash
+    npm install @keyloom/core @keyloom/nextjs
+    ```
+  </Tab>
+  <Tab value="pnpm">
+    ```bash
+    pnpm add @keyloom/core @keyloom/nextjs
+    ```
+  </Tab>
+  <Tab value="yarn">
+    ```bash
+    yarn add @keyloom/core @keyloom/nextjs
+    ```
+  </Tab>
+</Tabs>
+
+#### Standalone Server
+
+<Tabs items={['npm', 'pnpm', 'yarn']}>
+  <Tab value="npm">
+    ```bash
+    npm install @keyloom/core @keyloom/server
+    ```
+  </Tab>
+  <Tab value="pnpm">
+    ```bash
+    pnpm add @keyloom/core @keyloom/server
+    ```
+  </Tab>
+  <Tab value="yarn">
+    ```bash
+    yarn add @keyloom/core @keyloom/server
+    ```
+  </Tab>
+</Tabs>
+
+## Database Adapters
+
+Choose a database adapter based on your database:
+
+### Prisma Adapter (Recommended)
+
+<Tabs items={['npm', 'pnpm', 'yarn']}>
+  <Tab value="npm">
+    ```bash
+    npm install @keyloom/adapters @prisma/client prisma
+    ```
+  </Tab>
+  <Tab value="pnpm">
+    ```bash
+    pnpm add @keyloom/adapters @prisma/client prisma
+    ```
+  </Tab>
+  <Tab value="yarn">
+    ```bash
+    yarn add @keyloom/adapters @prisma/client prisma
+    ```
+  </Tab>
+</Tabs>
+
+### Memory Adapter (Development Only)
+
+The memory adapter is included with `@keyloom/core` and requires no additional installation.
+
+<Callout type="warn">
+  The memory adapter should only be used for development and testing. It stores data in memory and will lose all data when the process restarts.
+</Callout>
+
+## OAuth Providers
+
+Install OAuth providers as needed:
+
+<Tabs items={['npm', 'pnpm', 'yarn']}>
+  <Tab value="npm">
+    ```bash
+    # Install all providers
+    npm install @keyloom/providers
+
+    # Or install specific providers
+    npm install @keyloom/providers/github
+    npm install @keyloom/providers/google
+    npm install @keyloom/providers/discord
+    ```
+  </Tab>
+  <Tab value="pnpm">
+    ```bash
+    # Install all providers
+    pnpm add @keyloom/providers
+
+    # Or install specific providers
+    pnpm add @keyloom/providers/github
+    pnpm add @keyloom/providers/google
+    pnpm add @keyloom/providers/discord
+    ```
+  </Tab>
+  <Tab value="yarn">
+    ```bash
+    # Install all providers
+    yarn add @keyloom/providers
+
+    # Or install specific providers
+    yarn add @keyloom/providers/github
+    yarn add @keyloom/providers/google
+    yarn add @keyloom/providers/discord
+    ```
+  </Tab>
+</Tabs>
+
+## CLI Tools
+
+Install the CLI tools globally for project initialization and management:
+
+<Tabs items={['npm', 'pnpm', 'yarn']}>
+  <Tab value="npm">
+    ```bash
+    npm install -g @keyloom/cli
+    ```
+  </Tab>
+  <Tab value="pnpm">
+    ```bash
+    pnpm add -g @keyloom/cli
+    ```
+  </Tab>
+  <Tab value="yarn">
+    ```bash
+    yarn global add @keyloom/cli
+    ```
+  </Tab>
+</Tabs>
+
+Verify the installation:
+
+```bash
+keyloom --version
+```
+
+## Complete Installation Examples
+
+### Next.js with Prisma
+
+For a production Next.js application with Prisma database:
+
+<Tabs items={['npm', 'pnpm', 'yarn']}>
+  <Tab value="npm">
+    ```bash
+    npm install @keyloom/core @keyloom/nextjs @keyloom/adapters @keyloom/providers @prisma/client prisma
+    npm install -g @keyloom/cli
+    ```
+  </Tab>
+  <Tab value="pnpm">
+    ```bash
+    pnpm add @keyloom/core @keyloom/nextjs @keyloom/adapters @keyloom/providers @prisma/client prisma
+    pnpm add -g @keyloom/cli
+    ```
+  </Tab>
+  <Tab value="yarn">
+    ```bash
+    yarn add @keyloom/core @keyloom/nextjs @keyloom/adapters @keyloom/providers @prisma/client prisma
+    yarn global add @keyloom/cli
+    ```
+  </Tab>
+</Tabs>
+
+### Development Setup
+
+For development with memory adapter:
+
+<Tabs items={['npm', 'pnpm', 'yarn']}>
+  <Tab value="npm">
+    ```bash
+    npm install @keyloom/core @keyloom/nextjs @keyloom/providers
+    npm install -g @keyloom/cli
+    ```
+  </Tab>
+  <Tab value="pnpm">
+    ```bash
+    pnpm add @keyloom/core @keyloom/nextjs @keyloom/providers
+    pnpm add -g @keyloom/cli
+    ```
+  </Tab>
+  <Tab value="yarn">
+    ```bash
+    yarn add @keyloom/core @keyloom/nextjs @keyloom/providers
+    yarn global add @keyloom/cli
+    ```
+  </Tab>
+</Tabs>
+
+## Manual Installation from Source
+
+If you need to install from source or contribute to Keyloom:
+
+```bash
+# Clone the repository
+git clone https://github.com/keyloom/keyloom.git
+cd keyloom
+
+# Install dependencies
+pnpm install -w
+
+# Build all packages
+pnpm build
+
+# Link packages locally (optional)
+pnpm link --global @keyloom/core
+pnpm link --global @keyloom/nextjs
+pnpm link --global @keyloom/cli
+```
+
+## Verification
+
+After installation, verify everything is working:
+
+1. **Check package versions:**
+   ```bash
+   npm list @keyloom/core
+   npm list @keyloom/nextjs
+   ```
+
+2. **Test CLI installation:**
+   ```bash
+   keyloom --help
+   ```
+
+3. **Create a test configuration:**
+   ```typescript
+   // test-keyloom.ts
+   import { memoryAdapter } from "@keyloom/core";
+   
+   const config = {
+     adapter: memoryAdapter(),
+     session: { strategy: "database" as const },
+     secrets: { authSecret: "test-secret" },
+   };
+   
+   console.log("Keyloom configuration created successfully!");
+   ```
+
+## Troubleshooting
+
+### Common Issues
+
+#### TypeScript Errors
+
+If you encounter TypeScript errors, ensure you have the correct version:
+
+```bash
+npm install typescript@^5.4
+```
+
+#### Peer Dependency Warnings
+
+Install missing peer dependencies:
+
+```bash
+# For Next.js integration
+npm install next@^13 react@^18
+
+# For TypeScript support
+npm install typescript@^5.4
+```
+
+#### Module Resolution Issues
+
+If you encounter module resolution issues, check your `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
+  }
+}
+```
+
+### Getting Help
+
+If you encounter issues during installation:
+
+1. Check the [GitHub Issues](https://github.com/keyloom/keyloom/issues)
+2. Join the [GitHub Discussions](https://github.com/keyloom/keyloom/discussions)
+3. Review the [troubleshooting guide](/troubleshooting)
+
+## Next Steps
+
+After installation, continue with:
+
+- [Getting Started Guide](/getting-started) - Basic setup and configuration
+- [CLI Reference](/cli) - Initialize your project with the CLI
+- [API Documentation](/api) - Explore the API reference
