@@ -1,0 +1,602 @@
+---
+title: Getting Started
+description: Quick start guide to set up Keyloom authentication in your application
+---
+
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs'
+import { Callout } from 'fumadocs-ui/components/callout'
+import { Steps, Step } from 'fumadocs-ui/components/steps'
+
+# Getting Started
+
+This guide will help you set up Keyloom authentication in your application in just a few minutes.
+
+## Prerequisites
+
+Before you begin, ensure you have:
+
+- **Node.js** >= 18.17.0
+- **Next.js** >= 13 (for Next.js integration)
+- **TypeScript** >= 5.4 (recommended)
+- A database (PostgreSQL, MySQL, SQLite) or use memory adapter for development
+
+## Quick Start (10 minutes)
+
+<Steps>
+
+<Step>
+
+### Install Keyloom
+
+<Tabs items={['npm', 'pnpm', 'yarn']}>
+  <Tab value="npm">
+    ```bash
+    npm install @keyloom/core @keyloom/nextjs
+    ```
+  </Tab>
+  <Tab value="pnpm">
+    ```bash
+    pnpm add @keyloom/core @keyloom/nextjs
+    ```
+  </Tab>
+  <Tab value="yarn">
+    ```bash
+    yarn add @keyloom/core @keyloom/nextjs
+    ```
+  </Tab>
+</Tabs>
+
+</Step>
+
+<Step>
+
+### Create Configuration
+
+Create a `keyloom.config.ts` file in your project root:
+
+```typescript
+// keyloom.config.ts
+import { memoryAdapter } from "@keyloom/core";
+
+export default {
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+  session: {
+    strategy: "database" as const,
+    ttlMinutes: 60,
+    rolling: true,
+  },
+  adapter: memoryAdapter(), // Use Prisma adapter in production
+  secrets: {
+    authSecret: process.env.AUTH_SECRET ?? "dev-secret-change-in-production",
+  },
+};
+```
+
+<Callout type="warn">
+  The memory adapter is for development only. Use a database adapter like Prisma in production.
+</Callout>
+
+</Step>
+
+<Step>
+
+### Set Up Environment Variables
+
+Create a `.env.local` file:
+
+```bash
+# .env.local
+AUTH_SECRET=your-super-secret-key-here
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+Generate a secure secret:
+
+```bash
+openssl rand -base64 32
+```
+
+</Step>
+
+<Step>
+
+### Add API Routes
+
+**For App Router:**
+
+Create `app/api/auth/[[...keyloom]]/route.ts`:
+
+```typescript
+import { createNextHandler } from "@keyloom/nextjs";
+import config from "../../../../keyloom.config";
+
+export const { GET, POST } = createNextHandler(config);
+```
+
+**For Pages Router:**
+
+Create `pages/api/auth/[...keyloom].ts`:
+
+```typescript
+import { createPagesApiHandler } from "@keyloom/nextjs";
+import config from "../../../keyloom.config";
+
+export default createPagesApiHandler(config);
+```
+
+</Step>
+
+<Step>
+
+### Add Middleware (Optional)
+
+Create `middleware.ts` in your project root:
+
+```typescript
+import { createAuthMiddleware } from "@keyloom/nextjs/middleware";
+import config from "./keyloom.config";
+
+export default createAuthMiddleware(config, {
+  publicRoutes: ["/", "/login", "/register"],
+});
+
+export const config = {
+  matcher: ["/((?!_next|favicon.ico|.*\\..*).*)"],
+};
+```
+
+</Step>
+
+</Steps>
+
+## Your First Login Page
+
+Create a simple login page to test your setup:
+
+<Tabs items={['App Router', 'Pages Router']}>
+  <Tab value="App Router">
+    ```typescript
+    // app/login/page.tsx
+    "use client";
+    
+    import { useState } from "react";
+    import { useRouter } from "next/navigation";
+    
+    export default function LoginPage() {
+      const [email, setEmail] = useState("");
+      const [password, setPassword] = useState("");
+      const [loading, setLoading] = useState(false);
+      const router = useRouter();
+    
+      const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+    
+        try {
+          // Get CSRF token
+          const csrfRes = await fetch("/api/auth/csrf");
+          const { csrfToken } = await csrfRes.json();
+    
+          // Login request
+          const response = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRF-Token": csrfToken,
+            },
+            body: JSON.stringify({ email, password }),
+          });
+    
+          if (response.ok) {
+            router.push("/dashboard");
+          } else {
+            const error = await response.json();
+            alert(error.message || "Login failed");
+          }
+        } catch (error) {
+          alert("Login failed");
+        } finally {
+          setLoading(false);
+        }
+      };
+    
+      return (
+        <div className="max-w-md mx-auto mt-8 p-6 border rounded-lg">
+          <h1 className="text-2xl font-bold mb-4">Login</h1>
+          <form onSubmit={handleLogin}>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full p-2 border rounded"
+                required
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full p-2 border rounded"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:opacity-50"
+            >
+              {loading ? "Logging in..." : "Login"}
+            </button>
+          </form>
+        </div>
+      );
+    }
+    ```
+  </Tab>
+  <Tab value="Pages Router">
+    ```typescript
+    // pages/login.tsx
+    import { useState } from "react";
+    import { useRouter } from "next/router";
+    
+    export default function LoginPage() {
+      const [email, setEmail] = useState("");
+      const [password, setPassword] = useState("");
+      const [loading, setLoading] = useState(false);
+      const router = useRouter();
+    
+      const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+    
+        try {
+          const csrfRes = await fetch("/api/auth/csrf");
+          const { csrfToken } = await csrfRes.json();
+    
+          const response = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRF-Token": csrfToken,
+            },
+            body: JSON.stringify({ email, password }),
+          });
+    
+          if (response.ok) {
+            router.push("/dashboard");
+          } else {
+            const error = await response.json();
+            alert(error.message || "Login failed");
+          }
+        } catch (error) {
+          alert("Login failed");
+        } finally {
+          setLoading(false);
+        }
+      };
+    
+      return (
+        <div className="max-w-md mx-auto mt-8 p-6 border rounded-lg">
+          <h1 className="text-2xl font-bold mb-4">Login</h1>
+          <form onSubmit={handleLogin}>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full p-2 border rounded"
+                required
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full p-2 border rounded"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:opacity-50"
+            >
+              {loading ? "Logging in..." : "Login"}
+            </button>
+          </form>
+        </div>
+      );
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Protected Dashboard
+
+Create a protected dashboard page:
+
+<Tabs items={['App Router', 'Pages Router']}>
+  <Tab value="App Router">
+    ```typescript
+    // app/dashboard/page.tsx
+    import { getUser, guard } from "@keyloom/nextjs";
+    import LogoutButton from "./logout-button";
+    
+    export default async function Dashboard() {
+      // Redirect to login if not authenticated
+      await guard({ redirectTo: "/login" });
+      
+      // Get current user
+      const user = await getUser();
+    
+      return (
+        <div className="max-w-4xl mx-auto mt-8 p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold">Dashboard</h1>
+            <LogoutButton />
+          </div>
+          
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h2 className="text-xl font-semibold mb-2">Welcome!</h2>
+            <p>Email: {user?.email}</p>
+            <p>Name: {user?.name || "Not set"}</p>
+            <p>Joined: {user?.createdAt.toLocaleDateString()}</p>
+          </div>
+        </div>
+      );
+    }
+    ```
+    
+    Create the logout button component:
+    
+    ```typescript
+    // app/dashboard/logout-button.tsx
+    "use client";
+    
+    import { useRouter } from "next/navigation";
+    
+    export default function LogoutButton() {
+      const router = useRouter();
+    
+      const handleLogout = async () => {
+        await fetch("/api/auth/logout", { method: "POST" });
+        router.push("/");
+      };
+    
+      return (
+        <button
+          onClick={handleLogout}
+          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+        >
+          Logout
+        </button>
+      );
+    }
+    ```
+  </Tab>
+  <Tab value="Pages Router">
+    ```typescript
+    // pages/dashboard.tsx
+    import { GetServerSideProps } from "next";
+    import { getSession } from "@keyloom/nextjs";
+    import { useRouter } from "next/router";
+    import config from "../keyloom.config";
+    
+    interface Props {
+      user: {
+        id: string;
+        email: string;
+        name: string | null;
+        createdAt: string;
+      };
+    }
+    
+    export default function Dashboard({ user }: Props) {
+      const router = useRouter();
+    
+      const handleLogout = async () => {
+        await fetch("/api/auth/logout", { method: "POST" });
+        router.push("/");
+      };
+    
+      return (
+        <div className="max-w-4xl mx-auto mt-8 p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold">Dashboard</h1>
+            <button
+              onClick={handleLogout}
+              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+            >
+              Logout
+            </button>
+          </div>
+          
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h2 className="text-xl font-semibold mb-2">Welcome!</h2>
+            <p>Email: {user.email}</p>
+            <p>Name: {user.name || "Not set"}</p>
+            <p>Joined: {new Date(user.createdAt).toLocaleDateString()}</p>
+          </div>
+        </div>
+      );
+    }
+    
+    export const getServerSideProps: GetServerSideProps = async (context) => {
+      const { session, user } = await getSession(config);
+    
+      if (!session || !user) {
+        return {
+          redirect: {
+            destination: "/login",
+            permanent: false,
+          },
+        };
+      }
+    
+      return {
+        props: {
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            createdAt: user.createdAt.toISOString(),
+          },
+        },
+      };
+    };
+    ```
+  </Tab>
+</Tabs>
+
+## Register New Users
+
+Before you can log in, you need to register a user. Create a simple registration endpoint:
+
+```typescript
+// app/api/register/route.ts (or pages/api/register.ts for Pages Router)
+import { register, argon2idHasher } from "@keyloom/core";
+import config from "../../../keyloom.config";
+
+export async function POST(request: Request) {
+  try {
+    const { email, password } = await request.json();
+
+    const { user } = await register(
+      { email, password },
+      {
+        adapter: config.adapter,
+        hasher: argon2idHasher,
+      }
+    );
+
+    return Response.json({ user: { id: user.id, email: user.email } });
+  } catch (error: any) {
+    return Response.json(
+      { error: error.code || "registration_failed", message: error.message },
+      { status: 400 }
+    );
+  }
+}
+```
+
+## Test Your Setup
+
+1. **Start your development server:**
+   ```bash
+   npm run dev
+   ```
+
+2. **Register a test user:**
+   ```bash
+   curl -X POST http://localhost:3000/api/register \
+     -H "Content-Type: application/json" \
+     -d '{"email":"test@example.com","password":"password123"}'
+   ```
+
+3. **Visit your login page:**
+   - Go to `http://localhost:3000/login`
+   - Login with `test@example.com` / `password123`
+   - You should be redirected to the dashboard
+
+## Common Use Cases
+
+### Session Management
+
+```typescript
+// Check if user is authenticated
+const { session, user } = await getSession();
+if (session) {
+  console.log(`User ${user.email} is logged in`);
+  console.log(`Session expires: ${session.expiresAt}`);
+}
+```
+
+### API Route Protection
+
+```typescript
+// app/api/protected/route.ts
+import { getUser } from "@keyloom/nextjs";
+
+export async function GET() {
+  const user = await getUser();
+  
+  if (!user) {
+    return Response.json({ error: "unauthorized" }, { status: 401 });
+  }
+  
+  return Response.json({ message: `Hello ${user.email}!` });
+}
+```
+
+### Client-Side Session Hook
+
+```typescript
+// hooks/useSession.ts
+"use client";
+
+import { useEffect, useState } from "react";
+
+export function useSession() {
+  const [session, setSession] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/auth/session")
+      .then(res => res.json())
+      .then(data => {
+        setSession(data);
+        setLoading(false);
+      });
+  }, []);
+
+  return { session, loading };
+}
+```
+
+## Next Steps
+
+Now that you have basic authentication working:
+
+1. **[Set up a database](/adapters)** - Replace memory adapter with Prisma
+2. **[Add OAuth providers](/providers)** - Enable GitHub, Google login
+3. **[Configure RBAC](/advanced/rbac)** - Add role-based access control
+4. **[Customize middleware](/api/nextjs#middleware)** - Fine-tune route protection
+5. **[Add email verification](/advanced/email-verification)** - Secure user registration
+
+## Troubleshooting
+
+### Common Issues
+
+**"AUTH_SECRET is required"**
+- Make sure you have `AUTH_SECRET` in your `.env.local` file
+- Generate a secure secret with `openssl rand -base64 32`
+
+**"Cannot find module 'keyloom.config'"**
+- Ensure `keyloom.config.ts` is in your project root
+- Check the import path in your API routes
+
+**Middleware not working**
+- Verify `middleware.ts` is in your project root
+- Check the `matcher` configuration
+- Ensure your routes are not in the `publicRoutes` array
+
+**Session not persisting**
+- Check that cookies are being set (inspect browser dev tools)
+- Verify your `baseUrl` matches your development URL
+- Ensure you're not blocking cookies in your browser
+
+### Getting Help
+
+If you encounter issues:
+
+1. Check the [API documentation](/api)
+2. Review [example applications](https://github.com/keyloom/keyloom/tree/main/examples)
+3. Search [GitHub Issues](https://github.com/keyloom/keyloom/issues)
+4. Ask in [GitHub Discussions](https://github.com/keyloom/keyloom/discussions)

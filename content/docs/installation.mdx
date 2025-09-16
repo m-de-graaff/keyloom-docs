@@ -3,8 +3,8 @@ title: Installation Guide
 description: Complete installation guide for Keyloom authentication library
 ---
 
-import { Tabs, Tab } from 'fumadocs-ui/components/tabs'
-import { Callout } from 'fumadocs-ui/components/callout'
+import { Tabs, Tab } from "fumadocs-ui/components/tabs";
+import { Callout } from "fumadocs-ui/components/callout";
 
 # Installation Guide
 
@@ -19,7 +19,9 @@ Before installing Keyloom, ensure you have the following:
 - A package manager: **npm**, **pnpm**, or **yarn**
 
 <Callout type="info">
-  Keyloom is built with TypeScript and provides full type safety. While you can use it with JavaScript, TypeScript is highly recommended for the best developer experience.
+  Keyloom is built with TypeScript and provides full type safety. While you can
+  use it with JavaScript, TypeScript is highly recommended for the best
+  developer experience.
 </Callout>
 
 ## Quick Installation
@@ -28,22 +30,10 @@ Before installing Keyloom, ensure you have the following:
 
 The core package is required for all Keyloom installations:
 
-<Tabs items={['npm', 'pnpm', 'yarn']}>
-  <Tab value="npm">
-    ```bash
-    npm install @keyloom/core
-    ```
-  </Tab>
-  <Tab value="pnpm">
-    ```bash
-    pnpm add @keyloom/core
-    ```
-  </Tab>
-  <Tab value="yarn">
-    ```bash
-    yarn add @keyloom/core
-    ```
-  </Tab>
+<Tabs items={["npm", "pnpm", "yarn"]}>
+  <Tab value="npm">```bash npm install @keyloom/core ```</Tab>
+  <Tab value="pnpm">```bash pnpm add @keyloom/core ```</Tab>
+  <Tab value="yarn">```bash yarn add @keyloom/core ```</Tab>
 </Tabs>
 
 ### Framework Integration
@@ -52,42 +42,18 @@ Choose the appropriate integration package for your framework:
 
 #### Next.js
 
-<Tabs items={['npm', 'pnpm', 'yarn']}>
-  <Tab value="npm">
-    ```bash
-    npm install @keyloom/core @keyloom/nextjs
-    ```
-  </Tab>
-  <Tab value="pnpm">
-    ```bash
-    pnpm add @keyloom/core @keyloom/nextjs
-    ```
-  </Tab>
-  <Tab value="yarn">
-    ```bash
-    yarn add @keyloom/core @keyloom/nextjs
-    ```
-  </Tab>
+<Tabs items={["npm", "pnpm", "yarn"]}>
+  <Tab value="npm">```bash npm install @keyloom/core @keyloom/nextjs ```</Tab>
+  <Tab value="pnpm">```bash pnpm add @keyloom/core @keyloom/nextjs ```</Tab>
+  <Tab value="yarn">```bash yarn add @keyloom/core @keyloom/nextjs ```</Tab>
 </Tabs>
 
 #### Standalone Server
 
-<Tabs items={['npm', 'pnpm', 'yarn']}>
-  <Tab value="npm">
-    ```bash
-    npm install @keyloom/core @keyloom/server
-    ```
-  </Tab>
-  <Tab value="pnpm">
-    ```bash
-    pnpm add @keyloom/core @keyloom/server
-    ```
-  </Tab>
-  <Tab value="yarn">
-    ```bash
-    yarn add @keyloom/core @keyloom/server
-    ```
-  </Tab>
+<Tabs items={["npm", "pnpm", "yarn"]}>
+  <Tab value="npm">```bash npm install @keyloom/core @keyloom/server ```</Tab>
+  <Tab value="pnpm">```bash pnpm add @keyloom/core @keyloom/server ```</Tab>
+  <Tab value="yarn">```bash yarn add @keyloom/core @keyloom/server ```</Tab>
 </Tabs>
 
 ## Database Adapters
@@ -96,21 +62,15 @@ Choose a database adapter based on your database:
 
 ### Prisma Adapter (Recommended)
 
-<Tabs items={['npm', 'pnpm', 'yarn']}>
+<Tabs items={["npm", "pnpm", "yarn"]}>
   <Tab value="npm">
-    ```bash
-    npm install @keyloom/adapters @prisma/client prisma
-    ```
+    ```bash npm install @keyloom/adapters @prisma/client prisma ```
   </Tab>
   <Tab value="pnpm">
-    ```bash
-    pnpm add @keyloom/adapters @prisma/client prisma
-    ```
+    ```bash pnpm add @keyloom/adapters @prisma/client prisma ```
   </Tab>
   <Tab value="yarn">
-    ```bash
-    yarn add @keyloom/adapters @prisma/client prisma
-    ```
+    ```bash yarn add @keyloom/adapters @prisma/client prisma ```
   </Tab>
 </Tabs>
 
@@ -119,7 +79,8 @@ Choose a database adapter based on your database:
 The memory adapter is included with `@keyloom/core` and requires no additional installation.
 
 <Callout type="warn">
-  The memory adapter should only be used for development and testing. It stores data in memory and will lose all data when the process restarts.
+  The memory adapter should only be used for development and testing. It stores
+  data in memory and will lose all data when the process restarts.
 </Callout>
 
 ## OAuth Providers
@@ -137,6 +98,7 @@ Install OAuth providers as needed:
     npm install @keyloom/providers/google
     npm install @keyloom/providers/discord
     ```
+
   </Tab>
   <Tab value="pnpm">
     ```bash
@@ -148,6 +110,7 @@ Install OAuth providers as needed:
     pnpm add @keyloom/providers/google
     pnpm add @keyloom/providers/discord
     ```
+
   </Tab>
   <Tab value="yarn">
     ```bash
@@ -159,6 +122,7 @@ Install OAuth providers as needed:
     yarn add @keyloom/providers/google
     yarn add @keyloom/providers/discord
     ```
+
   </Tab>
 </Tabs>
 
@@ -166,22 +130,10 @@ Install OAuth providers as needed:
 
 Install the CLI tools globally for project initialization and management:
 
-<Tabs items={['npm', 'pnpm', 'yarn']}>
-  <Tab value="npm">
-    ```bash
-    npm install -g @keyloom/cli
-    ```
-  </Tab>
-  <Tab value="pnpm">
-    ```bash
-    pnpm add -g @keyloom/cli
-    ```
-  </Tab>
-  <Tab value="yarn">
-    ```bash
-    yarn global add @keyloom/cli
-    ```
-  </Tab>
+<Tabs items={["npm", "pnpm", "yarn"]}>
+  <Tab value="npm">```bash npm install -g @keyloom/cli ```</Tab>
+  <Tab value="pnpm">```bash pnpm add -g @keyloom/cli ```</Tab>
+  <Tab value="yarn">```bash yarn global add @keyloom/cli ```</Tab>
 </Tabs>
 
 Verify the installation:
@@ -196,24 +148,18 @@ keyloom --version
 
 For a production Next.js application with Prisma database:
 
-<Tabs items={['npm', 'pnpm', 'yarn']}>
+<Tabs items={["npm", "pnpm", "yarn"]}>
   <Tab value="npm">
-    ```bash
-    npm install @keyloom/core @keyloom/nextjs @keyloom/adapters @keyloom/providers @prisma/client prisma
-    npm install -g @keyloom/cli
-    ```
+    ```bash npm install @keyloom/core @keyloom/nextjs @keyloom/adapters
+    @keyloom/providers @prisma/client prisma npm install -g @keyloom/cli ```
   </Tab>
   <Tab value="pnpm">
-    ```bash
-    pnpm add @keyloom/core @keyloom/nextjs @keyloom/adapters @keyloom/providers @prisma/client prisma
-    pnpm add -g @keyloom/cli
-    ```
+    ```bash pnpm add @keyloom/core @keyloom/nextjs @keyloom/adapters
+    @keyloom/providers @prisma/client prisma pnpm add -g @keyloom/cli ```
   </Tab>
   <Tab value="yarn">
-    ```bash
-    yarn add @keyloom/core @keyloom/nextjs @keyloom/adapters @keyloom/providers @prisma/client prisma
-    yarn global add @keyloom/cli
-    ```
+    ```bash yarn add @keyloom/core @keyloom/nextjs @keyloom/adapters
+    @keyloom/providers @prisma/client prisma yarn global add @keyloom/cli ```
   </Tab>
 </Tabs>
 
@@ -221,24 +167,18 @@ For a production Next.js application with Prisma database:
 
 For development with memory adapter:
 
-<Tabs items={['npm', 'pnpm', 'yarn']}>
+<Tabs items={["npm", "pnpm", "yarn"]}>
   <Tab value="npm">
-    ```bash
-    npm install @keyloom/core @keyloom/nextjs @keyloom/providers
-    npm install -g @keyloom/cli
-    ```
+    ```bash npm install @keyloom/core @keyloom/nextjs @keyloom/providers npm
+    install -g @keyloom/cli ```
   </Tab>
   <Tab value="pnpm">
-    ```bash
-    pnpm add @keyloom/core @keyloom/nextjs @keyloom/providers
-    pnpm add -g @keyloom/cli
-    ```
+    ```bash pnpm add @keyloom/core @keyloom/nextjs @keyloom/providers pnpm add
+    -g @keyloom/cli ```
   </Tab>
   <Tab value="yarn">
-    ```bash
-    yarn add @keyloom/core @keyloom/nextjs @keyloom/providers
-    yarn global add @keyloom/cli
-    ```
+    ```bash yarn add @keyloom/core @keyloom/nextjs @keyloom/providers yarn
+    global add @keyloom/cli ```
   </Tab>
 </Tabs>
 
@@ -268,27 +208,30 @@ pnpm link --global @keyloom/cli
 After installation, verify everything is working:
 
 1. **Check package versions:**
+
    ```bash
    npm list @keyloom/core
    npm list @keyloom/nextjs
    ```
 
 2. **Test CLI installation:**
+
    ```bash
    keyloom --help
    ```
 
 3. **Create a test configuration:**
+
    ```typescript
    // test-keyloom.ts
    import { memoryAdapter } from "@keyloom/core";
-   
+
    const config = {
      adapter: memoryAdapter(),
      session: { strategy: "database" as const },
      secrets: { authSecret: "test-secret" },
    };
-   
+
    console.log("Keyloom configuration created successfully!");
    ```
 

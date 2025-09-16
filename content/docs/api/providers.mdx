@@ -1,0 +1,616 @@
+---
+title: "@keyloom/providers API"
+description: Complete API reference for OAuth providers
+---
+
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs'
+import { Callout } from 'fumadocs-ui/components/callout'
+import { Steps, Step } from 'fumadocs-ui/components/steps'
+
+# @keyloom/providers API
+
+OAuth providers for Keyloom authentication library supporting multiple OAuth providers with a unified API.
+
+## Installation
+
+<Tabs items={['npm', 'pnpm', 'yarn']}>
+  <Tab value="npm">
+    ```bash
+    npm install @keyloom/providers
+    ```
+  </Tab>
+  <Tab value="pnpm">
+    ```bash
+    pnpm add @keyloom/providers
+    ```
+  </Tab>
+  <Tab value="yarn">
+    ```bash
+    yarn add @keyloom/providers
+    ```
+  </Tab>
+</Tabs>
+
+## Available Providers
+
+### GitHub Provider
+
+OAuth integration with GitHub for user authentication.
+
+**Import:**
+```typescript
+import github from "@keyloom/providers/github";
+// or
+import { github } from "@keyloom/providers";
+```
+
+**Configuration:**
+```typescript
+const githubProvider = github({
+  clientId: process.env.GITHUB_CLIENT_ID!,
+  clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+});
+```
+
+**Default Scopes:** `read:user`, `user:email`
+
+### Google Provider
+
+OAuth integration with Google for user authentication.
+
+**Import:**
+```typescript
+import google from "@keyloom/providers/google";
+// or
+import { google } from "@keyloom/providers";
+```
+
+**Configuration:**
+```typescript
+const googleProvider = google({
+  clientId: process.env.GOOGLE_CLIENT_ID!,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+});
+```
+
+**Default Scopes:** `openid`, `email`, `profile`
+
+### Discord Provider
+
+OAuth integration with Discord for user authentication.
+
+**Import:**
+```typescript
+import discord from "@keyloom/providers/discord";
+// or
+import { discord } from "@keyloom/providers";
+```
+
+**Configuration:**
+```typescript
+const discordProvider = discord({
+  clientId: process.env.DISCORD_CLIENT_ID!,
+  clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+});
+```
+
+**Default Scopes:** `identify`, `email`
+
+## Provider Setup
+
+### GitHub Setup
+
+<Steps>
+
+<Step>
+
+### Create GitHub OAuth App
+
+1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
+2. Click "New OAuth App"
+3. Fill in the application details:
+   - **Application name:** Your app name
+   - **Homepage URL:** `http://localhost:3000` (development)
+   - **Authorization callback URL:** `http://localhost:3000/api/auth/callback/github`
+
+</Step>
+
+<Step>
+
+### Get Client Credentials
+
+After creating the app, you'll get:
+- **Client ID** - Public identifier
+- **Client Secret** - Private secret (keep secure)
+
+</Step>
+
+<Step>
+
+### Configure Environment Variables
+
+Add to your `.env.local`:
+
+```bash
+GITHUB_CLIENT_ID=your_github_client_id
+GITHUB_CLIENT_SECRET=your_github_client_secret
+```
+
+</Step>
+
+</Steps>
+
+### Google Setup
+
+<Steps>
+
+<Step>
+
+### Create Google OAuth App
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select existing
+3. Enable the Google+ API
+4. Go to "Credentials" → "Create Credentials" → "OAuth 2.0 Client IDs"
+5. Configure OAuth consent screen
+6. Set application type to "Web application"
+7. Add authorized redirect URIs:
+   - `http://localhost:3000/api/auth/callback/google` (development)
+   - `https://yourdomain.com/api/auth/callback/google` (production)
+
+</Step>
+
+<Step>
+
+### Configure Environment Variables
+
+```bash
+GOOGLE_CLIENT_ID=your_google_client_id.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+```
+
+</Step>
+
+</Steps>
+
+### Discord Setup
+
+<Steps>
+
+<Step>
+
+### Create Discord Application
+
+1. Go to [Discord Developer Portal](https://discord.com/developers/applications)
+2. Click "New Application"
+3. Go to "OAuth2" section
+4. Add redirect URIs:
+   - `http://localhost:3000/api/auth/callback/discord` (development)
+   - `https://yourdomain.com/api/auth/callback/discord` (production)
+
+</Step>
+
+<Step>
+
+### Configure Environment Variables
+
+```bash
+DISCORD_CLIENT_ID=your_discord_client_id
+DISCORD_CLIENT_SECRET=your_discord_client_secret
+```
+
+</Step>
+
+</Steps>
+
+## Usage with Keyloom
+
+### Basic Configuration
+
+```typescript
+// keyloom.config.ts
+import { memoryAdapter } from "@keyloom/core";
+import github from "@keyloom/providers/github";
+import google from "@keyloom/providers/google";
+import discord from "@keyloom/providers/discord";
+
+export default {
+  adapter: memoryAdapter(),
+  providers: [
+    github({
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+    }),
+    google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
+    discord({
+      clientId: process.env.DISCORD_CLIENT_ID!,
+      clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+    }),
+  ],
+  session: {
+    strategy: "database" as const,
+    ttlMinutes: 60,
+    rolling: true,
+  },
+  secrets: {
+    authSecret: process.env.AUTH_SECRET!,
+  },
+};
+```
+
+### OAuth Flow Implementation
+
+The OAuth flow is handled automatically by Keyloom, but here's how it works:
+
+```typescript
+import { startOAuth, completeOAuth } from "@keyloom/core";
+import github from "@keyloom/providers/github";
+
+const provider = github({
+  clientId: process.env.GITHUB_CLIENT_ID!,
+  clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+});
+
+// 1. Start OAuth flow
+const { url, state } = await startOAuth({
+  provider,
+  baseUrl: "http://localhost:3000",
+  callbackPath: "/api/auth/callback/github",
+  secrets: { authSecret: process.env.AUTH_SECRET! },
+});
+
+// Redirect user to OAuth provider
+response.redirect(url);
+
+// 2. Handle callback (in your callback route)
+const { user, account } = await completeOAuth({
+  provider,
+  adapter,
+  baseUrl: "http://localhost:3000",
+  callbackPath: "/api/auth/callback/github",
+  stateCookie: request.cookies.get("oauth-state"),
+  stateParam: request.query.state,
+  code: request.query.code,
+  secrets: { authSecret: process.env.AUTH_SECRET! },
+});
+```
+
+## Client-Side Usage
+
+### Login Buttons
+
+```typescript
+// React component
+export function SocialLoginButtons() {
+  const handleGitHubLogin = () => {
+    window.location.href = "/api/auth/login/github";
+  };
+
+  const handleGoogleLogin = () => {
+    window.location.href = "/api/auth/login/google";
+  };
+
+  const handleDiscordLogin = () => {
+    window.location.href = "/api/auth/login/discord";
+  };
+
+  return (
+    <div className="space-y-3">
+      <button
+        onClick={handleGitHubLogin}
+        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 text-white rounded hover:bg-gray-800"
+      >
+        <GitHubIcon />
+        Continue with GitHub
+      </button>
+      
+      <button
+        onClick={handleGoogleLogin}
+        className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
+      >
+        <GoogleIcon />
+        Continue with Google
+      </button>
+      
+      <button
+        onClick={handleDiscordLogin}
+        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+      >
+        <DiscordIcon />
+        Continue with Discord
+      </button>
+    </div>
+  );
+}
+```
+
+### Custom Redirect
+
+```typescript
+// Redirect to specific page after login
+const handleLogin = (provider: string) => {
+  const redirectUrl = encodeURIComponent("/dashboard");
+  window.location.href = `/api/auth/login/${provider}?redirect=${redirectUrl}`;
+};
+```
+
+## Provider Interface
+
+All providers implement the `OAuthProvider` interface:
+
+```typescript
+interface OAuthProvider {
+  id: string;
+  discovery?: { issuer: string };
+  authorization: {
+    url: string;
+    params?: Record<string, string>;
+  };
+  token: {
+    url: string;
+    headers?: Record<string, string>;
+    style?: "json" | "form";
+  };
+  userinfo?: {
+    url: string;
+    map: (raw: any, tokens: Tokens) => {
+      id: string;
+      email?: string | null;
+      name?: string | null;
+      image?: string | null;
+      emailVerified?: boolean;
+    };
+  };
+  scopes?: string[];
+}
+```
+
+### Token Types
+
+```typescript
+interface Tokens {
+  access_token: string;
+  token_type?: string;
+  refresh_token?: string;
+  expires_in?: number;
+  id_token?: string;
+  scope?: string;
+}
+```
+
+## Creating Custom Providers
+
+You can create custom providers for other OAuth services:
+
+```typescript
+import type { OAuthProvider } from "@keyloom/core";
+
+function customProvider(opts: {
+  clientId: string;
+  clientSecret: string;
+}): OAuthProvider & { clientId: string; clientSecret: string } {
+  return {
+    id: "custom",
+    authorization: {
+      url: "https://provider.com/oauth/authorize",
+      params: { scope: "read:user email" },
+    },
+    token: {
+      url: "https://provider.com/oauth/token",
+      style: "json",
+    },
+    userinfo: {
+      url: "https://api.provider.com/user",
+      map: (raw) => ({
+        id: String(raw.id),
+        email: raw.email ?? null,
+        name: raw.name ?? null,
+        image: raw.avatar_url ?? null,
+        emailVerified: !!raw.email_verified,
+      }),
+    },
+    scopes: ["read:user", "email"],
+    clientId: opts.clientId,
+    clientSecret: opts.clientSecret,
+  };
+}
+
+// Usage
+const provider = customProvider({
+  clientId: process.env.CUSTOM_CLIENT_ID!,
+  clientSecret: process.env.CUSTOM_CLIENT_SECRET!,
+});
+```
+
+## Provider-Specific Features
+
+### GitHub
+
+**Available Scopes:**
+- `read:user` - Read user profile
+- `user:email` - Access user email addresses
+- `read:org` - Read organization membership
+- `repo` - Access repositories (use with caution)
+
+**User Profile Mapping:**
+```typescript
+{
+  id: String(raw.id),
+  name: raw.name ?? raw.login ?? null,
+  image: raw.avatar_url ?? null,
+  email: raw.email ?? null, // May be null if private
+}
+```
+
+### Google
+
+**Available Scopes:**
+- `openid` - OpenID Connect
+- `email` - Email address
+- `profile` - Basic profile info
+
+**User Profile Mapping:**
+```typescript
+{
+  id: raw.sub,
+  email: raw.email ?? null,
+  name: raw.name ?? null,
+  image: raw.picture ?? null,
+  emailVerified: !!raw.email_verified,
+}
+```
+
+### Discord
+
+**Available Scopes:**
+- `identify` - Basic user info
+- `email` - Email address
+- `guilds` - User's Discord servers
+
+**User Profile Mapping:**
+```typescript
+{
+  id: raw.id,
+  email: raw.email ?? null,
+  name: raw.global_name ?? raw.username ?? null,
+  image: raw.avatar 
+    ? `https://cdn.discordapp.com/avatars/${raw.id}/${raw.avatar}.png`
+    : null,
+}
+```
+
+## Error Handling
+
+```typescript
+try {
+  const { user, account } = await completeOAuth(options);
+} catch (error) {
+  switch (error.message) {
+    case "state_mismatch":
+      // CSRF protection triggered
+      break;
+    case "state_expired":
+      // OAuth state expired (>10 minutes)
+      break;
+    case "state_wrong_provider":
+      // Provider mismatch
+      break;
+    case "oauth_error":
+      // OAuth provider returned error
+      break;
+    default:
+      // Other errors
+      break;
+  }
+}
+```
+
+## Security Considerations
+
+### PKCE (Proof Key for Code Exchange)
+
+All providers use PKCE for enhanced security:
+
+```typescript
+// Automatically handled by Keyloom
+const { verifier, challenge } = await createPkce();
+```
+
+### State Parameter
+
+OAuth state parameter prevents CSRF attacks:
+
+```typescript
+// State includes:
+// - Provider ID
+// - PKCE verifier
+// - Timestamp
+// - Optional redirect URL
+```
+
+### Secure Redirect URIs
+
+Always use HTTPS in production:
+
+```bash
+# Development
+http://localhost:3000/api/auth/callback/github
+
+# Production
+https://yourdomain.com/api/auth/callback/github
+```
+
+## Testing OAuth Providers
+
+### Mock Provider for Testing
+
+```typescript
+function mockProvider(): OAuthProvider & { clientId: string; clientSecret: string } {
+  return {
+    id: "mock",
+    authorization: {
+      url: "http://localhost:3001/oauth/authorize",
+      params: { scope: "read:user" },
+    },
+    token: {
+      url: "http://localhost:3001/oauth/token",
+      style: "json",
+    },
+    userinfo: {
+      url: "http://localhost:3001/api/user",
+      map: (raw) => ({
+        id: "test-user-id",
+        email: "test@example.com",
+        name: "Test User",
+        image: null,
+      }),
+    },
+    scopes: ["read:user"],
+    clientId: "test-client-id",
+    clientSecret: "test-client-secret",
+  };
+}
+```
+
+### Integration Testing
+
+```typescript
+// Test OAuth flow
+describe("OAuth Flow", () => {
+  it("should complete GitHub OAuth", async () => {
+    const provider = github({
+      clientId: "test-client-id",
+      clientSecret: "test-client-secret",
+    });
+
+    // Mock OAuth responses
+    nock("https://github.com")
+      .post("/login/oauth/access_token")
+      .reply(200, {
+        access_token: "test-token",
+        token_type: "bearer",
+      });
+
+    nock("https://api.github.com")
+      .get("/user")
+      .reply(200, {
+        id: 12345,
+        login: "testuser",
+        email: "test@example.com",
+        name: "Test User",
+        avatar_url: "https://github.com/avatar.jpg",
+      });
+
+    const result = await completeOAuth({
+      provider,
+      adapter: memoryAdapter(),
+      // ... other options
+    });
+
+    expect(result.user.email).toBe("test@example.com");
+  });
+});
+```

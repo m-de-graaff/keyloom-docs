@@ -1,0 +1,479 @@
+---
+title: "@keyloom/nextjs API"
+description: Complete API reference for the @keyloom/nextjs package
+---
+
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs'
+import { Callout } from 'fumadocs-ui/components/callout'
+
+# @keyloom/nextjs API
+
+Next.js integration for Keyloom providing seamless authentication for both App Router and Pages Router.
+
+## Installation
+
+<Tabs items={['npm', 'pnpm', 'yarn']}>
+  <Tab value="npm">
+    ```bash
+    npm install @keyloom/nextjs @keyloom/core
+    ```
+  </Tab>
+  <Tab value="pnpm">
+    ```bash
+    pnpm add @keyloom/nextjs @keyloom/core
+    ```
+  </Tab>
+  <Tab value="yarn">
+    ```bash
+    yarn add @keyloom/nextjs @keyloom/core
+    ```
+  </Tab>
+</Tabs>
+
+## Route Handlers
+
+### `createNextHandler(config)`
+
+Creates GET and POST handlers for authentication routes in App Router.
+
+**Parameters:**
+- `config: NextKeyloomConfig` - Keyloom configuration
+
+**Returns:** `{ GET: NextHandler; POST: NextHandler }`
+
+**Supported Routes:**
+- `GET /api/auth/session` - Get current session and user
+- `GET /api/auth/csrf` - Get CSRF token
+- `POST /api/auth/login` - Login with email/password
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/logout` - Logout current session
+
+```typescript
+// app/api/auth/[[...keyloom]]/route.ts
+import { createNextHandler } from "@keyloom/nextjs";
+import config from "../../../../keyloom.config";
+
+export const { GET, POST } = createNextHandler(config);
+```
+
+### `createPagesApiHandler(config)`
+
+Creates a unified handler for authentication routes in Pages Router.
+
+**Parameters:**
+- `config: NextKeyloomConfig` - Keyloom configuration
+
+**Returns:** `NextApiHandler`
+
+```typescript
+// pages/api/auth/[...keyloom].ts
+import { createPagesApiHandler } from "@keyloom/nextjs";
+import config from "../../../keyloom.config";
+
+export default createPagesApiHandler(config);
+```
+
+## Middleware
+
+### `createAuthMiddleware(config, options?)`
+
+Creates authentication middleware for route protection.
+
+**Parameters:**
+- `config: NextKeyloomConfig` - Keyloom configuration
+- `options?: AuthMiddlewareOptions` - Middleware options
+
+**Returns:** `NextMiddleware`
+
+```typescript
+// middleware.ts
+import { createAuthMiddleware } from "@keyloom/nextjs/middleware";
+import config from "./keyloom.config";
+
+export default createAuthMiddleware(config, {
+  publicRoutes: ["/", "/login", "/register"],
+  verifyAtEdge: false,
+  afterAuth: ({ authed, req, next, redirect }) => {
+    if (!authed && req.nextUrl.pathname.startsWith("/dashboard")) {
+      return redirect("/login");
+    }
+    return next();
+  }
+});
+
+export const config = {
+  matcher: ["/((?!_next|favicon.ico|.*\\..*).*)"]
+};
+```
+
+**Options:**
+
+```typescript
+interface AuthMiddlewareOptions {
+  publicRoutes?: (string | RegExp)[];
+  routes?: KeyloomRoutesManifest;
+  verifyAtEdge?: boolean;
+  afterAuth?: (ctx: {
+    authed: boolean;
+    req: NextRequest;
+    next: () => NextResponse;
+    redirect: (to: string) => NextResponse;
+  }) => NextResponse;
+}
+```
+
+### Route Patterns
+
+**Public Routes:**
+- String patterns: `"/login"`, `"/api/public"`
+- Regex patterns: `/^\/blog\/.*$/`
+- Wildcard patterns: `"/docs/*"`
+
+```typescript
+export default createAuthMiddleware(config, {
+  publicRoutes: [
+    "/",
+    "/login",
+    "/register",
+    "/api/public",
+    /^\/blog\/.*$/,
+    "/docs/*"
+  ]
+});
+```
+
+## Server Helpers
+
+### `getSession(config?)`
+
+Get current session and user data in Server Components or API routes.
+
+**Parameters:**
+- `config?: NextKeyloomConfig` - Optional config (cached after first call)
+
+**Returns:** `Promise<{ session: Session | null; user: User | null }>`
+
+```typescript
+// app/dashboard/page.tsx
+import { getSession } from "@keyloom/nextjs";
+import config from "../../keyloom.config";
+
+export default async function Dashboard() {
+  const { session, user } = await getSession(config);
+  
+  if (!user) {
+    return <div>Please log in</div>;
+  }
+  
+  return (
+    <div>
+      <h1>Welcome, {user.name || user.email}!</h1>
+      <p>Session expires: {session?.expiresAt.toLocaleString()}</p>
+    </div>
+  );
+}
+```
+
+### `getUser(config?)`
+
+Get current user data (shorthand for `getSession().user`).
+
+**Parameters:**
+- `config?: NextKeyloomConfig` - Optional config
+
+**Returns:** `Promise<User | null>`
+
+```typescript
+// app/profile/page.tsx
+import { getUser } from "@keyloom/nextjs";
+
+export default async function Profile() {
+  const user = await getUser();
+  
+  if (!user) {
+    return <div>Not authenticated</div>;
+  }
+  
+  return (
+    <div>
+      <h1>Profile</h1>
+      <p>Email: {user.email}</p>
+      <p>Name: {user.name}</p>
+    </div>
+  );
+}
+```
+
+### `guard(rule?, config?)`
+
+Server-side route guard that redirects unauthenticated users.
+
+**Parameters:**
+- `rule?: GuardRule` - Access control rules
+- `config?: NextKeyloomConfig` - Optional config
+
+**Returns:** `Promise<void | { session: Session; user: User; role?: string; orgId?: string }>`
+
+```typescript
+// app/admin/page.tsx
+import { guard } from "@keyloom/nextjs";
+
+export default async function AdminPage() {
+  // Redirect to /sign-in if not authenticated
+  await guard();
+  
+  // Or with role-based access
+  const { user, role } = await guard({
+    visibility: "role:admin",
+    redirectTo: "/unauthorized"
+  });
+  
+  return <div>Admin panel for {user.email}</div>;
+}
+```
+
+**Guard Rules:**
+
+```typescript
+interface GuardRule {
+  visibility?: "public" | "private" | `role:${string}`;
+  roles?: string[];
+  org?: boolean | "required";
+  redirectTo?: string;
+}
+```
+
+## RBAC Helpers
+
+### `withRole(action, options)`
+
+Wrap API route handlers with role-based access control.
+
+**Parameters:**
+- `action: () => Promise<Response>` - Handler function
+- `options: RoleOptions` - Role configuration
+
+**Returns:** `Promise<Response>`
+
+```typescript
+// app/api/admin/users/route.ts
+import { withRole, getUser } from "@keyloom/nextjs";
+import config from "../../../../keyloom.config";
+
+export async function GET() {
+  return withRole(
+    async () => {
+      // Admin-only logic here
+      const users = await getAllUsers();
+      return Response.json(users);
+    },
+    {
+      requiredRoles: ["admin"],
+      getUser: () => getUser(config),
+      adapter: config.adapter,
+      onDenied: () => new Response("Forbidden", { status: 403 })
+    }
+  );
+}
+```
+
+### `getActiveOrgId()`
+
+Get the active organization ID from cookies.
+
+**Returns:** `string | null`
+
+```typescript
+import { getActiveOrgId } from "@keyloom/nextjs";
+
+const orgId = getActiveOrgId();
+if (orgId) {
+  console.log("Active org:", orgId);
+}
+```
+
+### `setActiveOrgCookie(orgId)`
+
+Set the active organization cookie.
+
+**Parameters:**
+- `orgId: string` - Organization ID to set as active
+
+**Returns:** `void`
+
+```typescript
+import { setActiveOrgCookie } from "@keyloom/nextjs";
+
+// In an API route or Server Action
+setActiveOrgCookie("org-123");
+```
+
+## Edge Runtime Support
+
+### `hasSessionCookie(cookieHeader)`
+
+Edge-safe function to check for session cookie presence.
+
+**Parameters:**
+- `cookieHeader: string | null` - Cookie header value
+
+**Returns:** `boolean`
+
+```typescript
+// middleware.ts (edge runtime)
+import { hasSessionCookie } from "@keyloom/nextjs/edge";
+
+export function middleware(request: NextRequest) {
+  const cookieHeader = request.headers.get("cookie");
+  const hasSession = hasSessionCookie(cookieHeader);
+  
+  if (!hasSession && request.nextUrl.pathname.startsWith("/protected")) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+}
+```
+
+## Route Types
+
+### `KeyloomRouteRule`
+
+Configuration for route-level access control.
+
+```typescript
+interface KeyloomRouteRule {
+  visibility: "public" | "private" | `role:${string}`;
+  roles?: string[];
+  org?: boolean | "required";
+  redirectTo?: string;
+  mode?: "redirect" | "401";
+  verify?: "cookie" | "session" | "membership";
+}
+```
+
+### `KeyloomRoutesManifest`
+
+Generated manifest for route-based configuration.
+
+```typescript
+interface KeyloomRoutesManifest {
+  generatedAt: string;
+  entries: KeyloomRouteEntry[];
+}
+
+interface KeyloomRouteEntry {
+  pattern: string;
+  rule: KeyloomRouteRule;
+  file?: string;
+  specificity: number;
+}
+```
+
+## Configuration
+
+### `NextKeyloomConfig`
+
+Extended configuration for Next.js integration.
+
+```typescript
+interface NextKeyloomConfig extends KeyloomConfig {
+  // Next.js specific options can be added here
+}
+```
+
+### Edge-Safe Configuration
+
+For middleware running on the edge runtime, create a separate config file:
+
+```typescript
+// keyloom.middleware.ts (edge-safe)
+export default {
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+  session: { 
+    strategy: "database" as const, 
+    ttlMinutes: 60, 
+    rolling: true 
+  },
+  secrets: { 
+    authSecret: process.env.AUTH_SECRET ?? "dev-secret" 
+  }
+};
+```
+
+<Callout type="warn">
+  Edge runtime has limitations. Avoid Node.js-specific imports in middleware configuration.
+</Callout>
+
+## Client-Side Usage
+
+### Fetch Session
+
+```typescript
+// Client component
+"use client";
+
+import { useEffect, useState } from "react";
+
+export function useSession() {
+  const [session, setSession] = useState(null);
+  
+  useEffect(() => {
+    fetch("/api/auth/session")
+      .then(res => res.json())
+      .then(setSession);
+  }, []);
+  
+  return session;
+}
+```
+
+### Login/Logout
+
+```typescript
+// Login
+async function login(email: string, password: string) {
+  // Get CSRF token
+  const csrfRes = await fetch("/api/auth/csrf");
+  const { csrfToken } = await csrfRes.json();
+  
+  // Login request
+  const response = await fetch("/api/auth/login", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRF-Token": csrfToken
+    },
+    body: JSON.stringify({ email, password })
+  });
+  
+  return response.json();
+}
+
+// Logout
+async function logout() {
+  await fetch("/api/auth/logout", { method: "POST" });
+  window.location.href = "/";
+}
+```
+
+## Error Handling
+
+```typescript
+// API route with error handling
+export async function POST(request: Request) {
+  try {
+    const { user, session } = await login(credentials, ctx);
+    return Response.json({ user, session });
+  } catch (error) {
+    if (error instanceof KeyloomError) {
+      return Response.json(
+        { error: error.code, message: error.message },
+        { status: 400 }
+      );
+    }
+    return Response.json(
+      { error: "internal_error" },
+      { status: 500 }
+    );
+  }
+}
+```
