@@ -1,0 +1,442 @@
+---
+title: Advanced Topics
+description: Advanced configuration, RBAC, security, and performance considerations
+---
+
+import { Cards, Card } from "fumadocs-ui/components/card";
+
+# Advanced Topics
+
+Explore advanced Keyloom features for production applications.
+
+## Topics Overview
+
+<Cards>
+  <Card
+    title="RBAC System"
+    href="/docs/advanced/rbac"
+    description="Role-based access control with organizations and permissions"
+  />
+  <Card
+    title="Security Features"
+    href="/docs/advanced/security"
+    description="CSRF protection, rate limiting, and security best practices"
+  />
+  <Card
+    title="Performance"
+    href="/docs/advanced/performance"
+    description="Optimization, caching, and scaling considerations"
+  />
+  <Card
+    title="Configuration"
+    href="/docs/advanced/configuration"
+    description="Advanced configuration options and environment setup"
+  />
+  <Card
+    title="Email Verification"
+    href="/docs/advanced/email-verification"
+    description="Email verification and password reset flows"
+  />
+  <Card
+    title="Custom Adapters"
+    href="/docs/advanced/custom-adapters"
+    description="Creating custom database adapters"
+  />
+  <Card
+    title="Middleware"
+    href="/docs/advanced/middleware"
+    description="Custom middleware and route protection"
+  />
+  <Card
+    title="Testing"
+    href="/docs/advanced/testing"
+    description="Testing strategies and utilities"
+  />
+</Cards>
+
+## Quick Reference
+
+### RBAC Configuration
+
+```typescript
+// keyloom.config.ts
+export default {
+  rbac: {
+    enabled: true,
+    defaultRole: "member",
+    permissions: {
+      "users:read": ["admin", "member"],
+      "users:write": ["admin"],
+      "billing:read": ["admin", "billing"],
+      "billing:write": ["admin"],
+    },
+  },
+  // ... other config
+};
+```
+
+### Security Headers
+
+```typescript
+// middleware.ts
+export default createAuthMiddleware(config, {
+  afterAuth: ({ req, next }) => {
+    const response = next();
+
+    // Add security headers
+    response.headers.set("X-Frame-Options", "DENY");
+    response.headers.set("X-Content-Type-Options", "nosniff");
+    response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+
+    return response;
+  },
+});
+```
+
+### Performance Optimization
+
+```typescript
+// Prisma connection pooling
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL + "?connection_limit=10&pool_timeout=20",
+    },
+  },
+});
+
+// Session cleanup job
+setInterval(async () => {
+  await prisma.session.deleteMany({
+    where: {
+      expiresAt: {
+        lt: new Date(),
+      },
+    },
+  });
+}, 60 * 60 * 1000); // Every hour
+```
+
+### Custom Rate Limiting
+
+```typescript
+import { rateLimit } from "@keyloom/core";
+
+// Custom rate limiter
+export function customRateLimit(key: string, limit: number) {
+  return rateLimit.rateLimit(key, {
+    capacity: limit,
+    refillPerSec: limit / 3600, // Refill over 1 hour
+  });
+}
+
+// Usage in API route
+export async function POST(request: Request) {
+  const ip = request.headers.get("x-forwarded-for") || "unknown";
+
+  if (!customRateLimit(`api:${ip}`, 100)) {
+    return Response.json({ error: "rate_limited" }, { status: 429 });
+  }
+
+  // Handle request...
+}
+```
+
+### Email Verification
+
+```typescript
+import { issueVerificationToken } from "@keyloom/core";
+
+// Issue verification token
+const token = await issueVerificationToken({
+  identifier: user.email,
+  type: "email_verification",
+  expiresInMinutes: 60,
+});
+
+// Send verification email
+await sendEmail({
+  to: user.email,
+  subject: "Verify your email",
+  html: `
+    <p>Click the link to verify your email:</p>
+    <a href="${baseUrl}/verify?token=${token}">Verify Email</a>
+  `,
+});
+```
+
+### Custom Middleware
+
+```typescript
+// Custom authentication middleware
+export function createCustomMiddleware(config: KeyloomConfig) {
+  return async (request: NextRequest) => {
+    const { pathname } = request.nextUrl;
+
+    // Skip auth for API routes
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.next();
+    }
+
+    // Check session
+    const sessionId = parseCookieValue(request.headers.get("cookie"));
+    const { user } = await getCurrentSession(sessionId, config.adapter);
+
+    // Redirect unauthenticated users
+    if (!user && pathname.startsWith("/dashboard")) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+
+    // Add user info to headers
+    const response = NextResponse.next();
+    if (user) {
+      response.headers.set("x-user-id", user.id);
+      response.headers.set("x-user-email", user.email || "");
+    }
+
+    return response;
+  };
+}
+```
+
+## Best Practices
+
+### Environment Variables
+
+```bash
+# Production environment setup
+NODE_ENV=production
+
+# Authentication
+AUTH_SECRET=your-super-secure-secret-key-here
+NEXTAUTH_URL=https://yourdomain.com
+
+# Database
+DATABASE_URL=postgresql://user:pass@host:5432/db?sslmode=require
+
+# OAuth Providers
+GITHUB_CLIENT_ID=your_github_client_id
+GITHUB_CLIENT_SECRET=your_github_client_secret
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+# Email (optional)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+
+# Monitoring (optional)
+SENTRY_DSN=your_sentry_dsn
+LOG_LEVEL=info
+```
+
+### Security Checklist
+
+- ✅ Use HTTPS in production
+- ✅ Set secure `AUTH_SECRET` (32+ characters)
+- ✅ Enable CSRF protection
+- ✅ Configure rate limiting
+- ✅ Set secure cookie options
+- ✅ Validate all user inputs
+- ✅ Use parameterized queries
+- ✅ Implement proper error handling
+- ✅ Set up monitoring and logging
+- ✅ Regular security updates
+
+### Performance Checklist
+
+- ✅ Use database connection pooling
+- ✅ Implement session cleanup
+- ✅ Add database indexes
+- ✅ Use CDN for static assets
+- ✅ Enable compression
+- ✅ Implement caching strategies
+- ✅ Monitor database performance
+- ✅ Use edge runtime where possible
+- ✅ Optimize bundle size
+- ✅ Set up health checks
+
+### Testing Strategy
+
+```typescript
+// Test utilities
+export function createTestConfig() {
+  return {
+    adapter: memoryAdapter(),
+    session: { strategy: "database" as const },
+    secrets: { authSecret: "test-secret" },
+  };
+}
+
+// Integration test example
+describe("Authentication Flow", () => {
+  let config: KeyloomConfig;
+
+  beforeEach(() => {
+    config = createTestConfig();
+  });
+
+  it("should register and login user", async () => {
+    // Register user
+    const { user } = await register(
+      { email: "test@example.com", password: "password" },
+      { adapter: config.adapter, hasher: argon2idHasher }
+    );
+
+    expect(user.email).toBe("test@example.com");
+
+    // Login user
+    const { session } = await login(
+      { email: "test@example.com", password: "password" },
+      { adapter: config.adapter, hasher: argon2idHasher }
+    );
+
+    expect(session.userId).toBe(user.id);
+  });
+});
+```
+
+## Migration Guides
+
+### From Other Auth Libraries
+
+#### From NextAuth.js
+
+```typescript
+// Before (NextAuth.js)
+import NextAuth from "next-auth";
+import GithubProvider from "next-auth/providers/github";
+
+export default NextAuth({
+  providers: [
+    GithubProvider({
+      clientId: process.env.GITHUB_ID,
+      clientSecret: process.env.GITHUB_SECRET,
+    }),
+  ],
+});
+
+// After (Keyloom)
+import { createNextHandler } from "@keyloom/nextjs";
+import github from "@keyloom/providers/github";
+
+export const { GET, POST } = createNextHandler({
+  providers: [
+    github({
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+    }),
+  ],
+  // ... other config
+});
+```
+
+#### From Auth0
+
+```typescript
+// Before (Auth0)
+import { handleAuth } from "@auth0/nextjs-auth0";
+export default handleAuth();
+
+// After (Keyloom)
+import { createNextHandler } from "@keyloom/nextjs";
+import config from "../../../keyloom.config";
+
+export const { GET, POST } = createNextHandler(config);
+```
+
+### Database Schema Migration
+
+```sql
+-- Migrate from NextAuth.js schema
+ALTER TABLE accounts RENAME COLUMN "providerAccountId" TO provider_account_id;
+ALTER TABLE accounts RENAME COLUMN "userId" TO user_id;
+ALTER TABLE sessions RENAME COLUMN "userId" TO user_id;
+ALTER TABLE sessions RENAME COLUMN "sessionToken" TO id;
+
+-- Add Keyloom-specific columns
+ALTER TABLE users ADD COLUMN email_verified TIMESTAMP;
+ALTER TABLE sessions ADD COLUMN expires_at TIMESTAMP;
+```
+
+## Troubleshooting
+
+### Common Issues
+
+**Session not persisting:**
+
+- Check cookie settings (domain, secure, sameSite)
+- Verify `AUTH_SECRET` is set correctly
+- Ensure database connection is working
+
+**CSRF errors:**
+
+- Verify CSRF token is included in requests
+- Check cookie and header token match
+- Ensure cookies are enabled
+
+**Rate limiting issues:**
+
+- Adjust rate limit settings
+- Implement proper error handling
+- Consider using Redis for distributed rate limiting
+
+**Performance issues:**
+
+- Add database indexes
+- Implement connection pooling
+- Use session cleanup jobs
+- Monitor query performance
+
+### Debug Mode
+
+```typescript
+// Enable debug logging
+export default {
+  // ... config
+  debug: process.env.NODE_ENV === "development",
+  logger: {
+    level: "debug",
+    transport: {
+      target: "pino-pretty",
+    },
+  },
+};
+```
+
+### Health Checks
+
+```typescript
+// Health check endpoint
+export async function GET() {
+  try {
+    // Check database connection
+    await adapter.getUser("health-check");
+
+    return Response.json({
+      status: "healthy",
+      timestamp: new Date().toISOString(),
+      version: process.env.npm_package_version,
+    });
+  } catch (error) {
+    return Response.json(
+      {
+        status: "unhealthy",
+        error: error.message,
+        timestamp: new Date().toISOString(),
+      },
+      { status: 503 }
+    );
+  }
+}
+```
+
+## Next Steps
+
+Explore specific advanced topics:
+
+- [RBAC System](/docs/advanced/rbac) - Implement role-based access control
+- [Security Features](/docs/advanced/security) - Enhance application security
+- [Performance Optimization](/docs/advanced/performance) - Scale your application
+- [Custom Configuration](/docs/advanced/configuration) - Advanced setup options

@@ -3,35 +3,30 @@ title: "@keyloom/server API"
 description: Complete API reference for the standalone server implementation
 ---
 
-import { Tabs, Tab } from 'fumadocs-ui/components/tabs'
-import { Callout } from 'fumadocs-ui/components/callout'
-import { Steps, Step } from 'fumadocs-ui/components/steps'
+import { Tabs, Tab } from "fumadocs-ui/components/tabs";
+import { Callout } from "fumadocs-ui/components/callout";
+import { Steps, Step } from "fumadocs-ui/components/steps";
 
 # @keyloom/server API
 
 Standalone server implementation for Keyloom providing authentication APIs using Fastify.
 
 <Callout type="info">
-  The server package is currently in development and may have limited functionality compared to the Next.js integration.
+  The server package is currently in development and may have limited
+  functionality compared to the Next.js integration.
 </Callout>
 
 ## Installation
 
-<Tabs items={['npm', 'pnpm', 'yarn']}>
+<Tabs items={["npm", "pnpm", "yarn"]}>
   <Tab value="npm">
-    ```bash
-    npm install @keyloom/server @keyloom/core @keyloom/adapters
-    ```
+    ```bash npm install @keyloom/server @keyloom/core @keyloom/adapters ```
   </Tab>
   <Tab value="pnpm">
-    ```bash
-    pnpm add @keyloom/server @keyloom/core @keyloom/adapters
-    ```
+    ```bash pnpm add @keyloom/server @keyloom/core @keyloom/adapters ```
   </Tab>
   <Tab value="yarn">
-    ```bash
-    yarn add @keyloom/server @keyloom/core @keyloom/adapters
-    ```
+    ```bash yarn add @keyloom/server @keyloom/core @keyloom/adapters ```
   </Tab>
 </Tabs>
 
@@ -65,7 +60,8 @@ const env = {
   DATABASE_URL: process.env.DATABASE_URL!,
   AUTH_SECRET: process.env.AUTH_SECRET!,
   COOKIE_DOMAIN: process.env.COOKIE_DOMAIN,
-  COOKIE_SAMESITE: (process.env.COOKIE_SAMESITE as "lax" | "strict" | "none") || "lax",
+  COOKIE_SAMESITE:
+    (process.env.COOKIE_SAMESITE as "lax" | "strict" | "none") || "lax",
 };
 
 const app = buildServer(env);
@@ -96,6 +92,7 @@ The server provides the following REST API endpoints:
 Get a CSRF token for secure form submissions.
 
 **Response:**
+
 ```json
 {
   "csrfToken": "random-csrf-token-string"
@@ -103,9 +100,11 @@ Get a CSRF token for secure form submissions.
 ```
 
 **Headers:**
+
 - Sets `__keyloom_csrf` cookie with the token
 
 **Example:**
+
 ```bash
 curl http://localhost:8787/v1/auth/csrf
 ```
@@ -115,6 +114,7 @@ curl http://localhost:8787/v1/auth/csrf
 Register a new user account.
 
 **Request Body:**
+
 ```json
 {
   "email": "user@example.com",
@@ -123,11 +123,13 @@ Register a new user account.
 ```
 
 **Headers:**
+
 - `Content-Type: application/json`
 - `X-Keyloom-CSRF: csrf-token-from-cookie`
 - `Cookie: __keyloom_csrf=csrf-token`
 
 **Response:**
+
 ```json
 {
   "userId": "user-id-string",
@@ -138,6 +140,7 @@ Register a new user account.
 **Rate Limiting:** 5 requests per IP, refills at 0.2/second
 
 **Example:**
+
 ```bash
 # Get CSRF token first
 CSRF_TOKEN=$(curl -s http://localhost:8787/v1/auth/csrf | jq -r '.csrfToken')
@@ -155,6 +158,7 @@ curl -X POST http://localhost:8787/v1/auth/register \
 Authenticate a user and create a session.
 
 **Request Body:**
+
 ```json
 {
   "email": "user@example.com",
@@ -163,11 +167,13 @@ Authenticate a user and create a session.
 ```
 
 **Headers:**
+
 - `Content-Type: application/json`
 - `X-Keyloom-CSRF: csrf-token-from-cookie`
 - `Cookie: __keyloom_csrf=csrf-token`
 
 **Response:**
+
 ```json
 {
   "sessionId": "session-id-string"
@@ -175,11 +181,13 @@ Authenticate a user and create a session.
 ```
 
 **Headers:**
+
 - Sets `__keyloom_session` cookie with session ID
 
 **Rate Limiting:** 10 requests per IP, refills at 1/second
 
 **Example:**
+
 ```bash
 curl -X POST http://localhost:8787/v1/auth/login \
   -H "Content-Type: application/json" \
@@ -193,9 +201,11 @@ curl -X POST http://localhost:8787/v1/auth/login \
 End the current user session.
 
 **Headers:**
+
 - `Cookie: __keyloom_session=session-id`
 
 **Response:**
+
 ```json
 {
   "ok": true
@@ -203,9 +213,11 @@ End the current user session.
 ```
 
 **Headers:**
+
 - Clears `__keyloom_session` cookie
 
 **Example:**
+
 ```bash
 curl -X POST http://localhost:8787/v1/auth/logout \
   -H "Cookie: __keyloom_session=session-id"
@@ -216,9 +228,11 @@ curl -X POST http://localhost:8787/v1/auth/logout \
 Get current session and user information.
 
 **Headers:**
+
 - `Cookie: __keyloom_session=session-id`
 
 **Response:**
+
 ```json
 {
   "session": {
@@ -236,6 +250,7 @@ Get current session and user information.
 ```
 
 **Example:**
+
 ```bash
 curl http://localhost:8787/v1/auth/session \
   -H "Cookie: __keyloom_session=session-id"
@@ -247,10 +262,10 @@ curl http://localhost:8787/v1/auth/session \
 
 ```typescript
 interface ServerEnv {
-  PORT: string;                    // Server port (default: "8787")
-  DATABASE_URL: string;            // Database connection string
-  AUTH_SECRET: string;             // Secret for signing tokens (min 16 chars)
-  COOKIE_DOMAIN?: string;          // Cookie domain (optional)
+  PORT: string; // Server port (default: "8787")
+  DATABASE_URL: string; // Database connection string
+  AUTH_SECRET: string; // Secret for signing tokens (min 16 chars)
+  COOKIE_DOMAIN?: string; // Cookie domain (optional)
   COOKIE_SAMESITE: "lax" | "strict" | "none"; // Cookie SameSite policy
 }
 ```
@@ -290,13 +305,13 @@ function createCustomServer() {
   // Custom authentication endpoint
   app.post("/auth/custom-login", async (request, reply) => {
     const { email, password } = request.body as any;
-    
+
     try {
       const { user, session } = await core.login(
         { email, password },
         { adapter, hasher }
       );
-      
+
       // Set session cookie
       reply.setCookie("session", session.id, {
         httpOnly: true,
@@ -304,7 +319,7 @@ function createCustomServer() {
         sameSite: "lax",
         maxAge: 60 * 60 * 24 * 7, // 7 days
       });
-      
+
       return { user: { id: user.id, email: user.email } };
     } catch (error) {
       reply.code(401);
@@ -315,19 +330,19 @@ function createCustomServer() {
   // Protected route example
   app.get("/protected", async (request, reply) => {
     const sessionId = request.cookies.session;
-    
+
     if (!sessionId) {
       reply.code(401);
       return { error: "No session" };
     }
-    
+
     const { user } = await core.getCurrentSession(sessionId, adapter);
-    
+
     if (!user) {
       reply.code(401);
       return { error: "Invalid session" };
     }
-    
+
     return { message: `Hello ${user.email}!` };
   });
 
@@ -399,7 +414,7 @@ const db = new PrismaClient();
 const adapter = PrismaAdapter(db);
 ```
 
-Ensure your database has the required Keyloom schema. See the [Adapters documentation](/api/adapters) for schema details.
+Ensure your database has the required Keyloom schema. See the [Adapters documentation](/docs/api/adapters) for schema details.
 
 ## Error Handling
 
@@ -481,7 +496,7 @@ class AuthService {
 
   async login(email: string, password: string) {
     const csrfToken = await this.getCsrfToken();
-    
+
     const response = await fetch(`${this.baseUrl}/v1/auth/login`, {
       method: "POST",
       headers: {
@@ -491,7 +506,7 @@ class AuthService {
       credentials: "include",
       body: JSON.stringify({ email, password }),
     });
-    
+
     return response.json();
   }
 
@@ -499,7 +514,7 @@ class AuthService {
     const response = await fetch(`${this.baseUrl}/v1/auth/session`, {
       credentials: "include",
     });
-    
+
     return response.json();
   }
 
@@ -508,7 +523,7 @@ class AuthService {
       method: "POST",
       credentials: "include",
     });
-    
+
     return response.json();
   }
 }
@@ -569,16 +584,12 @@ app.get("/metrics", async () => {
 
 <Callout type="warn">
   The server package is currently in early development and has some limitations:
-  
-  - No OAuth provider support yet
-  - Limited RBAC functionality
-  - No email verification endpoints
-  - Basic error handling
-  - No built-in admin interface
+  - No OAuth provider support yet - Limited RBAC functionality - No email
+  verification endpoints - Basic error handling - No built-in admin interface
 </Callout>
 
 ## Next Steps
 
-- [Core API Documentation](/api/core) - Understand the underlying authentication logic
-- [Adapters Documentation](/api/adapters) - Set up database integration
-- [Next.js Integration](/api/nextjs) - For full-featured web applications
+- [Core API Documentation](/docs/api/core) - Understand the underlying authentication logic
+- [Adapters Documentation](/docs/api/adapters) - Set up database integration
+- [Next.js Integration](/docs/api/nextjs) - For full-featured web applications

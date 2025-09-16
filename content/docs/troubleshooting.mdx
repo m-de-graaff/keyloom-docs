@@ -1,0 +1,680 @@
+---
+title: Troubleshooting
+description: Common issues and solutions for Keyloom
+---
+
+import { Callout } from 'fumadocs-ui/components/callout'
+import { Steps, Step } from 'fumadocs-ui/components/steps'
+
+# Troubleshooting
+
+Common issues and their solutions when using Keyloom.
+
+## Quick Diagnostics
+
+### CLI Doctor Command
+
+The fastest way to diagnose issues is using the CLI doctor command:
+
+```bash
+npx keyloom doctor
+```
+
+This will check:
+- Configuration file validity
+- Environment variables
+- Database connection
+- Package versions
+- Common setup issues
+
+## Authentication Issues
+
+### Sessions Not Persisting
+
+**Symptoms:**
+- User gets logged out immediately
+- Session doesn't survive page refresh
+- Login appears successful but user is not authenticated
+
+**Common Causes & Solutions:**
+
+<Steps>
+
+<Step>
+
+### Check Cookie Settings
+
+Ensure cookies are configured correctly:
+
+```typescript
+// keyloom.config.ts
+export default {
+  session: {
+    strategy: "database",
+    cookie: {
+      secure: process.env.NODE_ENV === "production", // HTTPS only in production
+      sameSite: "lax", // Allow cross-site requests
+      domain: process.env.COOKIE_DOMAIN, // Set for subdomains
+    },
+  },
+};
+```
+
+**Common Issues:**
+- `secure: true` in development (use HTTP)
+- `sameSite: "strict"` blocking legitimate requests
+- Wrong `domain` setting
+
+</Step>
+
+<Step>
+
+### Verify AUTH_SECRET
+
+Check that `AUTH_SECRET` is set and consistent:
+
+```bash
+# Generate a new secret
+openssl rand -base64 32
+
+# Add to .env
+AUTH_SECRET=your-generated-secret-here
+```
+
+**Issues:**
+- Missing `AUTH_SECRET`
+- Different secrets between environments
+- Secret too short (minimum 16 characters)
+
+</Step>
+
+<Step>
+
+### Database Connection
+
+Verify database connection and schema:
+
+```bash
+# Test database connection
+npx prisma db push
+
+# Check if tables exist
+npx prisma studio
+```
+
+**Common Issues:**
+- Database not running
+- Wrong `DATABASE_URL`
+- Missing Keyloom tables
+- Schema out of sync
+
+</Step>
+
+</Steps>
+
+### CSRF Token Errors
+
+**Symptoms:**
+- "CSRF validation failed" errors
+- Forms not submitting
+- API requests being rejected
+
+**Solutions:**
+
+```typescript
+// Ensure CSRF token is included
+const csrfToken = await getCsrfToken();
+
+// In forms
+<input type="hidden" name="csrfToken" value={csrfToken} />
+
+// In API requests
+fetch("/api/auth/login", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "X-Keyloom-CSRF": csrfToken,
+  },
+  body: JSON.stringify({ email, password }),
+});
+```
+
+**Common Issues:**
+- Missing CSRF token in requests
+- Token mismatch between cookie and header
+- Cookies disabled in browser
+
+### Rate Limiting Issues
+
+**Symptoms:**
+- "Rate limited" errors
+- Unable to login after multiple attempts
+- API requests being blocked
+
+**Solutions:**
+
+```typescript
+// Check rate limit settings
+import { rateLimit } from "@keyloom/core";
+
+// Custom rate limiting
+const isAllowed = rateLimit.rateLimit(`login:${ip}`, {
+  capacity: 10,      // Increase capacity
+  refillPerSec: 1,   // Faster refill rate
+});
+```
+
+**Debugging:**
+- Check IP address detection
+- Verify rate limit configuration
+- Clear rate limit cache if needed
+
+## OAuth Issues
+
+### OAuth Login Not Working
+
+**Symptoms:**
+- OAuth redirect fails
+- "Invalid client" errors
+- User not created after OAuth
+
+**Common Solutions:**
+
+<Steps>
+
+<Step>
+
+### Verify OAuth App Configuration
+
+Check your OAuth app settings:
+
+**GitHub:**
+- Authorization callback URL: `http://localhost:3000/api/auth/callback/github`
+- Homepage URL matches your domain
+
+**Google:**
+- Authorized redirect URIs exactly match
+- OAuth consent screen configured
+- APIs enabled (Google+ API)
+
+**Discord:**
+- Redirect URIs match exactly
+- Application has correct permissions
+
+</Step>
+
+<Step>
+
+### Check Environment Variables
+
+```bash
+# Verify all required variables are set
+echo $GITHUB_CLIENT_ID
+echo $GITHUB_CLIENT_SECRET
+echo $GOOGLE_CLIENT_ID
+echo $GOOGLE_CLIENT_SECRET
+```
+
+**Common Issues:**
+- Missing environment variables
+- Wrong variable names
+- Spaces or quotes in values
+
+</Step>
+
+<Step>
+
+### Debug OAuth Flow
+
+Enable debug logging:
+
+```typescript
+// keyloom.config.ts
+export default {
+  debug: true, // Enable debug mode
+  // ... other config
+};
+```
+
+Check browser network tab for:
+- OAuth authorization URL
+- Callback parameters
+- Error responses
+
+</Step>
+
+</Steps>
+
+### OAuth State Mismatch
+
+**Symptoms:**
+- "State mismatch" errors
+- OAuth callback fails
+- Security warnings
+
+**Solutions:**
+
+```typescript
+// Ensure state parameter is preserved
+// This is handled automatically by Keyloom
+// Check for:
+// - Cookie settings blocking state cookie
+// - Multiple OAuth attempts simultaneously
+// - Browser blocking third-party cookies
+```
+
+## Database Issues
+
+### Connection Problems
+
+**Symptoms:**
+- "Database connection failed"
+- Timeout errors
+- "Cannot connect to database"
+
+**Solutions:**
+
+<Steps>
+
+<Step>
+
+### Verify Connection String
+
+```bash
+# Test connection string format
+# PostgreSQL
+DATABASE_URL="postgresql://username:password@localhost:5432/database"
+
+# MySQL
+DATABASE_URL="mysql://username:password@localhost:3306/database"
+
+# SQLite
+DATABASE_URL="file:./dev.db"
+```
+
+</Step>
+
+<Step>
+
+### Check Database Status
+
+```bash
+# PostgreSQL
+pg_isready -h localhost -p 5432
+
+# MySQL
+mysqladmin ping -h localhost -P 3306 -u username -p
+
+# Test with Prisma
+npx prisma db push
+```
+
+</Step>
+
+<Step>
+
+### Connection Pool Settings
+
+```typescript
+// Adjust connection pool
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL + "?connection_limit=5&pool_timeout=20",
+    },
+  },
+});
+```
+
+</Step>
+
+</Steps>
+
+### Schema Issues
+
+**Symptoms:**
+- "Table doesn't exist" errors
+- "Column not found" errors
+- Migration failures
+
+**Solutions:**
+
+```bash
+# Reset database (development only)
+npx prisma migrate reset
+
+# Apply pending migrations
+npx prisma migrate deploy
+
+# Generate Prisma client
+npx prisma generate
+
+# Check schema status
+npx prisma migrate status
+```
+
+## Next.js Integration Issues
+
+### Middleware Not Working
+
+**Symptoms:**
+- Routes not protected
+- Middleware not executing
+- Edge runtime errors
+
+**Solutions:**
+
+<Steps>
+
+<Step>
+
+### Check Middleware Configuration
+
+```typescript
+// middleware.ts
+import { createAuthMiddleware } from "@keyloom/nextjs";
+import config from "./keyloom.config";
+
+export default createAuthMiddleware(config, {
+  protectedPaths: ["/dashboard"],
+  publicPaths: ["/", "/login"],
+});
+
+export const config = {
+  matcher: [
+    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+  ],
+};
+```
+
+</Step>
+
+<Step>
+
+### Verify File Location
+
+Ensure `middleware.ts` is in the correct location:
+- **App Router**: `src/middleware.ts` or `middleware.ts` (root)
+- **Pages Router**: `middleware.ts` (root)
+
+</Step>
+
+<Step>
+
+### Edge Runtime Compatibility
+
+Check for edge runtime issues:
+
+```typescript
+// Avoid Node.js APIs in middleware
+// Use edge-compatible alternatives
+// Check Vercel Edge Runtime docs
+```
+
+</Step>
+
+</Steps>
+
+### API Routes Not Working
+
+**Symptoms:**
+- 404 errors on auth routes
+- Routes not handling requests
+- TypeScript errors
+
+**Solutions:**
+
+```typescript
+// App Router: app/api/auth/[[...keyloom]]/route.ts
+import { createNextHandler } from "@keyloom/nextjs";
+import config from "../../../../keyloom.config";
+
+export const { GET, POST } = createNextHandler(config);
+
+// Pages Router: pages/api/auth/[...keyloom].ts
+import { createPagesHandler } from "@keyloom/nextjs";
+import config from "../../../keyloom.config";
+
+export default createPagesHandler(config);
+```
+
+**Common Issues:**
+- Wrong file location
+- Incorrect file naming
+- Missing export statements
+
+## Performance Issues
+
+### Slow Authentication
+
+**Symptoms:**
+- Login takes too long
+- Session validation is slow
+- Database queries timing out
+
+**Solutions:**
+
+<Steps>
+
+<Step>
+
+### Database Optimization
+
+```sql
+-- Add indexes for common queries
+CREATE INDEX idx_sessions_user_id ON sessions(user_id);
+CREATE INDEX idx_sessions_expires_at ON sessions(expires_at);
+CREATE INDEX idx_users_email ON users(email);
+```
+
+</Step>
+
+<Step>
+
+### Connection Pooling
+
+```typescript
+// Optimize Prisma connection
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL + "?connection_limit=10",
+    },
+  },
+});
+```
+
+</Step>
+
+<Step>
+
+### Session Cleanup
+
+```typescript
+// Regular cleanup of expired sessions
+setInterval(async () => {
+  await prisma.session.deleteMany({
+    where: {
+      expiresAt: {
+        lt: new Date(),
+      },
+    },
+  });
+}, 60 * 60 * 1000); // Every hour
+```
+
+</Step>
+
+</Steps>
+
+### Memory Issues
+
+**Symptoms:**
+- High memory usage
+- Memory leaks
+- Out of memory errors
+
+**Solutions:**
+
+```typescript
+// Proper cleanup
+process.on("SIGTERM", async () => {
+  await prisma.$disconnect();
+  process.exit(0);
+});
+
+// Avoid memory leaks
+// - Close database connections
+// - Clear intervals and timeouts
+// - Remove event listeners
+```
+
+## TypeScript Issues
+
+### Type Errors
+
+**Common Issues & Solutions:**
+
+```typescript
+// Issue: Module not found
+// Solution: Check imports
+import { getCurrentUser } from "@keyloom/nextjs";
+
+// Issue: Type mismatch
+// Solution: Use correct types
+import type { User, Session } from "@keyloom/core";
+
+// Issue: Configuration types
+// Solution: Use defineKeyloom helper
+import { defineKeyloom } from "@keyloom/core";
+
+export default defineKeyloom({
+  // TypeScript will validate this
+});
+```
+
+### Build Errors
+
+**Solutions:**
+
+```bash
+# Clear TypeScript cache
+rm -rf .next
+rm -rf node_modules/.cache
+
+# Reinstall dependencies
+npm ci
+
+# Check TypeScript version
+npx tsc --version
+
+# Generate Prisma types
+npx prisma generate
+```
+
+## Deployment Issues
+
+### Vercel Deployment
+
+**Common Issues:**
+
+```bash
+# Environment variables not set
+# Solution: Add to Vercel dashboard
+
+# Edge runtime issues
+# Solution: Check middleware compatibility
+
+# Database connection in serverless
+# Solution: Use connection pooling
+```
+
+### Docker Deployment
+
+**Common Issues:**
+
+```dockerfile
+# Missing environment variables
+ENV AUTH_SECRET=your-secret
+ENV DATABASE_URL=your-db-url
+
+# Wrong Node.js version
+FROM node:18-alpine
+
+# Missing dependencies
+RUN npm ci --only=production
+```
+
+## Getting Help
+
+### Debug Information
+
+When asking for help, include:
+
+```bash
+# System information
+node --version
+npm --version
+
+# Package versions
+npm list @keyloom/core @keyloom/nextjs
+
+# Configuration (remove secrets)
+cat keyloom.config.ts
+
+# Error messages and stack traces
+# Browser console errors
+# Server logs
+```
+
+### Reporting Issues
+
+1. **Search existing issues** first
+2. **Use the issue template**
+3. **Provide minimal reproduction**
+4. **Include environment details**
+5. **Add relevant labels**
+
+### Community Support
+
+- **GitHub Discussions**: General questions
+- **GitHub Issues**: Bug reports
+- **Discord**: Real-time help (coming soon)
+
+### Professional Support
+
+For enterprise support and consulting:
+- Email: support@keyloom.dev
+- Priority support available
+- Custom implementation assistance
+
+## Prevention
+
+### Best Practices
+
+- **Use TypeScript** for better error catching
+- **Test thoroughly** in development
+- **Monitor logs** in production
+- **Keep dependencies updated**
+- **Follow security guidelines**
+- **Use proper error handling**
+- **Implement health checks**
+- **Set up monitoring**
+
+### Regular Maintenance
+
+```bash
+# Weekly tasks
+npm audit fix
+npm update
+
+# Monthly tasks
+npx keyloom doctor
+Review error logs
+Update documentation
+
+# Quarterly tasks
+Security review
+Performance audit
+Dependency cleanup
+```

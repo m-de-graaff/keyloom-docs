@@ -3,9 +3,9 @@ title: Getting Started
 description: Quick start guide to set up Keyloom authentication in your application
 ---
 
-import { Tabs, Tab } from 'fumadocs-ui/components/tabs'
-import { Callout } from 'fumadocs-ui/components/callout'
-import { Steps, Step } from 'fumadocs-ui/components/steps'
+import { Tabs, Tab } from "fumadocs-ui/components/tabs";
+import { Callout } from "fumadocs-ui/components/callout";
+import { Steps, Step } from "fumadocs-ui/components/steps";
 
 # Getting Started
 
@@ -28,22 +28,10 @@ Before you begin, ensure you have:
 
 ### Install Keyloom
 
-<Tabs items={['npm', 'pnpm', 'yarn']}>
-  <Tab value="npm">
-    ```bash
-    npm install @keyloom/core @keyloom/nextjs
-    ```
-  </Tab>
-  <Tab value="pnpm">
-    ```bash
-    pnpm add @keyloom/core @keyloom/nextjs
-    ```
-  </Tab>
-  <Tab value="yarn">
-    ```bash
-    yarn add @keyloom/core @keyloom/nextjs
-    ```
-  </Tab>
+<Tabs items={["npm", "pnpm", "yarn"]}>
+  <Tab value="npm">```bash npm install @keyloom/core @keyloom/nextjs ```</Tab>
+  <Tab value="pnpm">```bash pnpm add @keyloom/core @keyloom/nextjs ```</Tab>
+  <Tab value="yarn">```bash yarn add @keyloom/core @keyloom/nextjs ```</Tab>
 </Tabs>
 
 </Step>
@@ -73,7 +61,8 @@ export default {
 ```
 
 <Callout type="warn">
-  The memory adapter is for development only. Use a database adapter like Prisma in production.
+  The memory adapter is for development only. Use a database adapter like Prisma
+  in production.
 </Callout>
 
 </Step>
@@ -489,11 +478,13 @@ export async function POST(request: Request) {
 ## Test Your Setup
 
 1. **Start your development server:**
+
    ```bash
    npm run dev
    ```
 
 2. **Register a test user:**
+
    ```bash
    curl -X POST http://localhost:3000/api/register \
      -H "Content-Type: application/json" \
@@ -526,11 +517,11 @@ import { getUser } from "@keyloom/nextjs";
 
 export async function GET() {
   const user = await getUser();
-  
+
   if (!user) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
-  
+
   return Response.json({ message: `Hello ${user.email}!` });
 }
 ```
@@ -549,8 +540,8 @@ export function useSession() {
 
   useEffect(() => {
     fetch("/api/auth/session")
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         setSession(data);
         setLoading(false);
       });
@@ -564,30 +555,34 @@ export function useSession() {
 
 Now that you have basic authentication working:
 
-1. **[Set up a database](/adapters)** - Replace memory adapter with Prisma
-2. **[Add OAuth providers](/providers)** - Enable GitHub, Google login
-3. **[Configure RBAC](/advanced/rbac)** - Add role-based access control
-4. **[Customize middleware](/api/nextjs#middleware)** - Fine-tune route protection
-5. **[Add email verification](/advanced/email-verification)** - Secure user registration
+1. **[Set up a database](/docs/adapters)** - Replace memory adapter with Prisma
+2. **[Add OAuth providers](/docs/providers)** - Enable GitHub, Google login
+3. **[Configure RBAC](/docs/advanced/rbac)** - Add role-based access control
+4. **[Customize middleware](/docs/api/nextjs#middleware)** - Fine-tune route protection
+5. **[Add email verification](/docs/advanced/email-verification)** - Secure user registration
 
 ## Troubleshooting
 
 ### Common Issues
 
 **"AUTH_SECRET is required"**
+
 - Make sure you have `AUTH_SECRET` in your `.env.local` file
 - Generate a secure secret with `openssl rand -base64 32`
 
 **"Cannot find module 'keyloom.config'"**
+
 - Ensure `keyloom.config.ts` is in your project root
 - Check the import path in your API routes
 
 **Middleware not working**
+
 - Verify `middleware.ts` is in your project root
 - Check the `matcher` configuration
 - Ensure your routes are not in the `publicRoutes` array
 
 **Session not persisting**
+
 - Check that cookies are being set (inspect browser dev tools)
 - Verify your `baseUrl` matches your development URL
 - Ensure you're not blocking cookies in your browser
@@ -596,7 +591,7 @@ Now that you have basic authentication working:
 
 If you encounter issues:
 
-1. Check the [API documentation](/api)
+1. Check the [API documentation](/docs/api)
 2. Review [example applications](https://github.com/keyloom/keyloom/tree/main/examples)
 3. Search [GitHub Issues](https://github.com/keyloom/keyloom/issues)
 4. Ask in [GitHub Discussions](https://github.com/keyloom/keyloom/discussions)

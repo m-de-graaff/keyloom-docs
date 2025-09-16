@@ -3,7 +3,7 @@ title: API Reference
 description: Comprehensive API documentation for all Keyloom packages
 ---
 
-import { Cards, Card } from 'fumadocs-ui/components/card'
+import { Cards, Card } from "fumadocs-ui/components/card";
 
 # API Reference
 
@@ -12,12 +12,36 @@ Complete API documentation for all Keyloom packages.
 ## Package Overview
 
 <Cards>
-  <Card title="@keyloom/core" href="/api/core" description="Core authentication logic and utilities" />
-  <Card title="@keyloom/nextjs" href="/api/nextjs" description="Next.js integration and middleware" />
-  <Card title="@keyloom/server" href="/api/server" description="Standalone server implementation" />
-  <Card title="@keyloom/adapters" href="/api/adapters" description="Database adapters (Prisma, Memory, etc.)" />
-  <Card title="@keyloom/providers" href="/api/providers" description="OAuth providers (GitHub, Google, Discord)" />
-  <Card title="@keyloom/cli" href="/api/cli" description="Command-line tools and utilities" />
+  <Card
+    title="@keyloom/core"
+    href="/docs/api/core"
+    description="Core authentication logic and utilities"
+  />
+  <Card
+    title="@keyloom/nextjs"
+    href="/docs/api/nextjs"
+    description="Next.js integration and middleware"
+  />
+  <Card
+    title="@keyloom/server"
+    href="/docs/api/server"
+    description="Standalone server implementation"
+  />
+  <Card
+    title="@keyloom/adapters"
+    href="/docs/api/adapters"
+    description="Database adapters (Prisma, Memory, etc.)"
+  />
+  <Card
+    title="@keyloom/providers"
+    href="/docs/api/providers"
+    description="OAuth providers (GitHub, Google, Discord)"
+  />
+  <Card
+    title="@keyloom/cli"
+    href="/docs/api/cli"
+    description="Command-line tools and utilities"
+  />
 </Cards>
 
 ## Quick Reference
@@ -25,12 +49,12 @@ Complete API documentation for all Keyloom packages.
 ### Core Functions
 
 ```typescript
-import { 
-  register, 
-  login, 
-  logout, 
+import {
+  register,
+  login,
+  logout,
   getCurrentSession,
-  memoryAdapter 
+  memoryAdapter,
 } from "@keyloom/core";
 
 // Register a new user
@@ -63,7 +87,7 @@ const token = csrf.issueCsrfToken();
 // Validate CSRF token
 const isValid = csrf.validateDoubleSubmit({
   cookieToken: "token-from-cookie",
-  headerToken: "token-from-header"
+  headerToken: "token-from-header",
 });
 ```
 
@@ -79,7 +103,7 @@ const session = newSession(userId, ttlMinutes);
 const cookie = serializeSessionCookie(sessionId, {
   domain: "example.com",
   secure: true,
-  sameSite: "lax"
+  sameSite: "lax",
 });
 ```
 
@@ -91,7 +115,7 @@ import { startOAuth, completeOAuth } from "@keyloom/core";
 // Start OAuth flow
 const { url, state } = await startOAuth(provider, {
   redirectUri: "http://localhost:3000/auth/callback",
-  scopes: ["user:email"]
+  scopes: ["user:email"],
 });
 
 // Complete OAuth flow
@@ -114,7 +138,7 @@ import type {
   Adapter,
   KeyloomConfig,
   LoginInput,
-  RegisterInput
+  RegisterInput,
 } from "@keyloom/core";
 
 interface User {
@@ -187,11 +211,11 @@ try {
 ## Constants
 
 ```typescript
-import { 
+import {
   COOKIE_NAME,
   DEFAULT_SESSION_TTL_MINUTES,
   JWT_AUDIENCE,
-  JWT_ISSUER 
+  JWT_ISSUER,
 } from "@keyloom/core";
 
 // Default session cookie name
@@ -220,7 +244,7 @@ const id = newId(); // Generates a unique ID
 
 ## Next Steps
 
-- [Core Package API](/api/core) - Detailed core package documentation
-- [Next.js Integration](/api/nextjs) - Next.js specific APIs
-- [Database Adapters](/api/adapters) - Adapter interfaces and implementations
-- [OAuth Providers](/api/providers) - Provider configurations and setup
+- [Core Package API](/docs/api/core) - Detailed core package documentation
+- [Next.js Integration](/docs/api/nextjs) - Next.js specific APIs
+- [Database Adapters](/docs/api/adapters) - Adapter interfaces and implementations
+- [OAuth Providers](/docs/api/providers) - Provider configurations and setup
