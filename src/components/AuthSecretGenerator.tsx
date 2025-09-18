@@ -44,7 +44,7 @@ export function AuthSecretGenerator() {
       <div className="space-y-4">
         <button
           onClick={generateSecret}
-          className="inline-flex items-center px-4 py-2font-medium rounded-md transition-colors"
+          className="inline-flex items-center px-4 py-2font-medium rounded-md transition-colors cursor-pointer"
         >
           <svg
             className="w-4 h-4 mr-2"
@@ -64,7 +64,7 @@ export function AuthSecretGenerator() {
 
         {secret && (
           <div className="space-y-3">
-            <div className="relative">
+            <div className="relative  border">
               <div className="rounded-lg p-3 font-mono text-sm break-all">
                 {secret}
               </div>
@@ -128,7 +128,7 @@ export function AuthSecretGenerator() {
               <strong>Usage:</strong> Add this to your{" "}
               <code className="px-1 rounded">.env.local</code> file:
               <br />
-              <code className="block mt-1 font-mono">AUTH_SECRET={secret}</code>
+              <code className="block font-mono mt-4">AUTH_SECRET={secret}</code>
             </div>
           </div>
         )}
