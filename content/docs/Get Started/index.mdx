@@ -1,0 +1,206 @@
+---
+title: Keyloom
+description: Modern, security-first authentication for JavaScript applications with enterprise-grade features and exceptional developer experience
+---
+
+import { Cards, Card } from "fumadocs-ui/components/card";
+import { Callout } from "fumadocs-ui/components/callout";
+import { Tabs, Tab } from "fumadocs-ui/components/tabs";
+
+![Keyloom](/keyloom_banner.png)
+
+# Modern Authentication for JavaScript
+
+Security-first authentication with enterprise-grade features, exceptional developer experience, and complete control over your data.
+
+[Get Started](/docs/get-started) | [View on GitHub](https://github.com/m-de-graaff/keyloom)
+
+## Key Features
+
+### Security First
+Built with security as the primary design principle, featuring CSRF protection, secure sessions, and modern cryptography.
+
+### Developer Experience
+TypeScript-first with comprehensive CLI tools, excellent documentation, and intuitive APIs for rapid development.
+
+### Enterprise Ready
+RBAC, multi-tenancy, audit logging, and compliance features ready for production at any scale.
+
+## Comprehensive Feature Set
+
+### Core Features
+- Multiple Auth Providers: GitHub, Google, Discord, Apple, Auth0, GitLab, Microsoft, and X (Twitter)
+- Database Agnostic: Prisma, Drizzle, PostgreSQL, MySQL, MongoDB support
+- Framework Support: First-class Next.js integration
+- Security First: CSRF protection, secure sessions, rate limiting
+
+### Advanced Features
+- TypeScript First: Complete type safety across all packages
+- Flexible Sessions: JWT, database, or hybrid strategies
+- RBAC & Multi-tenancy: Built-in organization and role management
+- Comprehensive CLI: Project initialization and management tools
+
+## Modular Architecture
+
+### Core Packages
+- **@keyloom/core**: Core authentication logic and RBAC engine
+- **@keyloom/nextjs**: Next.js integration and middleware
+- **@keyloom/server**: Standalone server implementation
+- **@keyloom/cli**: Command-line tools and utilities
+- **@keyloom/adapters**: Database adapters
+- **@keyloom/providers**: OAuth provider integrations
+
+## Quick Navigation
+
+<Cards>
+  <Card
+    title="Get Started"
+    href="/docs/get-started"
+    description="Quick setup guide with CLI, framework integration, and manual setup options"
+  />
+  <Card
+    title="Introduction"
+    href="/docs/introduction"
+    description="Learn about Keyloom's features, architecture, and use cases"
+  />
+  <Card
+    title="Comparison"
+    href="/docs/comparison"
+    description="How Keyloom compares to other authentication solutions"
+  />
+  <Card
+    title="CLI Reference"
+    href="/docs/cli"
+    description="Complete command-line interface documentation and tools"
+  />
+  <Card
+    title="Next.js Integration"
+    href="/docs/nextjs"
+    description="First-class Next.js integration with App and Pages Router"
+  />
+  <Card
+    title="Database Adapters"
+    href="/docs/adapters"
+    description="Prisma, Drizzle, PostgreSQL, MongoDB, and custom adapters"
+  />
+  <Card
+    title="OAuth Providers"
+    href="/docs/providers"
+    description="GitHub, Google, Discord, Apple, and more OAuth integrations"
+  />
+  <Card
+    title="Advanced Topics"
+    href="/docs/advanced"
+    description="RBAC, security, performance, and enterprise features"
+  />
+</Cards>
+
+## Quick Example
+
+<Tabs items={["Configuration", "Next.js Setup", "Usage"]}>
+<Tab value="Configuration">
+
+```typescript title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { prismaAdapter } from "@keyloom/adapters/prisma";
+import github from "@keyloom/providers/github";
+
+export default defineKeyloom({
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
+  session: {
+    strategy: "database", // or "jwt"
+    ttlMinutes: 60,
+    rolling: true,
+  },
+  adapter: prismaAdapter({
+    url: process.env.DATABASE_URL!,
+  }),
+  providers: [
+    github({
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+    }),
+  ],
+  rbac: { enabled: true }, // Organizations & roles
+  secrets: { authSecret: process.env.AUTH_SECRET! },
+});
+```
+
+</Tab>
+<Tab value="Next.js Setup">
+
+```typescript title="app/api/auth/[[...keyloom]]/route.ts"
+import { createNextHandler } from "@keyloom/nextjs";
+import config from "@/keyloom.config";
+
+export const { GET, POST } = createNextHandler(config);
+```
+
+```typescript title="middleware.ts"
+import { createAuthMiddleware } from "@keyloom/nextjs/middleware";
+import config from "@/keyloom.config";
+
+export default createAuthMiddleware(config, {
+  publicRoutes: ["/", "/sign-in"],
+});
+```
+
+</Tab>
+<Tab value="Usage">
+
+```typescript title="components/UserProfile.tsx"
+import { getCurrentSession } from "@keyloom/nextjs";
+import config from "@/keyloom.config";
+
+export default async function UserProfile() {
+  const { session, user } = await getCurrentSession(config);
+
+  if (!session) {
+    return <a href="/api/auth/signin">Sign In</a>;
+  }
+
+  return (
+    <div>
+      <h1>Welcome, {user?.email}!</h1>
+      <a href="/api/auth/signout">Sign Out</a>
+    </div>
+  );
+}
+```
+
+```typescript title="lib/auth.ts"
+// Server-side authentication functions
+import { keyloom } from "@/keyloom.config";
+
+// Register a new user
+const user = await keyloom.register({
+  email: "user@example.com",
+  password: "secure-password",
+});
+
+// Login user
+const session = await keyloom.login({
+  email: "user@example.com",
+  password: "secure-password",
+});
+```
+
+</Tab>
+</Tabs>
+
+<AuthSecretGenerator />
+
+## Community & Support
+
+### Get Help & Contribute
+- [GitHub Repository](https://github.com/m-de-graaff/keyloom)
+- [Report Issues & Bugs](https://github.com/m-de-graaff/keyloom/issues)
+- [Community Discussions](https://github.com/m-de-graaff/keyloom/discussions)
+
+### Security & License
+- Security Issues: mark_degraaff@outlook.com
+- MIT Licensed: Open source and free to use
+
+<Callout type="info">
+**Ready to get started?** Check out our [Get Started guide](/docs/get-started) for step-by-step instructions, or explore our [Introduction](/docs/introduction) to learn more about Keyloom's features and architecture.
+</Callout>
