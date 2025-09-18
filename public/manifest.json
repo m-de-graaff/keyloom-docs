@@ -1,0 +1,16 @@
+{
+  "name": "Keyloom Documentation",
+  "short_name": "Keyloom",
+  "description": "Modern, security-first authentication for JavaScript applications",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "/keyloom.png",
+      "sizes": "any",
+      "type": "image/png"
+    }
+  ]
+}
