@@ -80,26 +80,8 @@ GITHUB_CLIENT_SECRET=your-github-client-secret
 ```
 
 <Callout type="warn">
-The `AUTH_SECRET` must be a base64url-encoded 32-byte string. Generate one here:
+The `AUTH_SECRET` must be exactly 32 bytes when base64url decoded. Generate a new one:
 
-<div className="p-4 bg-gray-100 rounded-lg">
-  <button 
-    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-    onClick={() => {
-      const secret = window.crypto.getRandomValues(new Uint8Array(32));
-      const base64 = btoa(String.fromCharCode(...secret))
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=/g, '');
-      navigator.clipboard.writeText(base64);
-      alert('Secret copied to clipboard!');
-    }}
-  >
-    Generate Secret
-  </button>
-</div>
-
-Or use the CLI command:
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
 ```
