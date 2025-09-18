@@ -136,69 +136,39 @@ import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 
 <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-8 mb-12">
   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-    <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
-      <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center mb-4">
-        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-        </svg>
-      </div>
+    <div className="bg-white dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
       <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">@keyloom/core</h3>
       <p className="text-slate-600 dark:text-slate-400 text-sm">Core authentication logic, cryptography, session management, and RBAC engine.</p>
     </div>
 
-    <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
-      <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center mb-4">
-        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-      </div>
+    <div className="bg-white dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
       <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">@keyloom/nextjs</h3>
       <p className="text-slate-600 dark:text-slate-400 text-sm">Next.js integration with App/Pages Router support, middleware, and server helpers.</p>
     </div>
 
-    <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
-      <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center mb-4">
-        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
-        </svg>
-      </div>
+    <div className="bg-white dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
       <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">@keyloom/server</h3>
       <p className="text-slate-600 dark:text-slate-400 text-sm">Standalone server implementation with Fastify integration and JWT utilities.</p>
     </div>
 
-    <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
-      <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center mb-4">
-        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-      </div>
+    <div className="bg-white dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
       <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">@keyloom/cli</h3>
       <p className="text-slate-600 dark:text-slate-400 text-sm">Command-line tools for initialization, migrations, health checks, and code generation.</p>
     </div>
 
-    <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
-      <div className="w-10 h-10 bg-teal-500 rounded-lg flex items-center justify-center mb-4">
-        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
-        </svg>
-      </div>
+    <div className="bg-white dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
       <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">@keyloom/adapters</h3>
       <p className="text-slate-600 dark:text-slate-400 text-sm">Database adapters for Prisma, Drizzle, PostgreSQL, MySQL, MongoDB, and more.</p>
     </div>
 
-    <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
-      <div className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center mb-4">
-        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-        </svg>
-      </div>
+    <div className="bg-white dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
       <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">@keyloom/providers</h3>
       <p className="text-slate-600 dark:text-slate-400 text-sm">OAuth providers for GitHub, Google, Discord, Apple, Auth0, and more platforms.</p>
     </div>
   </div>
 </div>
 
-## 🚀 Quick Navigation
+## Quick Navigation
 
 <div className="mb-8">
   <p className="text-lg text-slate-600 dark:text-slate-400 text-center mb-8">
@@ -208,60 +178,53 @@ import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 
 <Cards>
   <Card
-    title="🚀 Get Started"
+    title="Get Started"
     href="/docs/get-started"
     description="Quick setup guide with CLI, framework integration, and manual setup options"
   />
   <Card
-    title="📖 Introduction"
+    title="Introduction"
     href="/docs/introduction"
     description="Learn about Keyloom's features, architecture, and use cases"
   />
   <Card
-    title="⚖️ Comparison"
+    title="Comparison"
     href="/docs/comparison"
     description="How Keyloom compares to other authentication solutions"
   />
   <Card
-    title="🛠️ CLI Reference"
+    title="CLI Reference"
     href="/docs/cli"
     description="Complete command-line interface documentation and tools"
   />
   <Card
-    title="⚡ Next.js Integration"
+    title="Next.js Integration"
     href="/docs/nextjs"
     description="First-class Next.js integration with App and Pages Router"
   />
   <Card
-    title="🗄️ Database Adapters"
+    title="Database Adapters"
     href="/docs/adapters"
     description="Prisma, Drizzle, PostgreSQL, MongoDB, and custom adapters"
   />
   <Card
-    title="🔐 OAuth Providers"
+    title="OAuth Providers"
     href="/docs/providers"
     description="GitHub, Google, Discord, Apple, and more OAuth integrations"
   />
   <Card
-    title="🏢 Advanced Topics"
+    title="Advanced Topics"
     href="/docs/advanced"
     description="RBAC, security, performance, and enterprise features"
   />
 </Cards>
 
-## 💻 Quick Example
+## Quick Example
 
-<div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-8 mb-12 overflow-hidden relative">
-  <div className="absolute inset-0 bg-grid-slate-700/25 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))]"></div>
-  <div className="relative z-10">
-    <div className="flex items-center justify-between mb-6">
-      <h3 className="text-xl font-semibold text-white">Get started in minutes</h3>
-      <div className="flex space-x-2">
-        <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-        <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-      </div>
-    </div>
+<div className="bg-slate-900 rounded-lg p-6 mb-12">
+  <div className="mb-6">
+    <h3 className="text-lg font-semibold text-white mb-2">Get started in minutes</h3>
+  </div>
 
 <Tabs items={["Configuration", "Next.js Setup", "Usage"]}>
 <Tab value="Configuration">
