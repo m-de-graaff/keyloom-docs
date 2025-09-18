@@ -80,12 +80,14 @@ GITHUB_CLIENT_SECRET=your-github-client-secret
 ```
 
 <Callout type="warn">
-The `AUTH_SECRET` must be exactly 32 bytes when base64url decoded. Generate a new one:
+The `AUTH_SECRET` must be exactly 32 bytes when base64url decoded. You can generate one using the tool below or with this command:
 
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
 ```
 </Callout>
+
+<AuthSecretGenerator />
 
 </Step>
 
