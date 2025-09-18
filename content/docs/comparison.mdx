@@ -1,0 +1,307 @@
+---
+title: Keyloom vs Alternatives
+description: How Keyloom compares to other authentication solutions and when to choose Keyloom for your project
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+import { Tabs, Tab } from "fumadocs-ui/components/tabs";
+
+# Keyloom vs Alternatives
+
+Understanding how Keyloom compares to other authentication solutions helps you make the right choice for your project. This guide covers the key differences, advantages, and trade-offs.
+
+## Comparison Overview
+
+<Callout type="info">
+Keyloom is designed to bridge the gap between simple authentication libraries and complex enterprise solutions, providing enterprise-grade features with exceptional developer experience.
+</Callout>
+
+### Keyloom vs NextAuth.js (Auth.js)
+
+**NextAuth.js** is the most popular authentication library for Next.js applications.
+
+| Feature | Keyloom | NextAuth.js |
+|---------|---------|-------------|
+| **TypeScript Support** | ✅ First-class, complete type safety | ⚠️ Good, but some type gaps |
+| **Security Focus** | ✅ Security-first design | ✅ Good security practices |
+| **Edge Runtime** | ✅ Full compatibility | ⚠️ Limited edge support |
+| **Database Adapters** | ✅ Contract-tested, consistent API | ✅ Many adapters, varying quality |
+| **RBAC Support** | ✅ Built-in organizations & roles | ❌ Requires custom implementation |
+| **Session Strategies** | ✅ JWT + Database hybrid | ✅ JWT or Database |
+| **CLI Tools** | ✅ Comprehensive CLI | ❌ No CLI |
+| **Bundle Size** | ✅ Tree-shakeable, optimized | ⚠️ Larger bundle |
+| **Learning Curve** | ⚠️ Moderate | ✅ Gentle |
+
+**Choose Keyloom when:**
+- You need RBAC or multi-tenant features
+- TypeScript safety is critical
+- You're building for edge environments
+- You want comprehensive CLI tooling
+
+**Choose NextAuth.js when:**
+- You need the largest ecosystem
+- You prefer battle-tested stability
+- You want the gentlest learning curve
+
+### Keyloom vs Supabase Auth
+
+**Supabase Auth** is a hosted authentication service with good developer experience.
+
+| Feature | Keyloom | Supabase Auth |
+|---------|---------|---------------|
+| **Self-Hosted** | ✅ Complete control | ❌ Vendor dependency |
+| **Pricing** | ✅ Open source, free | ⚠️ Usage-based pricing |
+| **Customization** | ✅ Full source access | ⚠️ Limited customization |
+| **Database Choice** | ✅ Any database | ❌ PostgreSQL only |
+| **Edge Deployment** | ✅ Deploy anywhere | ⚠️ Supabase infrastructure |
+| **Real-time Features** | ❌ Not included | ✅ Built-in real-time |
+| **Admin Dashboard** | ⚠️ Build your own | ✅ Comprehensive dashboard |
+| **Setup Complexity** | ⚠️ More initial setup | ✅ Instant setup |
+
+**Choose Keyloom when:**
+- You need complete control over your auth
+- You want to avoid vendor lock-in
+- You have specific database requirements
+- Cost predictability is important
+
+**Choose Supabase Auth when:**
+- You want instant setup with minimal configuration
+- You're already using Supabase ecosystem
+- You need real-time features out of the box
+
+### Keyloom vs Firebase Auth
+
+**Firebase Auth** is Google's hosted authentication service.
+
+| Feature | Keyloom | Firebase Auth |
+|---------|---------|---------------|
+| **Data Ownership** | ✅ Your infrastructure | ❌ Google's infrastructure |
+| **Offline Support** | ⚠️ Limited | ✅ Excellent offline support |
+| **Provider Ecosystem** | ✅ Extensible | ✅ Comprehensive |
+| **Real-time Database** | ❌ Separate solution needed | ✅ Integrated |
+| **Pricing Model** | ✅ No usage fees | ⚠️ Pay per authentication |
+| **European Data** | ✅ Deploy in EU | ⚠️ Limited EU options |
+| **Custom Claims** | ✅ Full RBAC system | ⚠️ Limited custom claims |
+
+**Choose Keyloom when:**
+- Data sovereignty is important
+- You need advanced RBAC features
+- You want predictable costs
+- You're building server-first applications
+
+**Choose Firebase Auth when:**
+- You're building mobile-first applications
+- You need Google's ecosystem integration
+- Offline-first is critical
+
+### Keyloom vs Auth0
+
+**Auth0** is an enterprise-focused identity platform.
+
+| Feature | Keyloom | Auth0 |
+|---------|---------|-------|
+| **Cost** | ✅ Open source | ❌ Expensive for scale |
+| **Customization** | ✅ Full source control | ⚠️ Limited customization |
+| **Enterprise Features** | ✅ RBAC, audit logs | ✅ Comprehensive enterprise |
+| **Compliance** | ⚠️ Self-managed | ✅ SOC2, GDPR certified |
+| **Global Infrastructure** | ⚠️ Self-deployed | ✅ Global CDN |
+| **Support** | ⚠️ Community | ✅ Enterprise support |
+| **Lock-in Risk** | ✅ No vendor lock-in | ❌ High switching cost |
+
+**Choose Keyloom when:**
+- Cost is a primary concern
+- You need full customization control
+- You want to avoid vendor lock-in
+- You have internal DevOps capabilities
+
+**Choose Auth0 when:**
+- You need enterprise compliance certifications
+- Global infrastructure is critical
+- You prefer managed services
+- Enterprise support is required
+
+## Unique Selling Points
+
+### 🔒 **Security-First Architecture**
+
+Keyloom is built with security as the primary design principle:
+
+```typescript
+// Example: Built-in CSRF protection
+import { validateDoubleSubmit } from "@keyloom/core/guard/csrf";
+
+const isValid = validateDoubleSubmit({
+  cookieToken: request.cookies.get('csrf-token'),
+  headerToken: request.headers.get('x-csrf-token')
+});
+```
+
+### 🎯 **TypeScript Excellence**
+
+Complete type safety across all operations:
+
+```typescript
+// Example: Fully typed session and user objects
+import type { Session, User } from "@keyloom/core";
+
+const { session, user }: { 
+  session: Session | null, 
+  user: User | null 
+} = await getCurrentSession(cookieValue, adapter);
+```
+
+### 🏗️ **Modular Architecture**
+
+Use only what you need with tree-shaking support:
+
+```typescript
+// Import only specific functions
+import { login } from "@keyloom/core/runtime/login";
+import { validateDoubleSubmit } from "@keyloom/core/guard/csrf";
+import { tokenHash } from "@keyloom/core/crypto/token-hash";
+```
+
+### 🛠️ **Comprehensive CLI**
+
+Project setup and management made easy:
+
+```bash
+# Initialize a new project
+npx @keyloom/cli init
+
+# Generate database migrations
+npx @keyloom/cli migrate
+
+# Health check your configuration
+npx @keyloom/cli doctor
+```
+
+## When to Choose Keyloom
+
+<Tabs items={["Startups", "Enterprise", "Agencies", "Open Source"]}>
+<Tab value="Startups">
+
+### Perfect for Startups
+
+**Advantages:**
+- **Cost-effective**: No per-user pricing or usage fees
+- **Scalable**: Grows from MVP to enterprise without rewrites
+- **Fast iteration**: CLI tools speed up development
+- **Investor-friendly**: No vendor dependencies in your cap table
+
+**Ideal scenarios:**
+- Building a SaaS product with freemium model
+- Need to demonstrate data security to enterprise customers
+- Planning international expansion (data sovereignty)
+- Want to avoid authentication costs eating into margins
+
+</Tab>
+<Tab value="Enterprise">
+
+### Enterprise-Ready Features
+
+**Advantages:**
+- **RBAC**: Built-in organizations, roles, and permissions
+- **Audit trails**: Complete authentication event logging
+- **Self-hosted**: Meet compliance requirements
+- **Customizable**: Adapt to existing enterprise workflows
+
+**Ideal scenarios:**
+- Multi-tenant B2B applications
+- Regulated industries (healthcare, finance)
+- Large organizations with complex permission structures
+- Companies with strict data residency requirements
+
+</Tab>
+<Tab value="Agencies">
+
+### Agency & Consultancy Benefits
+
+**Advantages:**
+- **Reusable**: Same auth system across client projects
+- **White-label**: No third-party branding
+- **Profitable**: No ongoing licensing costs to pass to clients
+- **Maintainable**: Consistent API across projects
+
+**Ideal scenarios:**
+- Building multiple client applications
+- Long-term maintenance contracts
+- Clients with specific security requirements
+- Projects requiring custom authentication flows
+
+</Tab>
+<Tab value="Open Source">
+
+### Open Source Projects
+
+**Advantages:**
+- **MIT License**: Compatible with any project
+- **Self-hosted**: No external dependencies
+- **Transparent**: Full source code access
+- **Community**: Contribute and benefit from improvements
+
+**Ideal scenarios:**
+- Open source applications needing authentication
+- Educational projects and tutorials
+- Community-driven platforms
+- Projects requiring authentication code review
+
+</Tab>
+</Tabs>
+
+## Migration Considerations
+
+### From NextAuth.js
+
+<Callout type="info">
+Keyloom provides migration utilities to help transition from NextAuth.js with minimal disruption.
+</Callout>
+
+**Migration benefits:**
+- Improved TypeScript support
+- Better edge runtime compatibility
+- Built-in RBAC capabilities
+- Enhanced security features
+
+**Migration challenges:**
+- Learning new API patterns
+- Updating existing authentication flows
+- Migrating session data
+
+### From Hosted Solutions
+
+**Benefits of self-hosting:**
+- Complete data control
+- No usage-based pricing
+- Customization freedom
+- No vendor lock-in
+
+**Considerations:**
+- Infrastructure management responsibility
+- Security update management
+- Monitoring and alerting setup
+
+## Decision Framework
+
+Use this framework to evaluate if Keyloom is right for your project:
+
+### ✅ **Choose Keyloom if you:**
+- Need enterprise-grade security features
+- Want complete control over authentication data
+- Require advanced RBAC or multi-tenancy
+- Prioritize TypeScript safety and developer experience
+- Want to avoid vendor lock-in and usage-based pricing
+- Need edge runtime compatibility
+- Have DevOps capabilities for self-hosting
+
+### ❌ **Consider alternatives if you:**
+- Need instant setup with zero configuration
+- Prefer fully managed services
+- Require enterprise compliance certifications
+- Need extensive mobile SDK support
+- Want the largest possible ecosystem
+- Lack infrastructure management capabilities
+
+<Callout type="warn">
+Remember that authentication is a critical security component. Regardless of which solution you choose, ensure you understand the security implications and follow best practices for your specific use case.
+</Callout>
