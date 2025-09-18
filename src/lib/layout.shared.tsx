@@ -27,11 +27,6 @@ export function baseOptions(): BaseLayoutProps {
     // see https://fumadocs.dev/docs/ui/navigation/links
     links: [
       {
-        text: "Documentation",
-        url: "/docs",
-        active: "nested-url",
-      },
-      {
         text: "GitHub",
         url: "https://github.com/m-de-graaff/keyloom",
         external: true,
