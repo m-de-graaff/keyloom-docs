@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, Shield, Zap, Code, Database, GitBranch } from 'lucide-react';
+import { ArrowRight, Shield, Zap, Code, Database, Users, GitBranch } from 'lucide-react';
 import { JetBrains_Mono } from 'next/font/google';
 const mono = JetBrains_Mono({ subsets: ['latin'] });
 
