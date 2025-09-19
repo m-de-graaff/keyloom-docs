@@ -37,24 +37,42 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="relative overflow-hidden min-h-screen flex items-center">
         <div className="absolute inset-0">
-          <PixelBlast 
-            color='#7d7d7d'
-            pixelSize={3}
-            patternScale={2}
-            patternDensity={1.3}
-            pixelSizeJitter={.45}
-            speed={0.5}
-            edgeFade={0.03}
-            enableRipples
-          />
+          {/* Light mode dots */}
+          <div className="block dark:hidden">
+            <PixelBlast 
+              color='#b5b5b5'
+              pixelSize={3}
+              patternScale={2}
+              patternDensity={1.3}
+              pixelSizeJitter={.45}
+              speed={0.5}
+              edgeFade={0.03}
+              enableRipples
+            />
+          </div>
+          {/* Dark mode dots */}
+          <div className="hidden dark:block">
+            <PixelBlast 
+              color='#787878'
+              pixelSize={3}
+              patternScale={2}
+              patternDensity={1.3}
+              pixelSizeJitter={.45}
+              speed={0.5}
+              edgeFade={0.03}
+              enableRipples
+            />
+          </div>
         </div>
         <div className="relative mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8 w-full">
           <div className="mx-auto max-w-6xl text-center">
             {/* Subtle background for better text visibility */}
             <div className="absolute inset-0 rounded-3xl"></div>
-            <div className="relative z-10 px-8 py-16 sm:px-12 sm:py-20">
+            {/* Make text non-interactive so PixelBlast can be interacted with */}
+            <div className="relative px-8 py-16 sm:px-12 sm:py-20 pointer-events-none">
               <div className="mb-8 flex justify-center">
-                <div className="relative rounded-full border bg-fd-secondary/90 px-4 py-2 text-sm leading-6 text-fd-muted-foreground transition-colors hover:bg-fd-secondary">
+                {/* Make the badge interactive */}
+                <div className="relative rounded-full border bg-fd-secondary/90 px-4 py-2 text-sm leading-6 text-fd-muted-foreground transition-colors hover:bg-fd-secondary pointer-events-auto">
                   Open source authentication framework.{' '}
                   <Link href="/docs" className="font-medium text-fd-foreground hover:opacity-80">
                     <span className="absolute inset-0" aria-hidden="true" />
@@ -70,9 +88,10 @@ export default function HomePage() {
                 for TypeScript
               </h1>
               <div className="mt-12 flex items-center justify-center gap-x-6">
+                {/* Make the button interactive */}
                 <Link
                   href="/docs/get-started"
-                  className="rounded-md bg-fd-primary px-6 py-3 text-base font-semibold text-fd-primary-foreground transition-all hover:bg-fd-primary/90"
+                  className="rounded-md bg-fd-primary px-6 py-3 text-base font-semibold text-fd-primary-foreground transition-all hover:bg-fd-primary/90 pointer-events-auto"
                 >
                   Get started
                 </Link>
