@@ -1,0 +1,450 @@
+---
+title: MySQL Adapter
+description: Use MySQL with the mysql2 driver to persist Keyloom users, sessions, OAuth accounts, and authentication data.
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+import { Steps } from "fumadocs-ui/components/steps";
+import { Tabs, Tab } from "fumadocs-ui/components/tabs";
+
+# MySQL Adapter
+
+The MySQL adapter provides database persistence using the high-performance [mysql2](https://github.com/sidorares/node-mysql2) driver. It offers excellent compatibility with MySQL and MariaDB databases with optimized connection pooling.
+
+## Features
+
+- **MySQL & MariaDB**: Compatible with both database systems
+- **Connection Pooling**: Efficient connection management
+- **Prepared Statements**: Enhanced security and performance
+- **UTF8MB4 Support**: Full Unicode character support
+- **JSON Columns**: Modern MySQL JSON data type support
+- **Audit Logging**: Comprehensive event tracking
+
+<Callout type="info">
+This adapter is currently in development. Core authentication features are available, with RBAC and advanced features planned for future releases.
+</Callout>
+
+## Installation
+
+<Steps>
+<Step>
+
+### Install Dependencies
+
+```bash
+npm install @keyloom/adapters-mysql2 mysql2
+```
+
+</Step>
+
+<Step>
+
+### Configure Database Connection
+
+```typescript title="lib/db.ts"
+import mysql from "mysql2/promise";
+
+export const pool = mysql.createPool({
+  host: process.env.DB_HOST || "localhost",
+  port: parseInt(process.env.DB_PORT || "3306"),
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  
+  // Connection pool settings
+  connectionLimit: 10,
+  queueLimit: 0,
+  acquireTimeout: 60000,
+  timeout: 60000,
+  
+  // Character set and timezone
+  charset: "utf8mb4",
+  timezone: "+00:00",
+  
+  // SSL settings for production
+  ssl: process.env.NODE_ENV === "production" ? {
+    rejectUnauthorized: false
+  } : false,
+});
+
+// Test connection
+pool.getConnection()
+  .then(connection => {
+    console.log("MySQL connected successfully");
+    connection.release();
+  })
+  .catch(err => {
+    console.error("MySQL connection failed:", err);
+  });
+```
+
+</Step>
+
+<Step>
+
+### Configure Keyloom
+
+```typescript title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { mysql2Adapter } from "@keyloom/adapters-mysql2";
+import { pool } from "./lib/db";
+
+export default defineKeyloom({
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
+  adapter: mysql2Adapter({
+    pool,
+    tablePrefix: "keyloom_",
+  }),
+  session: {
+    strategy: "database",
+    ttlMinutes: 60,
+    rolling: true,
+  },
+  // ... other config
+});
+```
+
+</Step>
+</Steps>
+
+## Configuration Options
+
+```typescript
+interface MySQL2AdapterConfig {
+  /** MySQL connection pool */
+  pool: mysql.Pool;
+  /** Table name prefix */
+  tablePrefix?: string;
+  /** Enable query logging */
+  enableLogging?: boolean;
+  /** Custom table options */
+  tableOptions?: {
+    engine?: string;
+    charset?: string;
+    collate?: string;
+  };
+}
+```
+
+## Database Schema
+
+The adapter uses an optimized MySQL schema with proper indexing:
+
+### Core Tables
+
+```sql
+-- Users table
+CREATE TABLE keyloom_users (
+  id CHAR(36) PRIMARY KEY,
+  email VARCHAR(255) UNIQUE,
+  email_verified DATETIME,
+  name VARCHAR(255),
+  image TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Accounts table (OAuth providers)
+CREATE TABLE keyloom_accounts (
+  id CHAR(36) PRIMARY KEY,
+  user_id CHAR(36) NOT NULL,
+  type VARCHAR(50) NOT NULL,
+  provider VARCHAR(50) NOT NULL,
+  provider_account_id VARCHAR(255) NOT NULL,
+  refresh_token TEXT,
+  access_token TEXT,
+  expires_at BIGINT,
+  token_type VARCHAR(50),
+  scope TEXT,
+  id_token TEXT,
+  session_state TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES keyloom_users(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_provider_account (provider, provider_account_id),
+  INDEX idx_user_id (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Sessions table
+CREATE TABLE keyloom_sessions (
+  id CHAR(36) PRIMARY KEY,
+  session_token VARCHAR(255) UNIQUE NOT NULL,
+  user_id CHAR(36) NOT NULL,
+  expires DATETIME NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES keyloom_users(id) ON DELETE CASCADE,
+  INDEX idx_user_id (user_id),
+  INDEX idx_expires (expires),
+  INDEX idx_session_token (session_token)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Verification tokens
+CREATE TABLE keyloom_verification_tokens (
+  identifier VARCHAR(255) NOT NULL,
+  token_hash VARCHAR(255) NOT NULL,
+  expires_at DATETIME NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (identifier, token_hash),
+  INDEX idx_expires (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Audit events
+CREATE TABLE keyloom_audit_events (
+  id CHAR(36) PRIMARY KEY,
+  type VARCHAR(50) NOT NULL,
+  user_id CHAR(36),
+  ip VARCHAR(45),
+  user_agent TEXT,
+  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+  metadata JSON,
+  FOREIGN KEY (user_id) REFERENCES keyloom_users(id) ON DELETE SET NULL,
+  INDEX idx_user_id (user_id),
+  INDEX idx_timestamp (timestamp),
+  INDEX idx_type (type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+## Database Setup
+
+### Character Set Configuration
+
+Ensure your MySQL server supports UTF8MB4:
+
+```sql
+-- Check current settings
+SHOW VARIABLES LIKE 'character_set%';
+SHOW VARIABLES LIKE 'collation%';
+
+-- Set UTF8MB4 as default (in my.cnf)
+[mysqld]
+character-set-server = utf8mb4
+collation-server = utf8mb4_unicode_ci
+
+[mysql]
+default-character-set = utf8mb4
+
+[client]
+default-character-set = utf8mb4
+```
+
+### Migration Script
+
+```typescript title="scripts/migrate.ts"
+import { pool } from "../lib/db";
+import fs from "fs";
+import path from "path";
+
+async function runMigrations() {
+  const connection = await pool.getConnection();
+  
+  try {
+    // Read and execute migration files
+    const migrationDir = path.join(__dirname, "migrations");
+    const files = fs.readdirSync(migrationDir).sort();
+    
+    for (const file of files) {
+      if (file.endsWith(".sql")) {
+        console.log(`Running migration: ${file}`);
+        const sql = fs.readFileSync(path.join(migrationDir, file), "utf8");
+        
+        // Split by semicolon and execute each statement
+        const statements = sql.split(";").filter(stmt => stmt.trim());
+        for (const statement of statements) {
+          await connection.execute(statement);
+        }
+      }
+    }
+    
+    console.log("Migrations completed successfully");
+  } finally {
+    connection.release();
+  }
+}
+
+runMigrations().catch(console.error);
+```
+
+## Advanced Usage
+
+### Connection Pool Tuning
+
+```typescript title="lib/db.ts"
+import mysql from "mysql2/promise";
+
+export const pool = mysql.createPool({
+  // Connection settings
+  host: process.env.DB_HOST,
+  port: parseInt(process.env.DB_PORT || "3306"),
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  
+  // Pool configuration
+  connectionLimit: 20,        // Maximum connections
+  queueLimit: 0,             // No limit on queued requests
+  acquireTimeout: 60000,     // 60s timeout for getting connection
+  timeout: 60000,            // 60s query timeout
+  
+  // Performance settings
+  charset: "utf8mb4",
+  timezone: "+00:00",
+  supportBigNumbers: true,
+  bigNumberStrings: true,
+  
+  // Reconnection
+  reconnect: true,
+  
+  // SSL for production
+  ssl: process.env.NODE_ENV === "production" ? {
+    ca: fs.readFileSync(process.env.SSL_CA_PATH),
+    rejectUnauthorized: true
+  } : false,
+});
+```
+
+### Read/Write Splitting
+
+```typescript title="lib/db.ts"
+import mysql from "mysql2/promise";
+
+// Write pool (master)
+export const writePool = mysql.createPool({
+  host: process.env.DB_WRITE_HOST,
+  // ... other config
+  connectionLimit: 10,
+});
+
+// Read pool (replica)
+export const readPool = mysql.createPool({
+  host: process.env.DB_READ_HOST,
+  // ... other config
+  connectionLimit: 20,
+});
+
+// Custom adapter with read/write separation
+const adapter = mysql2Adapter({
+  pool: writePool,
+  readPool: readPool, // Optional read replica
+});
+```
+
+### Custom Table Configuration
+
+```typescript
+const adapter = mysql2Adapter({
+  pool,
+  tablePrefix: "auth_",
+  tableOptions: {
+    engine: "InnoDB",
+    charset: "utf8mb4",
+    collate: "utf8mb4_unicode_ci",
+  },
+});
+```
+
+## Performance Optimization
+
+### Query Optimization
+
+```sql
+-- Analyze query performance
+EXPLAIN SELECT * FROM keyloom_users WHERE email = 'user@example.com';
+
+-- Monitor slow queries
+SELECT 
+  query_time,
+  lock_time,
+  rows_sent,
+  rows_examined,
+  sql_text
+FROM mysql.slow_log
+WHERE sql_text LIKE '%keyloom%'
+ORDER BY query_time DESC;
+```
+
+### Index Optimization
+
+```sql
+-- Check index usage
+SELECT 
+  TABLE_NAME,
+  INDEX_NAME,
+  CARDINALITY,
+  SEQ_IN_INDEX,
+  COLUMN_NAME
+FROM information_schema.STATISTICS
+WHERE TABLE_SCHEMA = 'your_database'
+  AND TABLE_NAME LIKE 'keyloom_%'
+ORDER BY TABLE_NAME, SEQ_IN_INDEX;
+
+-- Analyze table statistics
+ANALYZE TABLE keyloom_users, keyloom_accounts, keyloom_sessions;
+```
+
+## Troubleshooting
+
+### Common Issues
+
+**Connection Pool Exhaustion**
+```sql
+-- Check current connections
+SHOW PROCESSLIST;
+SHOW STATUS LIKE 'Threads_connected';
+SHOW VARIABLES LIKE 'max_connections';
+```
+
+**Character Set Issues**
+```sql
+-- Fix character set for existing tables
+ALTER TABLE keyloom_users CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+**Slow Query Performance**
+```sql
+-- Enable slow query log
+SET GLOBAL slow_query_log = 'ON';
+SET GLOBAL long_query_time = 1;
+SET GLOBAL log_queries_not_using_indexes = 'ON';
+```
+
+**JSON Column Issues**
+```sql
+-- Verify JSON column support (MySQL 5.7+)
+SELECT VERSION();
+SELECT JSON_VALID('{"test": true}');
+```
+
+### Connection Debugging
+
+```typescript
+// Add connection event handlers
+pool.on('connection', (connection) => {
+  console.log('New MySQL connection established');
+});
+
+pool.on('error', (err) => {
+  console.error('MySQL pool error:', err);
+  if (err.code === 'PROTOCOL_CONNECTION_LOST') {
+    // Handle connection lost
+  }
+});
+```
+
+<Callout>
+For production deployments with high traffic, consider using MySQL connection poolers like ProxySQL for better resource management and load balancing.
+</Callout>
+
+## Migration from Other Databases
+
+When migrating from other database systems:
+
+1. **Export Data**: Use mysqldump or similar tools
+2. **Schema Conversion**: Adapt data types and constraints
+3. **Character Set**: Ensure UTF8MB4 compatibility
+4. **Index Recreation**: Optimize indexes for MySQL
+5. **Testing**: Thoroughly test all authentication flows
+
+<Callout type="warning">
+Always backup your data before migrating between different database systems.
+</Callout>
