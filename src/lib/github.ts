@@ -4,7 +4,7 @@ import type { ActionResponse, Feedback } from '@/components/feedback';
 // Repository configuration via environment variables
 const owner = process.env.GITHUB_FEEDBACK_OWNER;
 const repo = process.env.GITHUB_FEEDBACK_REPO;
-const DocsCategory = process.env.GITHUB_FEEDBACK_CATEGORY || 'Docs Feedback';
+const DocsCategory = process.env.GITHUB_FEEDBACK_CATEGORY || 'Feedback';
 
 let instance: Octokit | undefined;
 
@@ -28,17 +28,23 @@ async function getOctokit(): Promise<Octokit> {
 
   const app = new App({ appId, privateKey });
 
-  const { data } = await app.octokit.request(
-    'GET /repos/{owner}/{repo}/installation',
-    {
-      owner,
-      repo,
-      headers: { 'X-GitHub-Api-Version': '2022-11-28' },
-    },
-  );
+  try {
+    const { data } = await app.octokit.request(
+      'GET /repos/{owner}/{repo}/installation',
+      {
+        owner,
+        repo,
+        headers: { 'X-GitHub-Api-Version': '2022-11-28' },
+      },
+    );
 
-  instance = await app.getInstallationOctokit(data.id);
-  return instance;
+    instance = await app.getInstallationOctokit(data.id);
+    return instance;
+  } catch (error: any) {
+    throw new Error(
+      `GitHub App not installed on ${owner}/${repo}. Please install the app on this repository. Original error: ${error.message}`,
+    );
+  }
 }
 
 interface RepositoryInfo {
