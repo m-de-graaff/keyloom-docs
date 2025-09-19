@@ -46,17 +46,18 @@ export default function HomePage() {
       title: "Install the CLI",
       description:
         "Add the dev-only CLI and run the interactive init to detect your framework, install deps, and scaffold config.",
-      action: "pnpm add -D @keyloom/cli",
+      action: "pnpm add -g @keyloom/cli",
     },
     {
-      title: "Connect your providers",
-      description: "Add OAuth providers with simple config",
-      action: "providers: [github(), google()]",
+      title: "Install Hooks",
+      description: "let's you access auth state and user info on the client.",
+      action: "pnpm add @keyloom/react",
     },
     {
-      title: "Protect routes instantly",
-      description: "Add middleware for instant route protection",
-      action: "export default createAuthMiddleware(config, { routes })",
+      title: "Install UI",
+      description:
+        "Don't want the hastle of building your own auth UI? Use our UI library.",
+      action: "pnpm add @keyloom/ui",
     },
   ];
 
@@ -303,20 +304,6 @@ export const config = {
 import config from '@/keyloom.config';
 
 export const { GET, POST } = createNextHandler(config);`,
-    },
-    {
-      filename: "Generated automatically",
-      language: "text",
-      code: `✅ Database schema & migrations handled automatically
-✅ Session management & JWT tokens
-✅ OAuth provider callbacks & flows
-✅ Route protection & RBAC middleware
-✅ CSRF protection & security headers
-✅ TypeScript types & validation
-✅ Error handling & redirects
-✅ Cookie management & settings
-
-Total setup: ~20 lines vs ~150+ lines manually`,
     },
   ];
 
@@ -680,7 +667,7 @@ Total setup: ~20 lines vs ~150+ lines manually`,
                   Before / After
                 </span>
                 <span className="text-xs text-fd-muted-foreground/80">
-                  Shiki highlighting
+                  Keyloom VS Next-Auth
                 </span>
               </div>
               <div className="p-4 sm:p-6">
@@ -697,19 +684,19 @@ Total setup: ~20 lines vs ~150+ lines manually`,
       </section>
 
       {/* Technology Logos */}
-      <section className="py-8 sm:py-12">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-3xl text-center">
+      <section className="py-12 sm:py-16">
+        <div className="w-full">
+          <div className="mx-auto max-w-7xl px-6 lg:px-8 text-center mb-8">
             <p className="text-sm font-medium uppercase tracking-[0.18em] text-fd-muted-foreground">
               Built for your stack
             </p>
           </div>
-          <div className="mt-6">
+          <div className="w-full overflow-hidden">
             <LogoLoop
               logos={logos}
               speed={90}
-              gap={28}
-              logoHeight={28}
+              gap={40}
+              logoHeight={40}
               fadeOut
               scaleOnHover
               ariaLabel="Technology logos"

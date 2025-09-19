@@ -69,6 +69,15 @@ export function CodeComparison({
   const beforeNeedsExpansion = currentBeforeFile.code.split("\n").length > 20;
   const afterNeedsExpansion = currentAfterFile.code.split("\n").length > 20;
 
+  // Reset expanded state when switching tabs
+  useEffect(() => {
+    setIsBeforeExpanded(false);
+  }, [activeBeforeTab]);
+
+  useEffect(() => {
+    setIsAfterExpanded(false);
+  }, [activeAfterTab]);
+
   const selectedTheme = useMemo(() => {
     const currentTheme = theme === "system" ? systemTheme : theme;
     return currentTheme === "dark" ? darkTheme : lightTheme;
@@ -150,10 +159,10 @@ export function CodeComparison({
           }
           className={cn(
             "w-full overflow-auto bg-background font-mono text-xs relative",
-            "[&>pre]:!w-screen [&>pre]:py-2",
-            "[&>pre>code]:!inline-block [&>pre>code]:!w-full",
-            "[&>pre>code>span]:!inline-block [&>pre>code>span]:w-full [&>pre>code>span]:px-4 [&>pre>code>span]:py-0.5",
-            "[&>pre>code>.highlighted]:inline-block [&>pre>code>.highlighted]:w-full [&>pre>code>.highlighted]:!bg-[var(--highlight-color)]",
+            "[&>pre]:py-2 [&>pre]:overflow-x-auto",
+            "[&>pre>code]:!block [&>pre>code]:!w-full [&>pre>code]:whitespace-pre-wrap [&>pre>code]:break-words",
+            "[&>pre>code>span]:!block [&>pre>code>span]:px-4 [&>pre>code>span]:py-0.5 [&>pre>code>span]:whitespace-pre-wrap [&>pre>code>span]:break-words",
+            "[&>pre>code>.highlighted]:block [&>pre>code>.highlighted]:w-full [&>pre>code>.highlighted]:!bg-[var(--highlight-color)]",
             "group-hover/left:[&>pre>code>:not(.focused)]:!opacity-100 group-hover/left:[&>pre>code>:not(.focused)]:!blur-none",
             "group-hover/right:[&>pre>code>:not(.focused)]:!opacity-100 group-hover/right:[&>pre>code>:not(.focused)]:!blur-none",
             "[&>pre>code>.add]:bg-[rgba(16,185,129,.16)] [&>pre>code>.remove]:bg-[rgba(244,63,94,.16)]",
@@ -172,7 +181,7 @@ export function CodeComparison({
             transition: "max-height 0.3s ease-in-out",
           }}
           className={cn(
-            "overflow-auto break-all bg-background p-4 font-mono text-xs text-foreground",
+            "overflow-auto bg-background p-4 font-mono text-xs text-foreground whitespace-pre-wrap break-words",
             !isExpanded && needsExpansion && "overflow-hidden"
           )}
         >
