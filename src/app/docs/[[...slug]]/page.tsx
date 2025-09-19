@@ -1,16 +1,17 @@
-import { source } from '@/lib/source';
+import { source } from "@/lib/source";
 import {
   DocsBody,
   DocsDescription,
   DocsPage,
   DocsTitle,
-} from 'fumadocs-ui/page';
-import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
-import { createRelativeLink } from 'fumadocs-ui/mdx';
-import { getMDXComponents } from '@/mdx-components';
+} from "fumadocs-ui/page";
+import type { Metadata } from "next";
+import { LLMCopyButton, ViewOptions } from "@/components/page-actions";
+import { notFound } from "next/navigation";
+import { createRelativeLink } from "fumadocs-ui/mdx";
+import { getMDXComponents } from "@/mdx-components";
 
-export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
+export default async function Page(props: PageProps<"/docs/[[...slug]]">) {
   const params = await props.params;
   const page = source.getPage(params.slug);
   if (!page) notFound();
@@ -21,6 +22,13 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
     <DocsPage toc={page.data.toc} full={page.data.full}>
       <DocsTitle>{page.data.title}</DocsTitle>
       <DocsDescription>{page.data.description}</DocsDescription>
+      <div className="flex flex-row gap-2 items-center border-b pt-2 pb-6">
+        <LLMCopyButton markdownUrl={`${page.url}.mdx`} />
+        <ViewOptions
+          markdownUrl={`${page.url}.mdx`}
+          githubUrl={`https://github.com/m-de-graaff/keyloom/blob/main/keyloom-docs/content/docs/${page.path}`}
+        />
+      </div>
       <DocsBody>
         <MDXContent
           components={getMDXComponents({
@@ -38,7 +46,7 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata(
-  props: PageProps<'/docs/[[...slug]]'>,
+  props: PageProps<"/docs/[[...slug]]">
 ): Promise<Metadata> {
   const params = await props.params;
   const page = source.getPage(params.slug);
