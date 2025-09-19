@@ -2,8 +2,34 @@
 import Link from 'next/link';
 import { ArrowRight, Shield, Zap, Code, Database, Users, GitBranch } from 'lucide-react';
 import  PixelBlast  from '@/components/PixelBlast';
-import { CodeBlock } from 'react-code-blocks';
+import { CodeBlock, github, atomOneDark } from 'react-code-blocks';
 
+
+// Theme-aware CodeBlock component
+function ThemedCodeBlock({ language, text }: { language: string; text: string }) {
+  return (
+    <>
+      {/* Light mode code block */}
+      <div className="block dark:hidden">
+        <CodeBlock
+          language={language}
+          text={text}
+          theme={github}
+          showLineNumbers={false}
+        />
+      </div>
+      {/* Dark mode code block */}
+      <div className="hidden dark:block">
+        <CodeBlock
+          language={language}
+          text={text}
+          theme={atomOneDark}
+          showLineNumbers={false}
+        />
+      </div>
+    </>
+  );
+}
 
 export default function HomePage() {
   return (
@@ -22,9 +48,9 @@ export default function HomePage() {
           />
         </div>
         <div className="relative mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8 w-full">
-          <div className="mx-auto max-w-4xl text-center">
+          <div className="mx-auto max-w-6xl text-center">
             {/* Subtle background for better text visibility */}
-            <div className="absolute inset-0 bg-fd-background/30 rounded-3xl"></div>
+            <div className="absolute inset-0 rounded-3xl"></div>
             <div className="relative z-10 px-8 py-16 sm:px-12 sm:py-20">
               <div className="mb-8 flex justify-center">
                 <div className="relative rounded-full border bg-fd-secondary/90 px-4 py-2 text-sm leading-6 text-fd-muted-foreground transition-colors hover:bg-fd-secondary">
@@ -80,15 +106,15 @@ export default function HomePage() {
                     <div className="text-xs font-medium text-fd-muted-foreground">Terminal</div>
                   </div>
                   <div className="p-6">
-                    <div className={`text-sm leading-relaxed text-fd-card-foreground`}>
-                    <CodeBlock
-                      language="bash"
-                      text={`$ npx keyloom init
+                    <div className="text-sm leading-relaxed">
+                      <ThemedCodeBlock
+                        language="bash"
+                        text={`$ npx keyloom init
 ✓ Created keyloom.config.ts
 ✓ Added API routes
 ✓ Generated database schema
 ✓ Ready to authenticate!`}
-                    />
+                      />
                     </div>
                   </div>
                 </div>
@@ -102,8 +128,8 @@ export default function HomePage() {
                     <div className="text-xs font-medium text-fd-muted-foreground">keyloom.config.ts</div>
                   </div>
                   <div className="p-6">
-                    <div className={`text-sm leading-relaxed text-fd-card-foreground`}>
-                      <CodeBlock
+                    <div className="text-sm leading-relaxed">
+                      <ThemedCodeBlock
                         language="typescript"
                         text={`export default defineKeyloom({
   adapter: prismaAdapter(prisma),
