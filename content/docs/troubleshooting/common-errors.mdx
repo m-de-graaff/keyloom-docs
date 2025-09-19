@@ -1,0 +1,26 @@
+---
+title: Common Errors
+description: Fix frequent mistakes and runtime errors.
+---
+
+# Common Errors
+
+## 404 on /api/auth routes
+- Ensure the file exists at `app/api/auth/[...keyloom]/route.ts`
+- Export both `GET` and `POST` from `createNextHandler(config)`
+
+## Redirect loop in middleware
+- Re-run `npx keyloom routes --out .keyloom/routes.generated.ts`
+- Ensure public paths (e.g., `/sign-in`) are annotated correctly
+
+## Too many login attempts (429)
+- Add rate limiting around credential flows; see Concepts → Rate Limiting
+
+## Failed to fetch JWKS
+- Set `KEYLOOM_JWT_JWKS_URL` and `KEYLOOM_JWT_ISSUER` when using JWT strategy
+- Verify the URL is reachable from the server environment
+
+## Provider invalid callback
+- Callback must be `${BASE_URL}/api/auth/callback/<providerId>`
+- Update the provider config in the provider dashboard to match
+

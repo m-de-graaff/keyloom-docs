@@ -1,0 +1,74 @@
+---
+title: Migrate from NextAuth.js
+description: Step-by-step guide to move from NextAuth.js to Keyloom.
+---
+
+import { Steps, Callout, Tabs, Tab } from "fumadocs-ui/components";
+
+# Migrate from NextAuth.js
+
+<Steps>
+1. Install packages
+
+```bash
+npm install @keyloom/core @keyloom/nextjs @keyloom/providers @keyloom/adapters
+```
+
+2. Initialize project
+
+```bash
+npx keyloom init --session database --adapter prisma --providers github,google --rbac
+```
+
+3. Configure providers
+
+```ts title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { prismaAdapter } from "@keyloom/adapters";
+import github from "@keyloom/providers/github";
+import google from "@keyloom/providers/google";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
+export default defineKeyloom({
+  adapter: prismaAdapter(prisma),
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
+  session: { strategy: "database" },
+  providers: [
+    github({ clientId: process.env.GITHUB_CLIENT_ID!, clientSecret: process.env.GITHUB_CLIENT_SECRET! }),
+    google({ clientId: process.env.GOOGLE_CLIENT_ID!, clientSecret: process.env.GOOGLE_CLIENT_SECRET! }),
+  ],
+});
+```
+
+4. Replace NextAuth route with Keyloom handler
+
+```ts title="app/api/auth/[...keyloom]/route.ts"
+import { createNextHandler } from "@keyloom/nextjs";
+import config from "@/keyloom.config";
+export const { GET, POST } = createNextHandler(config);
+```
+
+5. Add middleware
+
+```ts title="middleware.ts"
+import { createAuthMiddleware } from "@keyloom/nextjs/middleware";
+import routes from "./.keyloom/routes.generated";
+import config from "./keyloom.config";
+export default createAuthMiddleware(config, { routes });
+```
+
+6. Replace client hooks with server helpers
+
+```ts
+import { getSession, guard } from "@keyloom/nextjs";
+await guard({ visibility: "private" }, config);
+const { user } = await getSession(config);
+```
+
+</Steps>
+
+<Callout>
+Keep your Prisma User/Account/Session models; add the Keyloom RBAC models via the CLI migration generator.
+</Callout>

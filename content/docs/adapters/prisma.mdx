@@ -1,0 +1,52 @@
+---
+title: Prisma Adapter
+description: Use Prisma to persist Keyloom users, sessions, OAuth accounts, and RBAC.
+---
+
+import { Steps, Callout } from "fumadocs-ui/components";
+
+# Prisma Adapter
+
+<Steps>
+1. Install Prisma (if not yet)
+
+```bash
+npm install prisma @prisma/client
+npx prisma init
+```
+
+2. Add Keyloom models
+
+```bash
+npx keyloom generate migration
+```
+
+This adds the required User, Account, Session, and RBAC models to your Prisma schema (or prints instructions).
+
+3. Create the adapter and configure Keyloom
+
+```ts title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { prismaAdapter } from "@keyloom/adapters";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
+export default defineKeyloom({
+  adapter: prismaAdapter(prisma),
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
+  session: { strategy: "database" },
+});
+```
+
+4. Run migrations
+
+```bash
+npx prisma migrate dev --name keyloom_init
+```
+</Steps>
+
+<Callout>
+The Prisma adapter expects standard User, Session, Account tables and, if you enable RBAC, organization and membership tables. The CLI generator scaffolds these for you.
+</Callout>
+

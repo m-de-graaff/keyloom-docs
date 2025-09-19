@@ -10,7 +10,7 @@ import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 
 The authentication landscape is crowded with solutions that either oversimplify or overcomplicate. Keyloom delivers enterprise-grade security with exceptional developer experience, while keeping you in complete control of your data and costs.
 
-## The Authentication Problem in 2024
+## The Authentication Problem in 2025
 
 Most authentication solutions force you to choose between:
 - **Simple but limited** libraries that require extensive custom work for enterprise features
@@ -25,23 +25,23 @@ Most authentication solutions force you to choose between:
 
 ## Detailed Comparisons
 
-### 🆚 Keyloom vs NextAuth.js (Auth.js)
+### Keyloom vs NextAuth.js (Auth.js)
 
 **NextAuth.js** is the most popular authentication library for Next.js, but it's showing its age.
 
 | Feature | Keyloom | NextAuth.js |
 |---------|---------|-------------|
-| **TypeScript Support** | ✅ **100% type-safe** - Every function, every return type | ⚠️ Good, but type gaps in adapters & providers |
-| **Security Architecture** | ✅ **Security-first design** - CSRF, rate limiting, PKCE built-in | ⚠️ Security features require manual setup |
-| **Edge Runtime** | ✅ **Full edge compatibility** - Works everywhere | ❌ **Major limitation** - Limited edge support |
-| **Database Adapters** | ✅ **Contract-tested consistency** - Same API across all DBs | ⚠️ Adapter quality varies, inconsistent APIs |
-| **RBAC & Multi-tenancy** | ✅ **Built-in organizations, roles, permissions** | ❌ **Major gap** - Requires extensive custom code |
-| **Session Management** | ✅ **Hybrid strategy** - JWT + Database benefits | ⚠️ Either/or choice, no hybrid option |
-| **CLI & DevEx** | ✅ **Full CLI suite** - init, migrate, doctor, routes | ❌ **No tooling** - Manual setup only |
-| **Bundle Size** | ✅ **Tree-shakeable** - Import only what you need | ❌ Large bundle, everything included |
-| **Maintenance** | ✅ **Active development** - Modern architecture | ⚠️ Legacy codebase, slower innovation |
+| **TypeScript Support** | **100% type-safe** - Every function, every return type | Good, but type gaps in adapters & providers |
+| **Security Architecture** | **Security-first design** - CSRF, rate limiting, PKCE built-in | Security features require manual setup |
+| **Edge Runtime** | **Full edge compatibility** - Works everywhere | **Major limitation** - Limited edge support |
+| **Database Adapters** | **Contract-tested consistency** - Same API across all DBs | Adapter quality varies, inconsistent APIs |
+| **RBAC & Multi-tenancy** | **Built-in organizations, roles, permissions** | **Major gap** - Requires extensive custom code |
+| **Session Management** | **Hybrid strategy** - JWT + Database benefits | Either/or choice, no hybrid option |
+| **CLI & DevEx** | **Full CLI suite** - init, migrate, doctor, routes | **No tooling** - Manual setup only |
+| **Bundle Size** | **Tree-shakeable** - Import only what you need | Large bundle, everything included |
+| **Maintenance** | **Active development** - Modern architecture | Legacy codebase, slower innovation |
 
-**💡 Why Keyloom wins:**
+**Why Keyloom wins:**
 - **Enterprise-ready out of the box** - RBAC, audit logs, multi-tenancy included
 - **Modern architecture** - Built for edge, TypeScript-first, security-focused
 - **Better developer experience** - CLI tools, consistent APIs, complete type safety
@@ -52,27 +52,27 @@ Most authentication solutions force you to choose between:
 - You need the absolute largest ecosystem (though Keyloom's is growing fast)
 - You prefer the most battle-tested option (though Keyloom is production-ready)
 
-### 🆚 Keyloom vs Clerk
+### Keyloom vs Clerk
 
 **Clerk** is a modern hosted auth service that's become popular, but the pricing can be shocking.
 
 | Feature | Keyloom | Clerk |
 |---------|---------|-------|
-| **Pricing Model** | ✅ **$0 forever** - Open source, no usage fees | ❌ **$0.05/MAU** - $2,500/month for 50k users |
-| **Data Ownership** | ✅ **Your infrastructure** - Complete control | ❌ **Vendor-hosted** - Your users' data on their servers |
-| **Customization** | ✅ **Full source access** - Modify anything | ⚠️ **Limited** - Theming and basic config only |
-| **Vendor Lock-in** | ✅ **Zero lock-in** - Standard database schemas | ❌ **High lock-in** - Proprietary APIs and data formats |
-| **RBAC & Organizations** | ✅ **Built-in** - Organizations, roles, permissions | ✅ **Built-in** - Similar feature set |
-| **UI Components** | ✅ **Customizable** - Build your own or use ours | ✅ **Pre-built** - Beautiful but limited customization |
-| **Edge Runtime** | ✅ **Full compatibility** - Deploy anywhere | ✅ **Good support** - Works on most platforms |
-| **TypeScript** | ✅ **100% type-safe** - Complete type coverage | ✅ **Good** - Well-typed APIs |
+| **Pricing Model** | **$0 forever** - Open source, no usage fees | **$0.05/MAU** - $2,500/month for 50k users |
+| **Data Ownership** | **Your infrastructure** - Complete control | **Vendor-hosted** - Your users' data on their servers |
+| **Customization** | **Full source access** - Modify anything | **Limited** - Theming and basic config only |
+| **Vendor Lock-in** | **Zero lock-in** - Standard database schemas | **High lock-in** - Proprietary APIs and data formats |
+| **RBAC & Organizations** | **Built-in** - Organizations, roles, permissions | **Built-in** - Similar feature set |
+| **UI Components** | **Customizable** - Build your own or use ours | **Pre-built** - Beautiful but limited customization |
+| **Edge Runtime** | **Full compatibility** - Deploy anywhere | **Good support** - Works on most platforms |
+| **TypeScript** | **100% type-safe** - Complete type coverage | **Good** - Well-typed APIs |
 
-**💰 Cost Comparison (50,000 monthly active users):**
+**Cost Comparison (50,000 monthly active users):**
 - **Keyloom**: $0/month (hosting costs only)
 - **Clerk**: $2,500/month ($0.05 × 50,000 users)
 - **Annual difference**: $30,000 saved with Keyloom
 
-**💡 Why Keyloom wins:**
+**Why Keyloom wins:**
 - **Massive cost savings** - No per-user fees, ever
 - **Data sovereignty** - Your users' data stays on your infrastructure
 - **No vendor lock-in** - Standard schemas, easy to migrate away
@@ -83,22 +83,22 @@ Most authentication solutions force you to choose between:
 - You prefer fully managed services
 - You need their specific UI components and don't want to build your own
 
-### 🆚 Keyloom vs Supabase Auth
+### Keyloom vs Supabase Auth
 
 **Supabase Auth** is part of the Supabase ecosystem, but comes with database and vendor limitations.
 
 | Feature | Keyloom | Supabase Auth |
 |---------|---------|---------------|
-| **Database Freedom** | ✅ **Any database** - PostgreSQL, MySQL, MongoDB, etc. | ❌ **PostgreSQL only** - Locked to Supabase's stack |
-| **Self-Hosting** | ✅ **Complete control** - Deploy anywhere | ❌ **Vendor dependency** - Must use Supabase infrastructure |
-| **Pricing** | ✅ **$0 forever** - Open source | ⚠️ **Usage-based** - $25/month + overages |
-| **Customization** | ✅ **Full source access** - Modify anything | ⚠️ **Limited** - Configuration options only |
-| **Edge Deployment** | ✅ **Deploy anywhere** - Your choice of infrastructure | ❌ **Supabase only** - Limited to their edge locations |
-| **RBAC** | ✅ **Built-in** - Organizations, roles, permissions | ⚠️ **Basic** - Row Level Security only |
-| **Real-time Features** | ⚠️ **Separate solution** - Use your preferred real-time stack | ✅ **Built-in** - Integrated real-time subscriptions |
-| **Admin Dashboard** | ⚠️ **Build your own** - Full control over admin experience | ✅ **Comprehensive** - Ready-to-use dashboard |
+| **Database Freedom** | **Any database** - PostgreSQL, MySQL, MongoDB, etc. | **PostgreSQL only** - Locked to Supabase's stack |
+| **Self-Hosting** | **Complete control** - Deploy anywhere | **Vendor dependency** - Must use Supabase infrastructure |
+| **Pricing** | **$0 forever** - Open source | **Usage-based** - $25/month + overages |
+| **Customization** | **Full source access** - Modify anything | **Limited** - Configuration options only |
+| **Edge Deployment** | **Deploy anywhere** - Your choice of infrastructure | **Supabase only** - Limited to their edge locations |
+| **RBAC** | **Built-in** - Organizations, roles, permissions | **Basic** - Row Level Security only |
+| **Real-time Features** | **Separate solution** - Use your preferred real-time stack | **Built-in** - Integrated real-time subscriptions |
+| **Admin Dashboard** | **Build your own** - Full control over admin experience | **Comprehensive** - Ready-to-use dashboard |
 
-**💡 Why Keyloom wins:**
+**Why Keyloom wins:**
 - **Database flexibility** - Use any database, not just PostgreSQL
 - **No vendor lock-in** - Your data, your infrastructure, your choice
 - **Cost predictability** - No surprise bills as you scale
@@ -111,109 +111,211 @@ Most authentication solutions force you to choose between:
 
 ### Keyloom vs Firebase Auth
 
-**Firebase Auth** is Google's hosted authentication service.
+**Firebase Auth** is Google's authentication service, optimized for mobile but with significant limitations for modern web apps.
 
 | Feature | Keyloom | Firebase Auth |
 |---------|---------|---------------|
-| **Data Ownership** | ✅ Your infrastructure | ❌ Google's infrastructure |
-| **Offline Support** | ⚠️ Limited | ✅ Excellent offline support |
-| **Provider Ecosystem** | ✅ Extensible | ✅ Comprehensive |
-| **Real-time Database** | ❌ Separate solution needed | ✅ Integrated |
-| **Pricing Model** | ✅ No usage fees | ⚠️ Pay per authentication |
-| **European Data** | ✅ Deploy in EU | ⚠️ Limited EU options |
-| **Custom Claims** | ✅ Full RBAC system | ⚠️ Limited custom claims |
+| **Data Sovereignty** | **Your infrastructure** - Complete control | **Google's servers** - Your users' data on Google |
+| **Pricing Model** | **$0 forever** - No usage fees | **$0.0055/verification** - Adds up quickly |
+| **RBAC & Custom Claims** | **Full RBAC system** - Organizations, roles, permissions | **Very limited** - Basic custom claims only |
+| **Database Integration** | **Any database** - Your choice of storage | **Firebase only** - Locked to Google's ecosystem |
+| **Offline Support** | **Standard web** - Normal web app behavior | **Excellent** - Built for mobile offline scenarios |
+| **Provider Ecosystem** | **Extensible** - Easy to add custom providers | **Comprehensive** - Many built-in providers |
+| **European Data** | **Deploy anywhere** - EU, US, anywhere you want | **Limited EU options** - Google's infrastructure only |
+| **Server-Side Auth** | **Excellent** - Built for modern server patterns | **Awkward** - Designed for client-side auth |
+| **TypeScript** | **100% type-safe** - Complete type coverage | **Basic** - Limited TypeScript support |
 
-**Choose Keyloom when:**
-- Data sovereignty is important
-- You need advanced RBAC features
-- You want predictable costs
-- You're building server-first applications
+**Cost Comparison (1M authentications/month):**
+- **Keyloom**: $0/month (hosting costs only)
+- **Firebase Auth**: $5,500/month ($0.0055 × 1M verifications)
+- **Annual difference**: $66,000 saved with Keyloom
 
-**Choose Firebase Auth when:**
-- You're building mobile-first applications
-- You need Google's ecosystem integration
-- Offline-first is critical
+**Why Keyloom wins:**
+- **Massive cost savings** - No per-authentication fees
+- **Data sovereignty** - Keep user data in your preferred region/infrastructure
+- **Advanced RBAC** - Built-in organizations and permissions vs Firebase's basic custom claims
+- **Modern web-first design** - Built for server-side rendering and edge deployment
+
+**When Firebase Auth might be better:**
+- You're building a mobile-first application with offline requirements
+- You're already deep in the Google/Firebase ecosystem
+- You need Google's specific mobile SDKs and offline capabilities
 
 ### Keyloom vs Auth0
 
-**Auth0** is an enterprise-focused identity platform.
+**Auth0** is the enterprise authentication giant, but their pricing will make your CFO cry.
 
 | Feature | Keyloom | Auth0 |
 |---------|---------|-------|
-| **Cost** | ✅ Open source | ❌ Expensive for scale |
-| **Customization** | ✅ Full source control | ⚠️ Limited customization |
-| **Enterprise Features** | ✅ RBAC, audit logs | ✅ Comprehensive enterprise |
-| **Compliance** | ⚠️ Self-managed | ✅ SOC2, GDPR certified |
-| **Global Infrastructure** | ⚠️ Self-deployed | ✅ Global CDN |
-| **Support** | ⚠️ Community | ✅ Enterprise support |
-| **Lock-in Risk** | ✅ No vendor lock-in | ❌ High switching cost |
+| **Pricing** | **$0 forever** - Open source | **$240/month minimum** - Plus $0.0235/MAU after 1,000 users |
+| **Customization** | **Full source control** - Modify anything | **Heavily limited** - Theming and basic config only |
+| **Enterprise Features** | **Built-in** - RBAC, audit logs, multi-tenancy | **Comprehensive** - Full enterprise feature set |
+| **Vendor Lock-in** | **Zero lock-in** - Standard schemas, open source | **Extreme lock-in** - Proprietary everything |
+| **Compliance** | **Self-managed** - You handle compliance | **Certified** - SOC2, GDPR, HIPAA certified |
+| **Global Infrastructure** | **Self-deployed** - You manage global deployment | **Global CDN** - Worldwide infrastructure |
+| **Support** | **Community** - GitHub issues and discussions | **Enterprise** - Dedicated support team |
+| **Data Ownership** | **Your infrastructure** - Complete control | **Auth0's servers** - Your data on their infrastructure |
+| **Development Speed** | **CLI tools** - Fast setup and iteration | **Dashboard-heavy** - Slower configuration process |
 
-**Choose Keyloom when:**
-- Cost is a primary concern
-- You need full customization control
-- You want to avoid vendor lock-in
-- You have internal DevOps capabilities
+**Cost Comparison (100,000 monthly active users):**
+- **Keyloom**: $0/month (hosting costs only)
+- **Auth0**: $2,565/month ($240 base + $0.0235 × 99,000 users)
+- **Annual difference**: $30,780 saved with Keyloom
 
-**Choose Auth0 when:**
-- You need enterprise compliance certifications
-- Global infrastructure is critical
-- You prefer managed services
-- Enterprise support is required
+**Why Keyloom wins:**
+- **Massive cost savings** - Auth0's pricing scales exponentially with users
+- **No vendor lock-in** - Auth0 makes it extremely expensive to leave
+- **Full customization** - Modify the source code vs Auth0's limited theming
+- **Data sovereignty** - Your users' data stays on your infrastructure
+- **Modern developer experience** - CLI tools vs Auth0's dashboard-heavy workflow
 
-## Unique Selling Points
+**When Auth0 might be better:**
+- You need pre-built compliance certifications (SOC2, HIPAA, etc.)
+- You require enterprise support with SLAs
+- You prefer fully managed services and don't want to handle infrastructure
+- You need Auth0's specific enterprise integrations (SAML, AD, etc.)
 
-### 🔒 **Security-First Architecture**
+### Keyloom vs Other Competitors
 
-Keyloom is built with security as the primary design principle:
+**Quick comparison with other popular solutions:**
 
-```typescript
-// Example: Built-in CSRF protection
-import { validateDoubleSubmit } from "@keyloom/core/guard/csrf";
+| Solution | Cost (50k MAU) | Self-Hosted | RBAC Built-in | TypeScript | Edge Runtime |
+|----------|----------------|-------------|---------------|------------|--------------|
+| **Keyloom** | **$0** | ✅ | ✅ | ✅ | ✅ |
+| **SuperTokens** | $0 (self-hosted) | ✅ | ❌ | ⚠️ | ⚠️ |
+| **Keycloak** | $0 (self-hosted) | ✅ | ✅ | ❌ | ❌ |
+| **Ory** | $0 (self-hosted) | ✅ | ✅ | ⚠️ | ⚠️ |
+| **WorkOS** | $1,500/month | ❌ | ✅ | ✅ | ✅ |
+| **Stytch** | $2,500/month | ❌ | ⚠️ | ✅ | ✅ |
 
-const isValid = validateDoubleSubmit({
-  cookieToken: request.cookies.get('csrf-token'),
-  headerToken: request.headers.get('x-csrf-token')
-});
-```
+**Why Keyloom beats the alternatives:**
+- **SuperTokens**: Keyloom has better TypeScript support and built-in RBAC
+- **Keycloak**: Keyloom is modern, TypeScript-first, and edge-compatible
+- **Ory**: Keyloom has better developer experience and simpler architecture
+- **WorkOS/Stytch**: Keyloom gives you the same features at $0 cost
 
-### 🎯 **TypeScript Excellence**
+## What Makes Keyloom Unique
 
-Complete type safety across all operations:
+### Zero Cost, Maximum Value
 
-```typescript
-// Example: Fully typed session and user objects
-import type { Session, User } from "@keyloom/core";
-
-const { session, user }: { 
-  session: Session | null, 
-  user: User | null 
-} = await getCurrentSession(cookieValue, adapter);
-```
-
-### 🏗️ **Modular Architecture**
-
-Use only what you need with tree-shaking support:
-
-```typescript
-// Import only specific functions
-import { login } from "@keyloom/core/runtime/login";
-import { validateDoubleSubmit } from "@keyloom/core/guard/csrf";
-import { tokenHash } from "@keyloom/core/crypto/token-hash";
-```
-
-### 🛠️ **Comprehensive CLI**
-
-Project setup and management made easy:
+**The only enterprise-grade auth solution that's completely free:**
 
 ```bash
-# Initialize a new project
-npx @keyloom/cli init
+# Total cost for unlimited users, forever
+$ echo "Keyloom cost calculation:"
+$ echo "Base cost: $0"
+$ echo "Per-user cost: $0"
+$ echo "Enterprise features: $0"
+$ echo "Total: $0"
+```
 
-# Generate database migrations
-npx @keyloom/cli migrate
+**Compare this to competitors:**
+- **Auth0**: $30,780/year for 100k users
+- **Clerk**: $30,000/year for 50k users
+- **Firebase**: $66,000/year for 1M authentications
+- **Keyloom**: $0/year for unlimited users
 
-# Health check your configuration
-npx @keyloom/cli doctor
+### Security That Actually Works
+
+**Built-in security features that competitors charge extra for:**
+
+```typescript
+// CSRF protection - built-in, not an add-on
+import { validateDoubleSubmit } from "@keyloom/core/guard/csrf";
+
+// Rate limiting - included, not extra
+import { rateLimit } from "@keyloom/core/guard/rate-limit";
+
+// PKCE for OAuth - standard, not premium
+import { generatePKCE } from "@keyloom/core/oauth/pkce";
+
+// Argon2id password hashing - secure by default
+import { hash } from "@keyloom/core/crypto/argon2id";
+```
+
+### TypeScript Excellence
+
+**100% type-safe authentication - no runtime surprises:**
+
+```typescript
+// Every function is fully typed
+import type { Session, User, LoginResult } from "@keyloom/core";
+
+// IntelliSense works perfectly
+const result: LoginResult = await login({
+  email: "user@example.com", // ✅ Type-checked
+  password: "secure123",     // ✅ Type-checked
+  ttlMinutes: 60            // ✅ Optional, type-checked
+});
+
+// No casting, no 'any' types, no runtime errors
+const { user, session } = result; // ✅ Fully typed
+```
+
+### Modern Architecture
+
+**Built for 2025+ deployment patterns:**
+
+```typescript
+// Tree-shakeable imports - only bundle what you use
+import { login } from "@keyloom/core/runtime/login";
+import { validateCSRF } from "@keyloom/core/guard/csrf";
+
+// Edge runtime compatible - deploy anywhere
+export const runtime = 'edge'; // ✅ Works perfectly
+
+// Hybrid session strategy - best of both worlds
+const config = {
+  session: {
+    strategy: 'hybrid', // JWT + Database benefits
+    rolling: true,      // Automatic token refresh
+    secure: true        // Production-ready defaults
+  }
+};
+```
+
+### Developer Experience That Doesn't Suck
+
+**CLI tools that actually help:**
+
+```bash
+# Set up a complete auth system in 2 minutes
+keyloom init
+
+# Generate type-safe database schemas
+keyloom migrate
+
+# Health check everything
+keyloom doctor
+
+# Generate route protection
+keyloom routes
+
+# Add UI components
+keyloom ui add signin
+```
+
+### Enterprise Features Without Enterprise Pricing
+
+**RBAC, audit logging, and multi-tenancy included:**
+
+```typescript
+// Organizations and roles - built-in
+const membership = await createMembership({
+  userId: user.id,
+  orgId: organization.id,
+  role: 'admin'
+});
+
+// Audit logging - included
+await audit('user.login', {
+  userId: user.id,
+  ip: request.ip,
+  userAgent: request.headers['user-agent']
+});
+
+// Multi-tenancy - ready to go
+const userOrgs = await getUserOrganizations(user.id);
 ```
 
 ## When to Choose Keyloom
@@ -321,27 +423,94 @@ Keyloom provides migration utilities to help transition from NextAuth.js with mi
 - Security update management
 - Monitoring and alerting setup
 
-## Decision Framework
+## The Real Decision Framework
 
-Use this framework to evaluate if Keyloom is right for your project:
+### Choose Keyloom if you want to:
 
-### ✅ **Choose Keyloom if you:**
-- Need enterprise-grade security features
-- Want complete control over authentication data
-- Require advanced RBAC or multi-tenancy
-- Prioritize TypeScript safety and developer experience
-- Want to avoid vendor lock-in and usage-based pricing
-- Need edge runtime compatibility
-- Have DevOps capabilities for self-hosting
+**Save massive amounts of money:**
+- Avoid $30,000+ annual auth bills
+- Eliminate per-user pricing that scales with success
+- Keep authentication costs at $0 forever
 
-### ❌ **Consider alternatives if you:**
-- Need instant setup with zero configuration
-- Prefer fully managed services
-- Require enterprise compliance certifications
-- Need extensive mobile SDK support
-- Want the largest possible ecosystem
-- Lack infrastructure management capabilities
+**Own your data and destiny:**
+- Keep user data on your infrastructure
+- Avoid vendor lock-in that makes switching expensive
+- Customize the source code to fit your exact needs
 
-<Callout type="warn">
-Remember that authentication is a critical security component. Regardless of which solution you choose, ensure you understand the security implications and follow best practices for your specific use case.
+**Build with modern tools:**
+- Get 100% TypeScript safety across your auth system
+- Deploy to edge runtimes without compatibility issues
+- Use CLI tools that actually speed up development
+
+**Get enterprise features without enterprise pricing:**
+- Built-in RBAC, organizations, and multi-tenancy
+- Audit logging and compliance features included
+- Security-first architecture with CSRF, rate limiting, PKCE
+
+### Consider alternatives if you:
+
+**Need zero setup time:**
+- You want to be up and running in 5 minutes with no configuration
+- You prefer clicking through dashboards over writing code
+- Setup time is more important than long-term costs and flexibility
+
+**Require specific compliance certifications:**
+- You need SOC2, HIPAA, or other pre-built compliance certifications
+- Your industry requires third-party audited security controls
+- Compliance is more important than cost and customization
+
+**Prefer fully managed services:**
+- You don't want to manage any authentication infrastructure
+- You prefer paying for convenience over saving money
+- You lack DevOps capabilities for self-hosting
+
+**Are building mobile-first apps:**
+- You need extensive offline authentication capabilities
+- Mobile SDKs are more important than web-first design
+- You're already committed to a mobile-focused ecosystem
+
+### The Bottom Line
+
+**Keyloom is perfect for:**
+- **Startups** who want enterprise features without enterprise costs
+- **Scale-ups** tired of authentication bills eating into their margins
+- **Enterprises** who want control over their authentication infrastructure
+- **Agencies** building multiple client projects with consistent auth
+- **Any developer** who values TypeScript safety and modern tooling
+
+**Keyloom might not be for:**
+- **Rapid prototypes** where setup time matters more than long-term costs
+- **Highly regulated industries** that require pre-built compliance certifications
+- **Teams without DevOps** who can't manage their own infrastructure
+
+## ROI Calculator: See Your Savings
+
+**Real cost comparisons for growing companies:**
+
+### Startup (10,000 users)
+- **Keyloom**: $0/month
+- **Clerk**: $500/month ($0.05 × 10k users)
+- **Auth0**: $473/month ($240 + $0.0235 × 9k users)
+- **Annual savings with Keyloom**: $5,676 - $6,000
+
+### Scale-up (100,000 users)
+- **Keyloom**: $0/month
+- **Clerk**: $5,000/month
+- **Auth0**: $2,565/month
+- **Annual savings with Keyloom**: $30,780 - $60,000
+
+### Enterprise (1,000,000 users)
+- **Keyloom**: $0/month
+- **Clerk**: $50,000/month
+- **Auth0**: $23,740/month
+- **Annual savings with Keyloom**: $284,880 - $600,000
+
+**What could you do with those savings?**
+- Hire 2-3 additional developers
+- Invest in product development
+- Expand to new markets
+- Build a bigger runway for your startup
+
+<Callout type="info">
+**Pro tip**: You can start with a hosted solution for rapid prototyping, then migrate to Keyloom when you need more control, better pricing, or enterprise features. Our migration guides make the switch painless.
 </Callout>

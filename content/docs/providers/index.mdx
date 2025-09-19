@@ -1,0 +1,37 @@
+---
+title: Providers
+description: Configure OAuth providers (GitHub, Google, Discord, Apple, Auth0, GitLab, Microsoft, X).
+---
+
+import { Cards, Card, Callout } from "fumadocs-ui/components";
+
+# Providers
+
+Keyloom supports first-class OAuth providers via @keyloom/providers.
+
+Available:
+- GitHub, Google, Discord, Apple, Auth0, GitLab, Microsoft, X
+
+## Quick start
+
+```ts title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import github from "@keyloom/providers/github";
+import google from "@keyloom/providers/google";
+
+export default defineKeyloom({
+  // ...adapter, baseUrl, session
+  providers: [
+    github({ clientId: process.env.GITHUB_CLIENT_ID!, clientSecret: process.env.GITHUB_CLIENT_SECRET! }),
+    google({ clientId: process.env.GOOGLE_CLIENT_ID!, clientSecret: process.env.GOOGLE_CLIENT_SECRET! }),
+  ],
+});
+```
+
+Callback URL format: `${baseUrl}/api/auth/callback/<providerId>`
+
+<Cards>
+  <Card title="GitHub" href="/docs/providers/github" />
+  <Card title="Google" href="/docs/providers/google" />
+</Cards>
+

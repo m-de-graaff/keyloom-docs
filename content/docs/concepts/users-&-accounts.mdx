@@ -1,0 +1,32 @@
+---
+title: Users & Accounts
+description: How Keyloom models users, sessions, and linked OAuth accounts.
+---
+
+import { Callout, Tabs, Tab } from "fumadocs-ui/components";
+
+# Users & Accounts
+
+Keyloom separates credentials (passwords) from OAuth accounts and treats sessions independently.
+
+## Users
+Created via the credentials flow or after OAuth linking.
+
+```ts
+import { register } from "@keyloom/core/runtime/register";
+const hasher = await getDefaultHasherSingleton();
+await register({ email: "a@b.com", password: "strong" }, { adapter, hasher });
+```
+
+## Sessions
+```ts
+import { getCurrentSession } from "@keyloom/core/runtime/current-session";
+const { session, user } = await getCurrentSession(sessionIdFromCookie, adapter);
+```
+
+## OAuth Accounts
+Use providers from @keyloom/providers and add them to your config. The adapter maintains an accounts table to link provider identity to a user.
+
+<Callout>
+See Providers for examples (GitHub, Google) and Adapters → Prisma for the required schema.
+</Callout>

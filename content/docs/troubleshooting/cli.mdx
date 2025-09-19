@@ -1,0 +1,21 @@
+---
+title: CLI Troubleshooting
+description: Fix issues when running the Keyloom CLI.
+---
+
+# CLI Troubleshooting
+
+## "keyloom: command not found"
+- Install it locally and use npx: `npx keyloom <command>`
+
+## routes.generated missing
+- Run `npx keyloom routes --out .keyloom/routes.generated.ts`
+- Commit the generated file if your CI needs it
+
+## Windows path issues
+- Run the CLI from the project root
+- Use quoted paths with `--cwd` if your path includes spaces
+
+## Migrations not applied
+- For Prisma: run `npx prisma migrate dev` after `npx keyloom generate migration`
+

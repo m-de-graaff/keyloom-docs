@@ -1,0 +1,40 @@
+---
+title: Adapters
+description: Configure a database adapter so Keyloom can persist users, sessions, accounts, and RBAC.
+---
+
+import { Callout, Cards, Card } from "fumadocs-ui/components";
+
+# Adapters
+
+Keyloom persists users, sessions, OAuth accounts, and (optionally) RBAC state through a database adapter.
+
+Currently supported (official):
+- Prisma
+
+Community or planned: Drizzle, Postgres (node-postgres), MySQL2, MongoDB.
+
+## Usage
+
+```ts
+import { defineKeyloom } from "@keyloom/core";
+import { prismaAdapter } from "@keyloom/adapters";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
+export default defineKeyloom({
+  adapter: prismaAdapter(prisma),
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
+  session: { strategy: "database" },
+});
+```
+
+<Callout>
+See Prisma for the required models and migration steps.
+</Callout>
+
+<Cards>
+  <Card title="Prisma" href="/docs/adapters/prisma" />
+</Cards>
+

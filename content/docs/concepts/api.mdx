@@ -1,0 +1,69 @@
+---
+title: Core API
+description: Overview of Keyloom core runtime APIs, guards, JWT utilities, and RBAC helpers.
+---
+
+import { Callout, Tabs, Tab } from "fumadocs-ui/components";
+
+# Core API
+
+This page summarizes the public APIs you will use most often from @keyloom/core and @keyloom/nextjs.
+
+## Runtime flows (credentials)
+
+The credentials flows live in @keyloom/core/runtime and are adapter-agnostic.
+
+```ts
+import { register } from "@keyloom/core/runtime/register";
+import { login } from "@keyloom/core/runtime/login";
+import { getCurrentSession } from "@keyloom/core/runtime/current-session";
+import { getDefaultHasherSingleton } from "@keyloom/core/config";
+
+// ctx expects your adapter and a password hasher
+const hasher = await getDefaultHasherSingleton();
+const ctx = { adapter, hasher };
+
+await register({ email: "user@example.com", password: "strong" }, ctx);
+const { user, session } = await login({ email: "user@example.com", password: "strong" }, ctx);
+const current = await getCurrentSession(session.id, adapter);
+```
+
+Notes:
+- register requires an adapter with createUser and createCredential
+- login requires getUserByEmail, getCredentialByUserId, createSession
+- getCurrentSession requires getSession and getUser
+
+## Guards
+
+### CSRF (double submit)
+```ts
+import { issueCsrfToken, validateDoubleSubmit } from "@keyloom/core/guard/csrf";
+
+const token = issueCsrfToken(); // store in cookie and send via header/form
+const ok = validateDoubleSubmit({ cookieToken: tokenFromCookie, headerToken: tokenFromHeader });
+```
+
+### Rate limit
+```ts
+import { rateLimit, inMemoryRateLimiter } from "@keyloom/core/guard/rate-limit";
+
+const allowed = rateLimit(`login:${ip}`, { capacity: 5, refillPerSec: 0.1 });
+// or async interface
+const limiter = inMemoryRateLimiter();
+const ok = await limiter.allow(`login:${ip}`, { capacity: 10, refillPerSec: 1 });
+```
+
+For production, prefer RedisRateLimiter from "@keyloom/core/guard/redis-rate-limiter".
+
+## JWT utilities
+
+When using the JWT strategy, you typically interact through @keyloom/nextjs (server helpers).
+See Reference → JWT for details.
+
+## RBAC helpers
+
+RBAC lives in the adapter and core RBAC modules. Typical operations are exposed via your adapter (e.g., createOrganization, addMember, getMembership). See Adapters → Prisma for the expected Prisma schema.
+
+<Callout>
+RBAC is optional. If disabled in your config, role/org checks are skipped by helpers.
+</Callout>

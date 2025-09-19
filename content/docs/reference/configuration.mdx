@@ -1,0 +1,36 @@
+---
+title: Configuration
+description: Keyloom configuration options and recommended defaults.
+---
+
+import { Callout } from "fumadocs-ui/components";
+
+# Configuration
+
+```ts title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { prismaAdapter } from "@keyloom/adapters";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
+export default defineKeyloom({
+  adapter: prismaAdapter(prisma),
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
+  session: { strategy: "database" }, // or "jwt"
+  rbac: { enabled: true },
+  providers: [],
+});
+```
+
+## Options
+- adapter: Database adapter instance
+- baseUrl: Public base URL of your app (used for callbacks, JWT issuer)
+- session.strategy: "database" | "jwt"
+- rbac.enabled: boolean
+- providers: OAuth providers array from @keyloom/providers
+
+<Callout>
+When using JWT, set issuer/audience in env or provide a JWKS URL; see Reference → JWT.
+</Callout>
+
