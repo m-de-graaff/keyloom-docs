@@ -6,7 +6,6 @@ import {
   DocsTitle,
 } from "fumadocs-ui/page";
 import type { Metadata } from "next";
-import { LLMCopyButton, ViewOptions } from "@/components/page-actions";
 import { notFound } from "next/navigation";
 import { createRelativeLink } from "fumadocs-ui/mdx";
 import { getMDXComponents } from "@/mdx-components";
@@ -23,11 +22,6 @@ export default async function Page(props: PageProps<"/docs/[[...slug]]">) {
       <DocsTitle>{page.data.title}</DocsTitle>
       <DocsDescription>{page.data.description}</DocsDescription>
       <div className="flex flex-row gap-2 items-center border-b pt-2 pb-6">
-        <LLMCopyButton markdownUrl={`${page.url}.mdx`} />
-        <ViewOptions
-          markdownUrl={`${page.url}.mdx`}
-          githubUrl={`https://github.com/m-de-graaff/keyloom/blob/main/keyloom-docs/content/docs/${page.path}`}
-        />
       </div>
       <DocsBody>
         <MDXContent

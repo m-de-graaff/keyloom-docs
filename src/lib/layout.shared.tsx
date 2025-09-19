@@ -26,20 +26,6 @@ export function baseOptions(): BaseLayoutProps {
     },
     // see https://fumadocs.dev/docs/ui/navigation/links
     links: [
-      {
-        text: "Get Started",
-        url: "/docs/get-started",
-      },
-      {
-        text: "GitHub",
-        url: "https://github.com/m-de-graaff/keyloom",
-        external: true,
-      },
-      {
-        text: "Support Me",
-        url: "https://buymeacoffee.com/mdegraaff",
-        external: true,
-      }
     ],
   };
 }
