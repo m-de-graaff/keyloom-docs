@@ -10,7 +10,7 @@ export default function HomePage() {
   return (
     <main className="flex flex-1 flex-col">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-fd-muted min-h-screen flex items-center">
+      <section className="relative overflow-hidden min-h-screen flex items-center">
         <div className="absolute inset-0">
           <PixelBlast 
             pixelSize={3}
@@ -23,40 +23,44 @@ export default function HomePage() {
           />
         </div>
         <div className="relative mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8 w-full">
-          <div className="mx-auto max-w-2xl text-center">
-            <div className="mb-8 flex justify-center">
-              <div className="relative rounded-full border bg-fd-secondary/60 px-3 py-1 text-sm leading-6 text-fd-muted-foreground transition-colors hover:bg-fd-secondary">
-                Open source authentication framework.{' '}
-                <Link href="/docs" className="font-medium text-fd-foreground hover:opacity-80">
-                  <span className="absolute inset-0" aria-hidden="true" />
-                  Read the docs <span aria-hidden="true">&rarr;</span>
+          <div className="mx-auto max-w-4xl text-center">
+            {/* Background overlay for better text visibility */}
+            <div className="absolute inset-0 bg-fd-background/40 backdrop-blur-sm rounded-3xl"></div>
+            <div className="relative z-10 px-8 py-16 sm:px-12 sm:py-20">
+              <div className="mb-8 flex justify-center">
+                <div className="relative rounded-full border bg-fd-secondary/80 backdrop-blur-sm px-4 py-2 text-sm leading-6 text-fd-muted-foreground transition-colors hover:bg-fd-secondary shadow-lg">
+                  Open source authentication framework.{' '}
+                  <Link href="/docs" className="font-medium text-fd-foreground hover:opacity-80">
+                    <span className="absolute inset-0" aria-hidden="true" />
+                    Read the docs <span aria-hidden="true">&rarr;</span>
+                  </Link>
+                </div>
+              </div>
+              <h1 className="text-4xl font-bold tracking-tight text-fd-foreground sm:text-6xl lg:text-7xl drop-shadow-sm">
+                The most comprehensive{' '}
+                <span className="text-fd-foreground">
+                  authentication framework
+                </span>{' '}
+                for TypeScript
+              </h1>
+              <p className="mt-8 text-xl leading-8 text-fd-muted-foreground max-w-3xl mx-auto">
+                Build secure, scalable authentication with zero vendor lock-in.
+                Full control over your data, complete customization, and enterprise-ready features.
+              </p>
+              <div className="mt-12 flex items-center justify-center gap-x-6">
+                <Link
+                  href="/docs/get-started"
+                  className="rounded-md bg-fd-primary px-6 py-3 text-base font-semibold text-fd-primary-foreground shadow-lg transition-all hover:bg-fd-primary/90 hover:shadow-xl"
+                >
+                  Get started
+                </Link>
+                <Link
+                  href="/docs"
+                  className="text-base font-semibold leading-6 text-fd-foreground transition-colors hover:opacity-80"
+                >
+                  View documentation <span aria-hidden="true">→</span>
                 </Link>
               </div>
-            </div>
-            <h1 className="text-4xl font-bold tracking-tight text-fd-foreground sm:text-6xl">
-              The most comprehensive{' '}
-              <span className="text-fd-foreground">
-                authentication framework
-              </span>{' '}
-              for TypeScript
-            </h1>
-            <p className="mt-6 text-lg leading-8 text-fd-muted-foreground">
-              Build secure, scalable authentication with zero vendor lock-in.
-              Full control over your data, complete customization, and enterprise-ready features.
-            </p>
-            <div className="mt-10 flex items-center justify-center gap-x-6">
-              <Link
-                href="/docs/get-started"
-                className="rounded-md bg-fd-primary px-3.5 py-2.5 text-sm font-semibold text-fd-primary-foreground shadow-sm transition-colors hover:bg-fd-primary/80"
-              >
-                Get started
-              </Link>
-              <Link
-                href="/docs"
-                className="text-sm font-semibold leading-6 text-fd-foreground transition-colors hover:opacity-80"
-              >
-                View documentation <span aria-hidden="true">→</span>
-              </Link>
             </div>
           </div>
         </div>
