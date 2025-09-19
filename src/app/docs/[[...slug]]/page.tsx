@@ -9,6 +9,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createRelativeLink } from "fumadocs-ui/mdx";
 import { getMDXComponents } from "@/mdx-components";
+import { Feedback } from "@/components/feedback";
+import { onRateAction } from "@/lib/github";
 
 export default async function Page(props: PageProps<"/docs/[[...slug]]">) {
   const params = await props.params;
@@ -31,6 +33,8 @@ export default async function Page(props: PageProps<"/docs/[[...slug]]">) {
           })}
         />
       </DocsBody>
+      {/* Feedback form at the bottom of every docs page */}
+      <Feedback onRateAction={onRateAction} />
     </DocsPage>
   );
 }
