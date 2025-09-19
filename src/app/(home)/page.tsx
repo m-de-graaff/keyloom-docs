@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { ArrowRight, Shield, Zap, Code, Database, Users, GitBranch } from 'lucide-react';
 import { JetBrains_Mono } from 'next/font/google';
 import  PixelBlast  from '@/components/PixelBlast';
-import { useEffect } from 'react';
+import {CodeBlock} from "react-code-blocks"
 const mono = JetBrains_Mono({ subsets: ['latin'] });
 
 
@@ -86,25 +86,37 @@ export default function HomePage() {
                 <h3 className="text-lg font-semibold leading-8 text-fd-foreground">
                   Initialize with CLI
                 </h3>
-                <div className="mt-4 overflow-auto rounded-lg border bg-fd-card p-4 text-sm shadow-sm">
-                  <div className="mb-2 text-xs uppercase tracking-wider text-fd-muted-foreground">Terminal</div>
-                  <pre className={`${mono.className} leading-6 text-fd-card-foreground`}>
-{`$ npx keyloom init
+                <div className="mt-4 overflow-auto rounded-lg border bg-fd-card shadow-lg">
+                  <div className="border-b bg-fd-muted px-4 py-2">
+                    <div className="text-xs font-medium text-fd-muted-foreground">Terminal</div>
+                  </div>
+                  <div className="p-6">
+                    <div className={`${mono.className} text-sm leading-relaxed text-fd-card-foreground`}>
+                    <CodeBlock
+                      language="bash"
+                      text={`$ npx keyloom init
 ✓ Created keyloom.config.ts
 ✓ Added API routes
 ✓ Generated database schema
 ✓ Ready to authenticate!`}
-                  </pre>
+                    />
+                    </div>
+                  </div>
                 </div>
               </div>
               <div>
                 <h3 className="text-lg font-semibold leading-8 text-fd-foreground">
                   Configuration
                 </h3>
-                <div className="mt-4 overflow-auto rounded-lg border bg-fd-card p-4 text-sm shadow-sm">
-                  <div className="mb-2 text-xs uppercase tracking-wider text-fd-muted-foreground">keyloom.config.ts</div>
-                  <pre className={`${mono.className} leading-6 text-fd-card-foreground`}>
-{`export default defineKeyloom({
+                <div className="mt-4 overflow-auto rounded-lg border bg-fd-card shadow-lg">
+                  <div className="border-b bg-fd-muted px-4 py-2">
+                    <div className="text-xs font-medium text-fd-muted-foreground">keyloom.config.ts</div>
+                  </div>
+                  <div className="p-6">
+                    <div className={`${mono.className} text-sm leading-relaxed text-fd-card-foreground`}>
+                      <CodeBlock
+                        language="typescript"
+                        text={`export default defineKeyloom({
   adapter: prismaAdapter(prisma),
   providers: [
     github({ clientId, clientSecret }),
@@ -113,7 +125,9 @@ export default function HomePage() {
   rbac: { enabled: true },
   session: { strategy: "database" },
 });`}
-                  </pre>
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
