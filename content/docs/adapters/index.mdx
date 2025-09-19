@@ -11,9 +11,12 @@ import { Cards, Card } from "fumadocs-ui/components/card";
 Keyloom persists users, sessions, OAuth accounts, and (optionally) RBAC state through a database adapter.
 
 Currently supported (official):
-- Prisma
 
-Community or planned: Drizzle, Postgres (node-postgres), MySQL2, MongoDB.
+- **Prisma** - Full-featured ORM with excellent TypeScript support
+- **Drizzle** - Lightweight ORM with PostgreSQL, MySQL, and SQLite support
+- **MongoDB** - NoSQL document database with flexible schema
+- **PostgreSQL** - Direct PostgreSQL access with node-postgres driver
+- **MySQL** - MySQL and MariaDB support with mysql2 driver
 
 ## Usage
 
@@ -32,10 +35,33 @@ export default defineKeyloom({
 ```
 
 <Callout>
-See Prisma for the required models and migration steps.
+  Choose the adapter that best fits your database setup and requirements.
 </Callout>
 
 <Cards>
-  <Card title="Prisma" href="/docs/adapters/prisma" />
+  <Card
+    title="Prisma"
+    href="/docs/adapters/prisma"
+    description="Full-featured ORM with excellent TypeScript support and automatic migrations"
+  />
+  <Card
+    title="Drizzle"
+    href="/docs/adapters/drizzle"
+    description="Lightweight ORM supporting PostgreSQL, MySQL, and SQLite with type safety"
+  />
+  <Card
+    title="MongoDB"
+    href="/docs/adapters/mongodb"
+    description="NoSQL document database with flexible schema and automatic indexing"
+  />
+  <Card
+    title="PostgreSQL"
+    href="/docs/adapters/postgresql"
+    description="Direct PostgreSQL access with connection pooling and advanced features"
+  />
+  <Card
+    title="MySQL"
+    href="/docs/adapters/mysql"
+    description="MySQL and MariaDB support with optimized connection management"
+  />
 </Cards>
-

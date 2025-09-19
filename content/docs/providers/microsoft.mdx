@@ -1,0 +1,364 @@
+---
+title: Microsoft Provider
+description: Configure Microsoft OAuth with Keyloom for Azure AD, Office 365, and Microsoft account authentication.
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+import { Steps } from "fumadocs-ui/components/steps";
+import { Tabs, Tab } from "fumadocs-ui/components/tabs";
+
+# Microsoft Provider
+
+The Microsoft provider enables OAuth authentication using Microsoft accounts, Azure AD, and Office 365. Perfect for enterprise applications, productivity tools, and any app integrating with Microsoft services.
+
+## Features
+
+- **Azure AD Integration**: Enterprise directory authentication
+- **Microsoft Accounts**: Personal Microsoft account support
+- **Office 365**: Access to Office 365 services and data
+- **Multi-Tenant Support**: Support for multiple Azure AD tenants
+- **Microsoft Graph**: Access to Microsoft Graph API
+
+## Setup
+
+<Steps>
+<Step>
+
+### Register Application in Azure
+
+1. Go to the [Azure Portal](https://portal.azure.com/)
+2. Navigate to "Azure Active Directory" → "App registrations"
+3. Click "New registration"
+4. Configure your application:
+   - **Name**: Your application name
+   - **Supported account types**: Choose based on your needs
+   - **Redirect URI**: Web platform with your callback URL
+
+</Step>
+
+<Step>
+
+### Configure Authentication
+
+In your app registration:
+
+1. Go to "Authentication"
+2. Add redirect URI: `https://yourdomain.com/api/auth/callback/microsoft`
+3. For local development: `http://localhost:3000/api/auth/callback/microsoft`
+4. Enable "ID tokens" under "Implicit grant and hybrid flows"
+
+</Step>
+
+<Step>
+
+### Create Client Secret
+
+1. Go to "Certificates & secrets"
+2. Click "New client secret"
+3. Add description and set expiration
+4. Copy the secret value (you won't see it again!)
+
+</Step>
+
+<Step>
+
+### Environment Variables
+
+Add your Microsoft credentials:
+
+```bash title=".env.local"
+MICROSOFT_CLIENT_ID=your_application_id
+MICROSOFT_CLIENT_SECRET=your_client_secret
+# Optional: specify tenant (default: 'common')
+MICROSOFT_TENANT=your_tenant_id
+```
+
+</Step>
+
+<Step>
+
+### Configure Keyloom
+
+```typescript title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import microsoft from "@keyloom/providers/microsoft";
+
+export default defineKeyloom({
+  // ... other config
+  providers: [
+    microsoft({
+      clientId: process.env.MICROSOFT_CLIENT_ID!,
+      clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
+      tenant: process.env.MICROSOFT_TENANT, // Optional
+    }),
+  ],
+});
+```
+
+</Step>
+</Steps>
+
+## Configuration Options
+
+```typescript
+interface MicrosoftProviderOptions {
+  /** Microsoft application (client) ID */
+  clientId: string;
+  /** Microsoft client secret */
+  clientSecret: string;
+  /** Azure AD tenant ID or 'common' for multi-tenant */
+  tenant?: string;
+  /** Custom scope (default: 'openid profile email offline_access') */
+  scope?: string;
+}
+```
+
+## Tenant Configuration
+
+<Tabs>
+<Tab value="common" label="Multi-Tenant (Default)">
+
+```typescript
+microsoft({
+  clientId: process.env.MICROSOFT_CLIENT_ID!,
+  clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
+  // tenant: 'common' is the default
+});
+```
+
+Allows users from any Azure AD tenant and personal Microsoft accounts.
+
+</Tab>
+
+<Tab value="organizations" label="Organizations Only">
+
+```typescript
+microsoft({
+  clientId: process.env.MICROSOFT_CLIENT_ID!,
+  clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
+  tenant: 'organizations',
+});
+```
+
+Allows users from any Azure AD tenant (no personal accounts).
+
+</Tab>
+
+<Tab value="consumers" label="Personal Accounts Only">
+
+```typescript
+microsoft({
+  clientId: process.env.MICROSOFT_CLIENT_ID!,
+  clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
+  tenant: 'consumers',
+});
+```
+
+Allows only personal Microsoft accounts.
+
+</Tab>
+
+<Tab value="specific" label="Specific Tenant">
+
+```typescript
+microsoft({
+  clientId: process.env.MICROSOFT_CLIENT_ID!,
+  clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
+  tenant: 'your-tenant-id-or-domain.com',
+});
+```
+
+Restricts to a specific Azure AD tenant.
+
+</Tab>
+</Tabs>
+
+## User Profile
+
+The Microsoft provider returns user information from the ID token:
+
+```typescript
+interface MicrosoftProfile {
+  id: string;           // Microsoft user ID (sub claim)
+  email: string | null; // User's email or preferred_username
+  name: string | null;  // User's display name
+  image: string | null; // Profile picture (null by default)
+  emailVerified?: boolean; // Email verification status
+}
+```
+
+## Scopes
+
+Default scopes requested:
+
+- `openid` - Required for OpenID Connect
+- `profile` - Access to user's profile information
+- `email` - Access to user's email address
+- `offline_access` - Enables refresh tokens
+
+### Microsoft Graph Scopes
+
+For Microsoft Graph API access:
+
+```typescript
+microsoft({
+  clientId: process.env.MICROSOFT_CLIENT_ID!,
+  clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
+  scope: "openid profile email offline_access User.Read Mail.Read",
+});
+```
+
+Common Microsoft Graph scopes:
+- `User.Read` - Read user profile
+- `Mail.Read` - Read user's mail
+- `Calendars.Read` - Read user's calendars
+- `Files.Read` - Read user's files
+- `Sites.Read.All` - Read SharePoint sites
+
+## Advanced Configuration
+
+### Custom Scopes for Office 365
+
+```typescript
+microsoft({
+  clientId: process.env.MICROSOFT_CLIENT_ID!,
+  clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
+  scope: "openid profile email offline_access https://graph.microsoft.com/User.Read https://graph.microsoft.com/Mail.Read",
+});
+```
+
+### Admin Consent
+
+For scopes requiring admin consent, configure in Azure Portal:
+
+1. Go to "API permissions" in your app registration
+2. Add required Microsoft Graph permissions
+3. Click "Grant admin consent" for your tenant
+
+### Custom Claims
+
+Access additional claims from the ID token:
+
+```typescript
+// In your application code
+const session = await getServerSession(authOptions);
+const idToken = session?.idToken; // Contains additional Microsoft claims
+
+// Example claims available:
+// - preferred_username
+// - given_name
+// - family_name
+// - upn (User Principal Name)
+// - tid (Tenant ID)
+```
+
+## Microsoft Graph Integration
+
+After authentication, use the access token for Microsoft Graph:
+
+```typescript
+// Example: Get user profile from Microsoft Graph
+async function getUserProfile(accessToken: string) {
+  const response = await fetch('https://graph.microsoft.com/v1.0/me', {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+  });
+  
+  return response.json();
+}
+
+// Example: Get user's emails
+async function getUserEmails(accessToken: string) {
+  const response = await fetch('https://graph.microsoft.com/v1.0/me/messages', {
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+    },
+  });
+  
+  return response.json();
+}
+```
+
+## Enterprise Features
+
+### Conditional Access
+
+Microsoft Conditional Access policies are automatically enforced:
+
+- Multi-factor authentication requirements
+- Device compliance checks
+- Location-based access controls
+- Risk-based authentication
+
+### Single Sign-On (SSO)
+
+For enterprise SSO scenarios:
+
+1. Configure your app registration for SSO
+2. Set up enterprise application in Azure AD
+3. Assign users and groups
+4. Configure SAML or OIDC as needed
+
+## Troubleshooting
+
+### Common Issues
+
+**AADSTS50011: Redirect URI Mismatch**
+- Ensure redirect URI exactly matches Azure AD configuration
+- Check for trailing slashes and correct protocol
+- Verify the format: `/api/auth/callback/microsoft`
+
+**AADSTS65001: User Consent Required**
+- User needs to consent to requested permissions
+- Consider pre-consenting for your organization
+- Check if admin consent is required for requested scopes
+
+**AADSTS50020: User Account Not Found**
+- User doesn't exist in the specified tenant
+- Check tenant configuration (common vs specific tenant)
+- Verify user has access to the application
+
+**Token Validation Errors**
+- Verify client secret is correct and not expired
+- Check that application type is configured correctly
+- Ensure proper audience and issuer validation
+
+### Testing
+
+Test your Microsoft integration:
+
+1. **Azure Portal**: Use the "Authentication" test feature
+2. **Graph Explorer**: Test Microsoft Graph API calls
+3. **Development**: Test with different account types
+4. **Production**: Verify enterprise policies work correctly
+
+<Callout>
+Microsoft requires HTTPS for production applications. Ensure your production environment has valid SSL certificates.
+</Callout>
+
+## Security Best Practices
+
+- **Client Secret Rotation**: Regularly rotate client secrets
+- **Least Privilege**: Request only necessary scopes
+- **Token Validation**: Always validate ID and access tokens
+- **Conditional Access**: Leverage Azure AD Conditional Access policies
+- **Monitoring**: Monitor sign-ins and authentication events in Azure AD
+
+## Migration Considerations
+
+When migrating from other Microsoft authentication solutions:
+
+1. **ADAL/MSAL**: Replace with Keyloom Microsoft provider
+2. **Token Caching**: Implement proper token refresh handling
+3. **Graph API**: Update API calls to use new token format
+4. **User Mapping**: Map existing user identities correctly
+
+## Resources
+
+- [Azure Portal](https://portal.azure.com/)
+- [Microsoft Graph Explorer](https://developer.microsoft.com/en-us/graph/graph-explorer)
+- [Microsoft Identity Platform Documentation](https://docs.microsoft.com/en-us/azure/active-directory/develop/)
+- [Microsoft Graph Documentation](https://docs.microsoft.com/en-us/graph/)
+- [Azure AD App Registration Guide](https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app)

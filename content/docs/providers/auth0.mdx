@@ -1,0 +1,313 @@
+---
+title: Auth0 Provider
+description: Configure Auth0 OAuth with Keyloom for enterprise authentication and social connections.
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+import { Steps } from "fumadocs-ui/components/steps";
+
+# Auth0 Provider
+
+The Auth0 provider enables OAuth authentication using Auth0's identity platform. Perfect for enterprise applications requiring advanced authentication features, social connections, and identity management.
+
+## Features
+
+- **Enterprise SSO**: Connect with SAML, OIDC, and enterprise identity providers
+- **Social Connections**: Support for 30+ social identity providers
+- **Multi-Factor Authentication**: Built-in MFA support
+- **Custom Domains**: Use your own domain for authentication
+- **Advanced Security**: Anomaly detection, breached password detection
+
+## Setup
+
+<Steps>
+<Step>
+
+### Create Auth0 Application
+
+1. Go to the [Auth0 Dashboard](https://manage.auth0.com/)
+2. Navigate to "Applications" and click "Create Application"
+3. Choose "Regular Web Applications" as the application type
+4. Note your **Domain**, **Client ID**, and **Client Secret**
+
+</Step>
+
+<Step>
+
+### Configure Callback URLs
+
+In your Auth0 application settings, add your callback URLs:
+
+**Allowed Callback URLs:**
+```
+https://yourdomain.com/api/auth/callback/auth0
+```
+
+**Allowed Logout URLs:**
+```
+https://yourdomain.com/
+```
+
+For local development:
+```
+http://localhost:3000/api/auth/callback/auth0
+http://localhost:3000/
+```
+
+</Step>
+
+<Step>
+
+### Environment Variables
+
+Add your Auth0 credentials to your environment file:
+
+```bash title=".env.local"
+AUTH0_DOMAIN=your-tenant.auth0.com
+AUTH0_CLIENT_ID=your_auth0_client_id
+AUTH0_CLIENT_SECRET=your_auth0_client_secret
+```
+
+</Step>
+
+<Step>
+
+### Configure Keyloom
+
+```typescript title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import auth0 from "@keyloom/providers/auth0";
+
+export default defineKeyloom({
+  // ... other config
+  providers: [
+    auth0({
+      domain: process.env.AUTH0_DOMAIN!,
+      clientId: process.env.AUTH0_CLIENT_ID!,
+      clientSecret: process.env.AUTH0_CLIENT_SECRET!,
+    }),
+  ],
+});
+```
+
+</Step>
+</Steps>
+
+## Configuration Options
+
+```typescript
+interface Auth0ProviderOptions {
+  /** Auth0 domain (e.g., 'your-tenant.auth0.com') */
+  domain: string;
+  /** Auth0 application client ID */
+  clientId: string;
+  /** Auth0 application client secret */
+  clientSecret: string;
+  /** Custom scope (default: 'openid profile email offline_access') */
+  scope?: string;
+}
+```
+
+## User Profile
+
+The Auth0 provider returns user information from the ID token:
+
+```typescript
+interface Auth0Profile {
+  id: string;           // Auth0 user ID (sub claim)
+  email: string | null; // User's email
+  name: string | null;  // User's full name
+  image: string | null; // Profile picture URL
+  emailVerified?: boolean; // Email verification status
+}
+```
+
+## Scopes
+
+The Auth0 provider requests these scopes by default:
+
+- `openid` - Required for OpenID Connect
+- `profile` - Access to user's profile information
+- `email` - Access to user's email address
+- `offline_access` - Enables refresh tokens
+
+### Custom Scopes
+
+```typescript
+auth0({
+  domain: process.env.AUTH0_DOMAIN!,
+  clientId: process.env.AUTH0_CLIENT_ID!,
+  clientSecret: process.env.AUTH0_CLIENT_SECRET!,
+  scope: "openid profile email read:user_metadata",
+});
+```
+
+## Auth0 Features Integration
+
+### Social Connections
+
+Enable social logins in your Auth0 dashboard:
+
+1. Go to "Authentication" → "Social"
+2. Enable desired providers (Google, Facebook, GitHub, etc.)
+3. Configure each provider with their credentials
+4. Users can now sign in with social accounts through Auth0
+
+### Enterprise Connections
+
+For enterprise SSO:
+
+1. Go to "Authentication" → "Enterprise"
+2. Configure SAML, OIDC, or other enterprise connections
+3. Set up domain-based routing for automatic connection selection
+
+### Multi-Factor Authentication
+
+Enable MFA in Auth0:
+
+1. Go to "Security" → "Multi-factor Auth"
+2. Enable desired MFA factors (SMS, Email, Authenticator apps)
+3. Configure MFA policies and rules
+
+## Advanced Configuration
+
+### Custom Domain
+
+Use your own domain for Auth0:
+
+```typescript
+auth0({
+  domain: "auth.yourdomain.com", // Your custom domain
+  clientId: process.env.AUTH0_CLIENT_ID!,
+  clientSecret: process.env.AUTH0_CLIENT_SECRET!,
+});
+```
+
+### Audience Parameter
+
+For API access tokens:
+
+```typescript
+auth0({
+  domain: process.env.AUTH0_DOMAIN!,
+  clientId: process.env.AUTH0_CLIENT_ID!,
+  clientSecret: process.env.AUTH0_CLIENT_SECRET!,
+  scope: "openid profile email read:posts write:posts",
+  // Add audience for API access
+});
+```
+
+### Connection Parameter
+
+Force a specific connection:
+
+```typescript
+// This requires custom implementation
+import { createOAuthProvider } from "@keyloom/providers/factory";
+
+const auth0WithConnection = createOAuthProvider({
+  id: "auth0",
+  authorizationUrl: `https://${process.env.AUTH0_DOMAIN}/authorize`,
+  tokenUrl: `https://${process.env.AUTH0_DOMAIN}/oauth/token`,
+  scopes: ["openid", "profile", "email"],
+  authorizationParams: {
+    connection: "google-oauth2", // Force Google connection
+  },
+  // ... other config
+});
+```
+
+## Auth0 Rules and Actions
+
+Enhance authentication with Auth0 Rules or Actions:
+
+### Example Rule: Add Custom Claims
+
+```javascript
+// Auth0 Rule
+function addCustomClaims(user, context, callback) {
+  const namespace = 'https://yourdomain.com/';
+  context.idToken[namespace + 'roles'] = user.app_metadata.roles || [];
+  context.idToken[namespace + 'permissions'] = user.app_metadata.permissions || [];
+  callback(null, user, context);
+}
+```
+
+### Example Action: Enrich Profile
+
+```javascript
+// Auth0 Action
+exports.onExecutePostLogin = async (event, api) => {
+  const { user } = event;
+  
+  // Add custom claims to tokens
+  api.idToken.setCustomClaim('https://yourdomain.com/roles', user.app_metadata.roles);
+  api.accessToken.setCustomClaim('https://yourdomain.com/permissions', user.app_metadata.permissions);
+};
+```
+
+## Troubleshooting
+
+### Common Issues
+
+**Invalid Callback URL**
+- Ensure callback URLs match exactly in Auth0 dashboard
+- Check for trailing slashes and correct protocol
+- Verify the format: `/api/auth/callback/auth0`
+
+**Domain Configuration**
+- Use the correct Auth0 domain format: `tenant.auth0.com`
+- For custom domains, ensure SSL certificates are properly configured
+- Check DNS settings for custom domains
+
+**Token Issues**
+- Verify client secret is correct and not expired
+- Check that the application type is "Regular Web Application"
+- Ensure proper scopes are requested
+
+**Connection Errors**
+- Verify social connections are enabled and configured
+- Check enterprise connection settings
+- Test connections individually in Auth0 dashboard
+
+### Testing
+
+Test your Auth0 integration:
+
+1. **Auth0 Dashboard**: Use the "Try Connection" feature
+2. **Development**: Test with `http://localhost:3000`
+3. **Production**: Ensure HTTPS and proper domain configuration
+
+<Callout>
+Auth0 requires HTTPS for production applications. Ensure your production environment has valid SSL certificates.
+</Callout>
+
+## Migration from Auth0
+
+If you're migrating from Auth0 to Keyloom:
+
+1. **Export Users**: Use Auth0's user export feature
+2. **Map User Data**: Transform Auth0 user format to Keyloom format
+3. **Handle Passwords**: Auth0 password hashes need to be re-hashed
+4. **Update Applications**: Replace Auth0 SDK calls with Keyloom
+5. **Test Thoroughly**: Verify all authentication flows work correctly
+
+<Callout type="warning">
+Password migration requires users to reset passwords or use a gradual migration strategy.
+</Callout>
+
+## Security Best Practices
+
+- **Client Secret**: Store securely and rotate regularly
+- **Scopes**: Request only necessary permissions
+- **Token Validation**: Always validate ID tokens
+- **HTTPS**: Use HTTPS in production
+- **Rate Limiting**: Implement rate limiting for auth endpoints
+
+## Resources
+
+- [Auth0 Dashboard](https://manage.auth0.com/)
+- [Auth0 Documentation](https://auth0.com/docs)
+- [Auth0 Marketplace](https://marketplace.auth0.com/)
+- [Auth0 Community](https://community.auth0.com/)
+- [Auth0 Status Page](https://status.auth0.com/)

@@ -9,7 +9,7 @@ import { Callout } from "fumadocs-ui/components/callout";
 
 ```ts title="keyloom.config.ts"
 import { defineKeyloom } from "@keyloom/core";
-import { prismaAdapter } from "@keyloom/adapters";
+import { prismaAdapter } from "@keyloom/adapters/prisma";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -24,6 +24,7 @@ export default defineKeyloom({
 ```
 
 ## Options
+
 - adapter: Database adapter instance
 - baseUrl: Public base URL of your app (used for callbacks, JWT issuer)
 - session.strategy: "database" | "jwt"
@@ -31,6 +32,6 @@ export default defineKeyloom({
 - providers: OAuth providers array from @keyloom/providers
 
 <Callout>
-When using JWT, set issuer/audience in env or provide a JWKS URL; see Reference → JWT.
+  When using JWT, set issuer/audience in env or provide a JWKS URL; see
+  Reference → JWT.
 </Callout>
-
