@@ -38,6 +38,7 @@ export default function HomePage() {
       <section className="relative overflow-hidden min-h-screen flex items-center">
         <div className="absolute inset-0">
           <PixelBlast 
+            color='#7d7d7d'
             pixelSize={3}
             patternScale={2}
             patternDensity={1.3}
