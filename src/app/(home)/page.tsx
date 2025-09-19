@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { ArrowRight, Shield, Zap, Code, Database, Users, GitBranch } from 'lucide-react';
 import { JetBrains_Mono } from 'next/font/google';
+import  PixelBlast  from '@/components/PixelBlast';
+import { useEffect } from 'react';
 const mono = JetBrains_Mono({ subsets: ['latin'] });
 
 
@@ -9,7 +11,17 @@ export default function HomePage() {
     <main className="flex flex-1 flex-col">
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-fd-muted">
-        <div className="absolute inset-0 " />
+        <div className="absolute inset-0">
+          <PixelBlast 
+            pixelSize={4}
+            patternScale={2}
+            patternDensity={1}
+            pixelSizeJitter={0}
+            speed={0.5}
+            edgeFade={0.25}
+            enableRipples
+          />
+        </div>
         <div className="relative mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <div className="mb-8 flex justify-center">

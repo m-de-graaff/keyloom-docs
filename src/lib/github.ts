@@ -26,7 +26,10 @@ async function getOctokit(): Promise<Octokit> {
     );
   }
 
-  const app = new App({ appId, privateKey });
+  // Handle escaped newlines in private key (common in env vars)
+  const formattedPrivateKey = privateKey.replace(/\\n/g, '\n');
+  
+  const app = new App({ appId, privateKey: formattedPrivateKey });
 
   try {
     const { data } = await app.octokit.request(
