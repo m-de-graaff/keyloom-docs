@@ -1,0 +1,1061 @@
+---
+title: Create Custom Database Adapter
+description: Complete guide to implement custom database adapters for Keyloom with examples, testing, and performance optimization.
+---
+
+import { Steps, Step } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+import { Tabs, Tab } from "fumadocs-ui/components/tabs";
+
+# Create Custom Database Adapter
+
+Learn how to create custom database adapters for Keyloom to support any database system. This guide covers the complete adapter interface, implementation patterns, and best practices.
+
+<Callout type="info">
+  Keyloom adapters provide a unified interface for different databases while
+  allowing database-specific optimizations and features.
+</Callout>
+
+## Understanding Adapter Architecture
+
+Keyloom adapters implement three main interfaces:
+
+1. **Core Adapter**: Users, accounts, sessions, and verification tokens
+2. **RBAC Adapter**: Organizations, memberships, and invitations (optional)
+3. **Refresh Token Store**: JWT refresh token management (optional)
+
+## Adapter Interface Overview
+
+```typescript
+interface KeyloomAdapter extends Adapter, RbacAdapter, RefreshTokenStore {
+  capabilities: AdapterCapabilities;
+  healthCheck?(): Promise<{ status: "healthy" | "unhealthy"; details?: any }>;
+  cleanup?(): Promise<{
+    sessions: number;
+    tokens: number;
+    refreshTokens: number;
+  }>;
+  close?(): Promise<void>;
+}
+```
+
+## Quick Start: Redis Adapter
+
+Let's create a Redis adapter as an example:
+
+<Steps>
+<Step>
+
+### Install Dependencies
+
+```bash
+npm install redis @keyloom/core
+npm install -D @types/redis
+```
+
+</Step>
+
+<Step>
+
+### Define Configuration
+
+```typescript title="adapters/redis/types.ts"
+import type { RedisClientType } from "redis";
+
+export interface RedisAdapterConfig {
+  client: RedisClientType;
+  keyPrefix?: string;
+  ttl?: {
+    sessions: number; // Session TTL in seconds
+    tokens: number; // Verification token TTL
+    refreshTokens: number;
+  };
+}
+
+export interface RedisAdapterCapabilities {
+  transactions: boolean;
+  json: boolean;
+  ttlIndex: boolean;
+  caseInsensitiveEmail: "app-normalize";
+  upsert: boolean;
+}
+```
+
+</Step>
+
+<Step>
+
+### Implement Core Adapter
+
+```typescript title="adapters/redis/index.ts"
+import type {
+  Adapter,
+  User,
+  Account,
+  Session,
+  VerificationToken,
+} from "@keyloom/core";
+import type {
+  KeyloomAdapter,
+  AdapterCapabilities,
+} from "@keyloom/core/adapter-types";
+import { normalizeEmail } from "@keyloom/core/adapter-types";
+import type { RedisAdapterConfig } from "./types";
+
+export function redisAdapter(config: RedisAdapterConfig): KeyloomAdapter {
+  const { client, keyPrefix = "keyloom:", ttl } = config;
+
+  // Helper functions
+  const key = (type: string, id: string) => `${keyPrefix}${type}:${id}`;
+  const userKey = (id: string) => key("user", id);
+  const userEmailKey = (email: string) =>
+    key("user:email", normalizeEmail(email));
+  const sessionKey = (id: string) => key("session", id);
+  const accountKey = (provider: string, providerAccountId: string) =>
+    key("account", `${provider}:${providerAccountId}`);
+  const tokenKey = (identifier: string, token: string) =>
+    key("token", `${identifier}:${token}`);
+
+  const capabilities: AdapterCapabilities = {
+    transactions: false, // Redis doesn't have traditional transactions
+    json: true,
+    ttlIndex: true,
+    caseInsensitiveEmail: "app-normalize",
+    upsert: true,
+  };
+
+  const coreAdapter: Adapter = {
+    // Users
+    async createUser(data: Partial<User>): Promise<User> {
+      const id = crypto.randomUUID();
+      const now = new Date();
+      const email = data.email ? normalizeEmail(data.email) : null;
+
+      const user: User = {
+        id,
+        email,
+        emailVerified: data.emailVerified ?? null,
+        name: data.name ?? null,
+        image: data.image ?? null,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      // Store user data
+      await client.hSet(userKey(id), {
+        id,
+        email: email ?? "",
+        emailVerified: user.emailVerified?.toISOString() ?? "",
+        name: user.name ?? "",
+        image: user.image ?? "",
+        createdAt: user.createdAt.toISOString(),
+        updatedAt: user.updatedAt.toISOString(),
+      });
+
+      // Create email index if email exists
+      if (email) {
+        await client.set(userEmailKey(email), id);
+      }
+
+      return user;
+    },
+
+    async getUser(id: string): Promise<User | null> {
+      const userData = await client.hGetAll(userKey(id));
+      if (!userData.id) return null;
+
+      return {
+        id: userData.id,
+        email: userData.email || null,
+        emailVerified: userData.emailVerified
+          ? new Date(userData.emailVerified)
+          : null,
+        name: userData.name || null,
+        image: userData.image || null,
+        createdAt: new Date(userData.createdAt),
+        updatedAt: new Date(userData.updatedAt),
+      };
+    },
+
+    async getUserByEmail(email: string): Promise<User | null> {
+      const userId = await client.get(userEmailKey(email));
+      if (!userId) return null;
+      return this.getUser(userId);
+    },
+
+    async updateUser(id: string, data: Partial<User>): Promise<User> {
+      const existing = await this.getUser(id);
+      if (!existing) throw new Error("User not found");
+
+      const updated = {
+        ...existing,
+        ...data,
+        updatedAt: new Date(),
+      };
+
+      await client.hSet(userKey(id), {
+        email: updated.email ?? "",
+        emailVerified: updated.emailVerified?.toISOString() ?? "",
+        name: updated.name ?? "",
+        image: updated.image ?? "",
+        updatedAt: updated.updatedAt.toISOString(),
+      });
+
+      // Update email index if changed
+      if (data.email && data.email !== existing.email) {
+        if (existing.email) {
+          await client.del(userEmailKey(existing.email));
+        }
+        await client.set(userEmailKey(data.email), id);
+      }
+
+      return updated;
+    },
+
+    // Accounts (OAuth)
+    async linkAccount(account: Account): Promise<Account> {
+      const id = crypto.randomUUID();
+      const now = new Date();
+
+      const fullAccount: Account = {
+        ...account,
+        id,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      await client.hSet(
+        accountKey(account.provider, account.providerAccountId),
+        {
+          id,
+          userId: account.userId,
+          provider: account.provider,
+          providerAccountId: account.providerAccountId,
+          type: account.type,
+          accessToken: account.accessToken ?? "",
+          refreshToken: account.refreshToken ?? "",
+          expiresAt: account.expiresAt?.toISOString() ?? "",
+          tokenType: account.tokenType ?? "",
+          scope: account.scope ?? "",
+          createdAt: fullAccount.createdAt.toISOString(),
+          updatedAt: fullAccount.updatedAt.toISOString(),
+        }
+      );
+
+      return fullAccount;
+    },
+
+    async getAccountByProvider(
+      provider: string,
+      providerAccountId: string
+    ): Promise<Account | null> {
+      const accountData = await client.hGetAll(
+        accountKey(provider, providerAccountId)
+      );
+      if (!accountData.id) return null;
+
+      return {
+        id: accountData.id,
+        userId: accountData.userId,
+        provider: accountData.provider,
+        providerAccountId: accountData.providerAccountId,
+        type: accountData.type as "oauth",
+        accessToken: accountData.accessToken || null,
+        refreshToken: accountData.refreshToken || null,
+        expiresAt: accountData.expiresAt
+          ? new Date(accountData.expiresAt)
+          : null,
+        tokenType: accountData.tokenType || null,
+        scope: accountData.scope || null,
+        createdAt: new Date(accountData.createdAt),
+        updatedAt: new Date(accountData.updatedAt),
+      };
+    },
+
+    // Sessions
+    async createSession(
+      sessionData: Omit<Session, "id" | "createdAt" | "updatedAt">
+    ): Promise<Session> {
+      const id = crypto.randomUUID();
+      const now = new Date();
+
+      const session: Session = {
+        ...sessionData,
+        id,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      await client.hSet(sessionKey(id), {
+        id,
+        userId: session.userId,
+        expiresAt: session.expiresAt.toISOString(),
+        createdAt: session.createdAt.toISOString(),
+        updatedAt: session.updatedAt.toISOString(),
+      });
+
+      // Set TTL if configured
+      if (ttl?.sessions) {
+        await client.expire(sessionKey(id), ttl.sessions);
+      }
+
+      return session;
+    },
+
+    async getSession(id: string): Promise<Session | null> {
+      const sessionData = await client.hGetAll(sessionKey(id));
+      if (!sessionData.id) return null;
+
+      return {
+        id: sessionData.id,
+        userId: sessionData.userId,
+        expiresAt: new Date(sessionData.expiresAt),
+        createdAt: new Date(sessionData.createdAt),
+        updatedAt: new Date(sessionData.updatedAt),
+      };
+    },
+
+    async deleteSession(id: string): Promise<void> {
+      await client.del(sessionKey(id));
+    },
+
+    // Verification Tokens
+    async createVerificationToken(
+      tokenData: Omit<VerificationToken, "id" | "createdAt" | "consumedAt">
+    ): Promise<VerificationToken> {
+      const id = crypto.randomUUID();
+      const now = new Date();
+
+      const token: VerificationToken = {
+        ...tokenData,
+        id,
+        createdAt: now,
+        consumedAt: null,
+      };
+
+      await client.hSet(tokenKey(token.identifier, token.token), {
+        id,
+        identifier: token.identifier,
+        token: token.token,
+        expiresAt: token.expiresAt.toISOString(),
+        createdAt: token.createdAt.toISOString(),
+        consumedAt: "",
+      });
+
+      // Set TTL if configured
+      if (ttl?.tokens) {
+        await client.expire(
+          tokenKey(token.identifier, token.token),
+          ttl.tokens
+        );
+      }
+
+      return token;
+    },
+
+    async useVerificationToken(
+      identifier: string,
+      token: string
+    ): Promise<VerificationToken | null> {
+      const key = tokenKey(identifier, token);
+      const tokenData = await client.hGetAll(key);
+
+      if (!tokenData.id) return null;
+
+      // Mark as consumed
+      const now = new Date();
+      await client.hSet(key, "consumedAt", now.toISOString());
+
+      return {
+        id: tokenData.id,
+        identifier: tokenData.identifier,
+        token: tokenData.token,
+        expiresAt: new Date(tokenData.expiresAt),
+        createdAt: new Date(tokenData.createdAt),
+        consumedAt: now,
+      };
+    },
+
+    // Audit
+    async appendAudit(event: any): Promise<void> {
+      // Simple audit log implementation
+      const auditKey = key("audit", Date.now().toString());
+      await client.hSet(auditKey, {
+        ...event,
+        timestamp: new Date().toISOString(),
+      });
+    },
+  };
+
+  // Minimal RBAC implementation (throws errors for unsupported operations)
+  const rbacAdapter = {
+    async createOrganization() {
+      throw new Error("RBAC not supported in Redis adapter");
+    },
+    async getOrganization() {
+      return null;
+    },
+    async getOrganizationsByUser() {
+      return [];
+    },
+    async addMember() {
+      throw new Error("RBAC not supported in Redis adapter");
+    },
+    async updateMember() {
+      throw new Error("RBAC not supported in Redis adapter");
+    },
+    async removeMember() {
+      /* noop */
+    },
+    async getMembership() {
+      return null;
+    },
+    async listMembers() {
+      return [];
+    },
+    async createInvite() {
+      throw new Error("RBAC not supported in Redis adapter");
+    },
+    async getInviteByTokenHash() {
+      return null;
+    },
+    async consumeInvite() {
+      /* noop */
+    },
+    async getEntitlements() {
+      return null;
+    },
+    async setEntitlements() {
+      /* noop */
+    },
+  };
+
+  // Minimal refresh token store (not implemented for Redis)
+  const refreshTokenStore = {
+    async save() {
+      throw new Error("Refresh tokens not supported in Redis adapter");
+    },
+    async findByHash() {
+      return null;
+    },
+    async markRotated() {
+      /* noop */
+    },
+    async revokeFamily() {
+      /* noop */
+    },
+    async createChild() {
+      /* noop */
+    },
+    async cleanupExpired() {
+      return 0;
+    },
+    async isFamilyRevoked() {
+      return false;
+    },
+    async getFamily() {
+      return [];
+    },
+  };
+
+  return Object.assign(coreAdapter, rbacAdapter, refreshTokenStore, {
+    capabilities,
+
+    async healthCheck() {
+      try {
+        await client.ping();
+        return { status: "healthy" as const };
+      } catch (error: any) {
+        return {
+          status: "unhealthy" as const,
+          details: { error: error.message },
+        };
+      }
+    },
+
+    async cleanup() {
+      // Clean up expired sessions and tokens
+      const now = Date.now();
+      let sessionsDeleted = 0;
+      let tokensDeleted = 0;
+
+      // This is a simplified cleanup - in production you'd want more efficient methods
+      const keys = await client.keys(`${keyPrefix}*`);
+
+      for (const key of keys) {
+        const ttl = await client.ttl(key);
+        if (ttl === -1) {
+          // No TTL set, check manually
+          if (key.includes(":session:")) {
+            const sessionData = await client.hGetAll(key);
+            if (
+              sessionData.expiresAt &&
+              new Date(sessionData.expiresAt) < new Date()
+            ) {
+              await client.del(key);
+              sessionsDeleted++;
+            }
+          } else if (key.includes(":token:")) {
+            const tokenData = await client.hGetAll(key);
+            if (
+              tokenData.expiresAt &&
+              new Date(tokenData.expiresAt) < new Date()
+            ) {
+              await client.del(key);
+              tokensDeleted++;
+            }
+          }
+        }
+      }
+
+      return {
+        sessions: sessionsDeleted,
+        tokens: tokensDeleted,
+        refreshTokens: 0,
+      };
+    },
+
+    async close() {
+      await client.quit();
+    },
+  });
+}
+```
+
+</Step>
+</Steps>
+
+## Testing Your Adapter
+
+<Steps>
+<Step>
+
+### Use Adapter Contract
+
+```typescript title="adapters/redis/__tests__/contract.test.ts"
+import { describe, expect, it, beforeAll, afterAll } from "vitest";
+import { createClient } from "redis";
+import { runAdapterContract } from "@keyloom/adapters/testing/contract";
+import { redisAdapter } from "../index";
+
+describe("Redis Adapter Contract", () => {
+  let client: any;
+  let adapter: any;
+
+  beforeAll(async () => {
+    client = createClient({ url: "redis://localhost:6379" });
+    await client.connect();
+    adapter = redisAdapter({ client });
+  });
+
+  afterAll(async () => {
+    await client.flushDb(); // Clean up test data
+    await client.quit();
+  });
+
+  it("passes adapter contract", () => {
+    const result = runAdapterContract(adapter);
+    expect(result.ok).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+
+  it("has correct capabilities", () => {
+    expect(adapter.capabilities).toEqual({
+      transactions: false,
+      json: true,
+      ttlIndex: true,
+      caseInsensitiveEmail: "app-normalize",
+      upsert: true,
+    });
+  });
+});
+```
+
+</Step>
+
+<Step>
+
+### Integration Tests
+
+```typescript title="adapters/redis/__tests__/integration.test.ts"
+import { describe, expect, it, beforeEach } from "vitest";
+import { redisAdapter } from "../index";
+
+describe("Redis Adapter Integration", () => {
+  let adapter: any;
+
+  beforeEach(async () => {
+    // Setup fresh adapter for each test
+    const client = createClient({ url: "redis://localhost:6379" });
+    await client.connect();
+    await client.flushDb();
+    adapter = redisAdapter({ client });
+  });
+
+  it("creates and retrieves users", async () => {
+    const userData = {
+      email: "test@example.com",
+      name: "Test User",
+    };
+
+    const user = await adapter.createUser(userData);
+    expect(user.id).toBeDefined();
+    expect(user.email).toBe("test@example.com");
+    expect(user.name).toBe("Test User");
+
+    const retrieved = await adapter.getUser(user.id);
+    expect(retrieved).toEqual(user);
+
+    const byEmail = await adapter.getUserByEmail("test@example.com");
+    expect(byEmail).toEqual(user);
+  });
+
+  it("manages sessions with TTL", async () => {
+    const user = await adapter.createUser({ email: "test@example.com" });
+
+    const sessionData = {
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 3600000), // 1 hour
+    };
+
+    const session = await adapter.createSession(sessionData);
+    expect(session.id).toBeDefined();
+    expect(session.userId).toBe(user.id);
+
+    const retrieved = await adapter.getSession(session.id);
+    expect(retrieved).toEqual(session);
+
+    await adapter.deleteSession(session.id);
+    const deleted = await adapter.getSession(session.id);
+    expect(deleted).toBeNull();
+  });
+
+  it("handles OAuth accounts", async () => {
+    const user = await adapter.createUser({ email: "test@example.com" });
+
+    const accountData = {
+      userId: user.id,
+      provider: "github",
+      providerAccountId: "12345",
+      type: "oauth" as const,
+      accessToken: "access-token",
+    };
+
+    const account = await adapter.linkAccount(accountData);
+    expect(account.id).toBeDefined();
+
+    const retrieved = await adapter.getAccountByProvider("github", "12345");
+    expect(retrieved).toEqual(account);
+  });
+});
+```
+
+</Step>
+</Steps>
+
+## Performance Optimization
+
+### Connection Pooling
+
+```typescript
+// Use connection pooling for better performance
+const client = createClient({
+  url: "redis://localhost:6379",
+  socket: {
+    connectTimeout: 5000,
+    lazyConnect: true,
+  },
+});
+
+// Configure cluster for high availability
+const cluster = createCluster({
+  rootNodes: [
+    { url: "redis://localhost:7000" },
+    { url: "redis://localhost:7001" },
+    { url: "redis://localhost:7002" },
+  ],
+});
+```
+
+### Batch Operations
+
+```typescript
+// Batch multiple operations for better performance
+async createUserWithAccount(userData: any, accountData: any) {
+  const pipeline = client.multi();
+
+  // Add all operations to pipeline
+  pipeline.hSet(userKey(userData.id), userData);
+  pipeline.hSet(accountKey(accountData.provider, accountData.providerAccountId), accountData);
+  pipeline.set(userEmailKey(userData.email), userData.id);
+
+  // Execute all at once
+  await pipeline.exec();
+}
+```
+
+### Indexing Strategy
+
+```typescript
+// Create efficient indexes for common queries
+async createIndexes() {
+  // Email lookup index
+  await client.set(userEmailKey(email), userId);
+
+  // Provider account index
+  await client.set(accountKey(provider, providerAccountId), accountId);
+
+  // Session user index for cleanup
+  await client.sAdd(key('user:sessions', userId), sessionId);
+}
+```
+
+## Database Schema Considerations
+
+### Required Fields
+
+All adapters must support these core entities:
+
+```typescript
+// User entity
+interface User {
+  id: string;
+  email: string | null;
+  emailVerified: Date | null;
+  name: string | null;
+  image: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Account entity (OAuth)
+interface Account {
+  id: string;
+  userId: string;
+  provider: string;
+  providerAccountId: string;
+  type: "oauth";
+  accessToken?: string | null;
+  refreshToken?: string | null;
+  expiresAt?: Date | null;
+  tokenType?: string | null;
+  scope?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Session entity
+interface Session {
+  id: string;
+  userId: string;
+  expiresAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+### Constraints and Indexes
+
+```sql
+-- Essential indexes for performance
+CREATE UNIQUE INDEX users_email_idx ON users(email) WHERE email IS NOT NULL;
+CREATE UNIQUE INDEX accounts_provider_idx ON accounts(provider, provider_account_id);
+CREATE INDEX sessions_user_idx ON sessions(user_id);
+CREATE INDEX sessions_expires_idx ON sessions(expires_at);
+```
+
+## Best Practices
+
+### Error Handling
+
+```typescript
+async createUser(data: Partial<User>): Promise<User> {
+  try {
+    // Implementation
+  } catch (error: any) {
+    // Map database errors to Keyloom errors
+    if (error.code === 'DUPLICATE_KEY') {
+      throw new KeyloomError('USER_EXISTS', 'User already exists');
+    }
+    throw new KeyloomError('DATABASE_ERROR', error.message);
+  }
+}
+```
+
+### Connection Management
+
+```typescript
+// Implement proper connection lifecycle
+export class DatabaseAdapter {
+  private client: any;
+  private connected = false;
+
+  async connect() {
+    if (!this.connected) {
+      await this.client.connect();
+      this.connected = true;
+    }
+  }
+
+  async close() {
+    if (this.connected) {
+      await this.client.close();
+      this.connected = false;
+    }
+  }
+}
+```
+
+### Monitoring and Observability
+
+```typescript
+// Add metrics and logging
+async createUser(data: Partial<User>): Promise<User> {
+  const start = Date.now();
+
+  try {
+    const user = await this.doCreateUser(data);
+
+    // Log success metrics
+    console.log(`User created in ${Date.now() - start}ms`);
+
+    return user;
+  } catch (error) {
+    // Log error metrics
+    console.error('User creation failed:', error);
+    throw error;
+  }
+}
+```
+
+## Advanced Patterns
+
+### Multi-Database Adapter
+
+```typescript title="adapters/multi-db/index.ts"
+// Use different databases for different data types
+export function multiDbAdapter(config: {
+  userDb: any; // PostgreSQL for relational data
+  sessionDb: any; // Redis for fast session storage
+  auditDb: any; // MongoDB for flexible audit logs
+}) {
+  return {
+    // Users in PostgreSQL
+    async createUser(data) {
+      return config.userDb.user.create({ data });
+    },
+
+    // Sessions in Redis
+    async createSession(data) {
+      const session = { ...data, id: crypto.randomUUID() };
+      await config.sessionDb.setex(
+        `session:${session.id}`,
+        3600, // 1 hour TTL
+        JSON.stringify(session)
+      );
+      return session;
+    },
+
+    // Audit logs in MongoDB
+    async appendAudit(event) {
+      await config.auditDb.collection("audit_logs").insertOne({
+        ...event,
+        timestamp: new Date(),
+      });
+    },
+
+    // ... other methods
+  };
+}
+```
+
+### Sharded Adapter
+
+```typescript title="adapters/sharded/index.ts"
+// Distribute data across multiple database shards
+export function shardedAdapter(shards: DatabaseClient[]) {
+  const getShardForUser = (userId: string) => {
+    const hash = userId.split("").reduce((a, b) => a + b.charCodeAt(0), 0);
+    return shards[hash % shards.length];
+  };
+
+  return {
+    async createUser(data) {
+      const user = { ...data, id: crypto.randomUUID() };
+      const shard = getShardForUser(user.id);
+      await shard.users.create(user);
+      return user;
+    },
+
+    async getUser(id) {
+      const shard = getShardForUser(id);
+      return shard.users.findById(id);
+    },
+
+    // ... other methods with sharding logic
+  };
+}
+```
+
+## Migration Utilities
+
+### Schema Migration
+
+```typescript title="adapters/utils/migrate.ts"
+export async function migrateSchema(adapter: KeyloomAdapter, version: string) {
+  const migrations = {
+    "1.0.0": async () => {
+      // Initial schema
+      await adapter.query(`
+        CREATE TABLE users (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          email TEXT UNIQUE,
+          name TEXT,
+          created_at TIMESTAMP DEFAULT NOW()
+        )
+      `);
+    },
+
+    "1.1.0": async () => {
+      // Add email verification
+      await adapter.query(`
+        ALTER TABLE users ADD COLUMN email_verified TIMESTAMP
+      `);
+    },
+  };
+
+  await migrations[version]?.();
+}
+```
+
+### Data Migration
+
+```typescript title="adapters/utils/data-migrate.ts"
+export async function migrateFromAdapter(
+  sourceAdapter: KeyloomAdapter,
+  targetAdapter: KeyloomAdapter,
+  options: { batchSize?: number; dryRun?: boolean } = {}
+) {
+  const { batchSize = 1000, dryRun = false } = options;
+
+  // Migrate users
+  let offset = 0;
+  let users;
+
+  do {
+    users = await sourceAdapter.query("SELECT * FROM users LIMIT ? OFFSET ?", [
+      batchSize,
+      offset,
+    ]);
+
+    if (!dryRun) {
+      for (const user of users) {
+        await targetAdapter.createUser(user);
+      }
+    }
+
+    console.log(`Migrated ${users.length} users (offset: ${offset})`);
+    offset += batchSize;
+  } while (users.length === batchSize);
+}
+```
+
+## Production Considerations
+
+### High Availability
+
+```typescript
+// Implement failover and retry logic
+export function resilientAdapter(primary: any, replica: any) {
+  return {
+    async getUser(id: string) {
+      try {
+        return await primary.getUser(id);
+      } catch (error) {
+        console.warn("Primary failed, trying replica:", error.message);
+        return await replica.getUser(id);
+      }
+    },
+
+    async createUser(data: any) {
+      // Always write to primary
+      const user = await primary.createUser(data);
+
+      // Async replication to replica
+      setImmediate(async () => {
+        try {
+          await replica.createUser(user);
+        } catch (error) {
+          console.error("Replica sync failed:", error);
+        }
+      });
+
+      return user;
+    },
+  };
+}
+```
+
+### Caching Layer
+
+```typescript
+// Add caching for frequently accessed data
+export function cachedAdapter(baseAdapter: any, cache: any) {
+  return {
+    async getUser(id: string) {
+      const cacheKey = `user:${id}`;
+
+      // Try cache first
+      let user = await cache.get(cacheKey);
+      if (user) return JSON.parse(user);
+
+      // Fallback to database
+      user = await baseAdapter.getUser(id);
+      if (user) {
+        await cache.setex(cacheKey, 300, JSON.stringify(user)); // 5 min cache
+      }
+
+      return user;
+    },
+
+    async updateUser(id: string, data: any) {
+      const user = await baseAdapter.updateUser(id, data);
+
+      // Invalidate cache
+      await cache.del(`user:${id}`);
+
+      return user;
+    },
+  };
+}
+```
+
+## Contributing Adapters
+
+When contributing adapters to the Keyloom ecosystem:
+
+### Documentation Requirements
+
+1. **Setup Instructions** - Clear installation and configuration steps
+2. **Schema Requirements** - Database schema and migration scripts
+3. **Performance Characteristics** - Expected performance and limitations
+4. **Configuration Options** - All available configuration parameters
+
+### Testing Requirements
+
+1. **Unit Tests** - Test all adapter methods
+2. **Integration Tests** - Test with real database
+3. **Performance Tests** - Benchmark critical operations
+4. **Contract Tests** - Use official adapter contract
+
+### Code Quality
+
+1. **TypeScript** - Full type safety and documentation
+2. **Error Handling** - Proper error mapping and recovery
+3. **Connection Management** - Proper resource cleanup
+4. **Security** - SQL injection prevention, input validation
+
+<Callout type="success">
+  Custom adapters enable Keyloom to work with any database while maintaining
+  consistent APIs and optimal performance for your specific use case.
+</Callout>

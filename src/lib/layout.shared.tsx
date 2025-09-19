@@ -35,6 +35,11 @@ export function baseOptions(): BaseLayoutProps {
         url: "https://github.com/m-de-graaff/keyloom",
         external: true,
       },
+      {
+        text: "Support Me",
+        url: "https://buymeacoffee.com/mdegraaff",
+        external: true,
+      }
     ],
   };
 }

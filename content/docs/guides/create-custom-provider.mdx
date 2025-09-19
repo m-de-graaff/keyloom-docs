@@ -1,0 +1,518 @@
+---
+title: Create Custom OAuth Provider
+description: Step-by-step guide to create custom OAuth providers for Keyloom with examples, testing, and best practices.
+---
+
+import { Steps, Step } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+import { Tabs, Tab } from "fumadocs-ui/components/tabs";
+
+# Create Custom OAuth Provider
+
+Learn how to create custom OAuth providers for Keyloom to integrate with any OAuth 2.0 service. This guide covers both simple and advanced provider implementations.
+
+<Callout type="info">
+Keyloom supports any OAuth 2.0 compliant service. If you create a provider for a popular service, consider contributing it back to the community!
+</Callout>
+
+## Understanding Provider Architecture
+
+Keyloom providers implement the `OAuthProvider` interface and handle three main phases:
+
+1. **Authorization**: Redirect users to the OAuth service
+2. **Token Exchange**: Exchange authorization code for access token
+3. **Profile Mapping**: Fetch and transform user profile data
+
+## Quick Start with Factory
+
+For standard OAuth 2.0 services, use the provider factory:
+
+<Steps>
+<Step>
+
+### Install Dependencies
+
+```bash
+npm install @keyloom/core @keyloom/providers
+```
+
+</Step>
+
+<Step>
+
+### Create Basic Provider
+
+```typescript title="providers/custom-service.ts"
+import { createOAuthProvider } from "@keyloom/providers/factory";
+
+export const customService = createOAuthProvider({
+  id: "custom-service",
+  authorizationUrl: "https://api.customservice.com/oauth/authorize",
+  tokenUrl: "https://api.customservice.com/oauth/token",
+  userinfoUrl: "https://api.customservice.com/v1/user",
+  scopes: ["profile", "email"],
+  mapProfile: (raw) => ({
+    id: String(raw.id),
+    email: raw.email ?? null,
+    name: raw.display_name ?? raw.username ?? null,
+    image: raw.avatar_url ?? null,
+    emailVerified: raw.email_verified ?? false,
+  }),
+});
+```
+
+</Step>
+
+<Step>
+
+### Use in Configuration
+
+```typescript title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { customService } from "./providers/custom-service";
+
+export default defineKeyloom({
+  providers: [
+    customService({
+      clientId: process.env.CUSTOM_SERVICE_CLIENT_ID!,
+      clientSecret: process.env.CUSTOM_SERVICE_CLIENT_SECRET!,
+    }),
+  ],
+  // ... other config
+});
+```
+
+</Step>
+</Steps>
+
+## Advanced Provider Implementation
+
+For complex OAuth flows or non-standard APIs, implement the provider manually:
+
+<Tabs>
+<Tab value="advanced" label="Advanced Provider">
+
+```typescript title="providers/enterprise-sso.ts"
+import type { OAuthProvider, Profile, Tokens } from "@keyloom/core/oauth/types";
+
+export interface EnterpriseSSOOptions {
+  clientId: string;
+  clientSecret: string;
+  domain: string;
+  tenant?: string;
+  scopes?: string[];
+}
+
+export function enterpriseSSO(opts: EnterpriseSSOOptions): OAuthProvider & {
+  clientId: string;
+  clientSecret: string;
+} {
+  const baseUrl = `https://${opts.domain}`;
+  const tenant = opts.tenant ?? "default";
+  
+  return {
+    id: "enterprise-sso",
+    
+    // Authorization endpoint
+    authorization: {
+      url: `${baseUrl}/oauth/authorize`,
+      params: {
+        scope: (opts.scopes ?? ["openid", "profile", "email"]).join(" "),
+        tenant,
+        // Custom parameters for enterprise SSO
+        prompt: "select_account",
+        access_type: "offline",
+      },
+    },
+    
+    // Token exchange endpoint
+    token: {
+      url: `${baseUrl}/oauth/token`,
+      style: "form", // or "json"
+      headers: {
+        "Accept": "application/json",
+        "User-Agent": "Keyloom/1.0",
+      },
+      // Custom token request body modification
+      customizeBody: async (body) => {
+        const params = body as URLSearchParams;
+        params.set("tenant", tenant);
+        
+        // Add client authentication for enterprise
+        const auth = Buffer.from(`${opts.clientId}:${opts.clientSecret}`).toString("base64");
+        return {
+          body: params,
+          headers: { "Authorization": `Basic ${auth}` },
+        };
+      },
+    },
+    
+    // User profile endpoint
+    userinfo: {
+      url: `${baseUrl}/api/v1/userinfo`,
+      map: (raw: any, tokens: Tokens): Profile => {
+        // Handle enterprise-specific profile structure
+        const profile = raw.profile ?? raw;
+        
+        return {
+          id: String(profile.sub ?? profile.user_id),
+          email: profile.email ?? profile.preferred_username ?? null,
+          name: profile.name ?? `${profile.given_name} ${profile.family_name}`.trim() ?? null,
+          image: profile.picture ?? profile.avatar_url ?? null,
+          emailVerified: profile.email_verified === true || profile.email_verified === "true",
+          // Store additional enterprise data
+          metadata: {
+            department: profile.department,
+            role: profile.role,
+            tenant: profile.tenant,
+            groups: profile.groups ?? [],
+          },
+        };
+      },
+    },
+    
+    // OIDC discovery (optional)
+    discovery: {
+      issuer: `${baseUrl}`,
+    },
+    
+    // Provider-specific scopes
+    scopes: opts.scopes ?? ["openid", "profile", "email"],
+    
+    // Client credentials
+    clientId: opts.clientId,
+    clientSecret: opts.clientSecret,
+  };
+}
+```
+
+</Tab>
+
+<Tab value="id-token" label="ID Token Provider">
+
+```typescript title="providers/oidc-provider.ts"
+import type { OAuthProvider } from "@keyloom/core/oauth/types";
+
+export function oidcProvider(opts: {
+  clientId: string;
+  clientSecret: string;
+  issuer: string;
+  scopes?: string[];
+}) {
+  return {
+    id: "oidc-provider",
+    
+    // OIDC discovery
+    discovery: { issuer: opts.issuer },
+    
+    authorization: {
+      url: `${opts.issuer}/auth`,
+      params: {
+        scope: (opts.scopes ?? ["openid", "profile", "email"]).join(" "),
+        response_type: "code",
+        response_mode: "query",
+      },
+    },
+    
+    token: {
+      url: `${opts.issuer}/token`,
+      style: "form",
+    },
+    
+    // Extract profile from ID token instead of userinfo endpoint
+    profileFromIdToken: (claims: Record<string, any>) => ({
+      id: claims.sub,
+      email: claims.email ?? null,
+      name: claims.name ?? claims.preferred_username ?? null,
+      image: claims.picture ?? null,
+      emailVerified: claims.email_verified ?? false,
+    }),
+    
+    scopes: opts.scopes ?? ["openid", "profile", "email"],
+    clientId: opts.clientId,
+    clientSecret: opts.clientSecret,
+  } satisfies OAuthProvider & { clientId: string; clientSecret: string };
+}
+```
+
+</Tab>
+</Tabs>
+
+## Provider Interface Reference
+
+### Core Properties
+
+```typescript
+interface OAuthProvider {
+  // Unique provider identifier
+  id: string;
+  
+  // Authorization endpoint configuration
+  authorization: {
+    url: string;
+    params?: Record<string, string>;
+  };
+  
+  // Token exchange endpoint
+  token: {
+    url: string;
+    style?: "json" | "form"; // Request body format
+    headers?: Record<string, string>;
+    customizeBody?: (body: URLSearchParams | Record<string, unknown>) => 
+      URLSearchParams | Record<string, unknown> | Promise<...>;
+  };
+  
+  // User profile endpoint (optional if using profileFromIdToken)
+  userinfo?: {
+    url?: string;
+    map?: (raw: any, tokens: Tokens) => Profile;
+  };
+  
+  // Extract profile from ID token (OIDC)
+  profileFromIdToken?: (claims: Record<string, any>) => Profile;
+  
+  // OIDC discovery (optional)
+  discovery?: { issuer: string };
+  
+  // OAuth scopes
+  scopes?: string[];
+}
+```
+
+### Profile Format
+
+```typescript
+interface Profile {
+  id: string;           // Required: unique user identifier
+  email?: string | null;
+  name?: string | null;
+  image?: string | null;
+  emailVerified?: boolean;
+  // Custom fields are preserved in user metadata
+  [key: string]: any;
+}
+```
+
+## Testing Your Provider
+
+<Steps>
+<Step>
+
+### Create Test Suite
+
+```typescript title="providers/__tests__/custom-service.test.ts"
+import { describe, expect, it, vi } from "vitest";
+import { customService } from "../custom-service";
+
+describe("Custom Service Provider", () => {
+  const provider = customService({
+    clientId: "test-client-id",
+    clientSecret: "test-client-secret",
+  });
+
+  it("has correct configuration", () => {
+    expect(provider.id).toBe("custom-service");
+    expect(provider.authorization.url).toBe("https://api.customservice.com/oauth/authorize");
+    expect(provider.token.url).toBe("https://api.customservice.com/oauth/token");
+    expect(provider.clientId).toBe("test-client-id");
+    expect(provider.clientSecret).toBe("test-client-secret");
+  });
+
+  it("maps profile correctly", () => {
+    const rawProfile = {
+      id: 12345,
+      email: "user@example.com",
+      display_name: "John Doe",
+      avatar_url: "https://example.com/avatar.jpg",
+      email_verified: true,
+    };
+
+    const mapped = provider.userinfo?.map?.(rawProfile, {} as any);
+    
+    expect(mapped).toEqual({
+      id: "12345",
+      email: "user@example.com",
+      name: "John Doe",
+      image: "https://example.com/avatar.jpg",
+      emailVerified: true,
+    });
+  });
+
+  it("handles missing profile fields", () => {
+    const rawProfile = { id: 67890 };
+    const mapped = provider.userinfo?.map?.(rawProfile, {} as any);
+    
+    expect(mapped).toEqual({
+      id: "67890",
+      email: null,
+      name: null,
+      image: null,
+      emailVerified: false,
+    });
+  });
+});
+```
+
+</Step>
+
+<Step>
+
+### Integration Testing
+
+```typescript title="providers/__tests__/integration.test.ts"
+import { startOAuth, completeOAuth } from "@keyloom/core/oauth/flow";
+import { memoryAdapter } from "@keyloom/core";
+import { customService } from "../custom-service";
+
+describe("Custom Service Integration", () => {
+  const adapter = memoryAdapter();
+  const provider = customService({
+    clientId: process.env.TEST_CLIENT_ID!,
+    clientSecret: process.env.TEST_CLIENT_SECRET!,
+  });
+
+  it("completes OAuth flow", async () => {
+    // Mock the OAuth endpoints
+    global.fetch = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          access_token: "test-token",
+          token_type: "Bearer",
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          id: 123,
+          email: "test@example.com",
+          display_name: "Test User",
+        }),
+      });
+
+    const { user, account } = await completeOAuth({
+      provider,
+      code: "test-code",
+      state: "test-state",
+      adapter,
+    });
+
+    expect(user.email).toBe("test@example.com");
+    expect(account.provider).toBe("custom-service");
+  });
+});
+```
+
+</Step>
+</Steps>
+
+## Common Patterns
+
+### Error Handling
+
+```typescript
+userinfo: {
+  url: "https://api.service.com/user",
+  map: (raw, tokens) => {
+    // Validate required fields
+    if (!raw.id) {
+      throw new Error("Provider response missing required 'id' field");
+    }
+    
+    // Handle API variations
+    const email = raw.email ?? raw.emailAddress ?? raw.mail ?? null;
+    const name = raw.displayName ?? raw.fullName ?? 
+                 `${raw.firstName} ${raw.lastName}`.trim() ?? null;
+    
+    return {
+      id: String(raw.id),
+      email,
+      name,
+      image: raw.profilePicture ?? raw.avatar ?? null,
+      emailVerified: Boolean(raw.emailVerified ?? raw.isEmailVerified),
+    };
+  },
+},
+```
+
+### Custom Headers
+
+```typescript
+token: {
+  url: "https://api.service.com/oauth/token",
+  style: "form",
+  headers: {
+    "Accept": "application/json",
+    "User-Agent": "MyApp/1.0",
+    "X-API-Version": "2023-01-01",
+  },
+},
+```
+
+### Dynamic Configuration
+
+```typescript
+export function dynamicProvider(opts: {
+  clientId: string;
+  clientSecret: string;
+  region?: string;
+  environment?: "staging" | "production";
+}) {
+  const baseUrl = opts.environment === "staging" 
+    ? "https://staging-api.service.com"
+    : "https://api.service.com";
+  
+  const regionParam = opts.region ? `?region=${opts.region}` : "";
+  
+  return {
+    id: "dynamic-provider",
+    authorization: {
+      url: `${baseUrl}/oauth/authorize${regionParam}`,
+      params: { scope: "profile email" },
+    },
+    // ... rest of configuration
+  };
+}
+```
+
+## Best Practices
+
+### Security
+
+- **Validate all profile data** - Never trust external API responses
+- **Use HTTPS only** - All OAuth endpoints must use HTTPS
+- **Implement PKCE** - For public clients, use PKCE flow
+- **Scope minimization** - Request only necessary permissions
+
+### Performance
+
+- **Cache discovery documents** - OIDC discovery responses can be cached
+- **Implement timeouts** - Set reasonable timeouts for API calls
+- **Handle rate limits** - Implement exponential backoff for API calls
+
+### User Experience
+
+- **Meaningful error messages** - Provide clear error messages for users
+- **Consistent profile mapping** - Map similar fields consistently across providers
+- **Handle edge cases** - Account for missing or malformed profile data
+
+### Testing
+
+- **Unit test profile mapping** - Test all profile transformation logic
+- **Mock external APIs** - Don't make real API calls in tests
+- **Test error scenarios** - Verify error handling works correctly
+- **Integration tests** - Test complete OAuth flow in staging environment
+
+## Contributing Providers
+
+If you create a provider for a popular service, consider contributing it:
+
+1. **Follow naming conventions** - Use lowercase service names
+2. **Add comprehensive tests** - Include unit and integration tests
+3. **Document configuration** - Provide clear setup instructions
+4. **Handle edge cases** - Account for API variations and errors
+5. **Submit a pull request** - Share with the community
+
+<Callout type="success">
+Custom providers integrate seamlessly with Keyloom's authentication flow, middleware, and session management. Once created, they work exactly like built-in providers.
+</Callout>
