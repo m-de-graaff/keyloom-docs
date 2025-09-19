@@ -349,31 +349,33 @@ export const { GET, POST } = createNextHandler(config);`,
     <main className="flex flex-1 flex-col">
       {/* Hero Section */}
       <section className="relative overflow-hidden min-h-[100dvh] sm:min-h-screen flex items-center">
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 w-full h-full">
           {/* Light mode dots */}
-          <div className="block dark:hidden">
+          <div className="block dark:hidden w-full h-full">
             <PixelBlast
               color="#dadada"
-              pixelSize={3}
-              patternScale={2}
-              patternDensity={1.3}
+              pixelSize={4}
+              patternScale={1.5}
+              patternDensity={1.2}
               pixelSizeJitter={0.45}
               speed={0.5}
               edgeFade={0.03}
               enableRipples
+              className="w-full h-full"
             />
           </div>
           {/* Dark mode dots */}
-          <div className="hidden dark:block">
+          <div className="hidden dark:block w-full h-full">
             <PixelBlast
               color="#666666"
-              pixelSize={3}
-              patternScale={2}
-              patternDensity={1.3}
+              pixelSize={4}
+              patternScale={1.5}
+              patternDensity={1.2}
               pixelSizeJitter={0.45}
               speed={0.5}
               edgeFade={0.03}
               enableRipples
+              className="w-full h-full"
             />
           </div>
         </div>
@@ -418,23 +420,23 @@ export const { GET, POST } = createNextHandler(config);`,
       </section>
 
       {/* Code Example Section */}
-      <section className="py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+      <section className="py-24 sm:py-32 overflow-hidden">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
             <h2 className="text-base font-semibold leading-7 text-fd-muted-foreground">
               Quick Setup
             </h2>
-            <p className="mt-2 text-3xl font-bold tracking-tight text-fd-foreground sm:text-4xl">
+            <p className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-fd-foreground lg:text-4xl">
               Get authentication running in minutes
             </p>
-            <p className="mt-6 text-lg leading-8 text-fd-muted-foreground">
+            <p className="mt-6 text-base sm:text-lg leading-7 sm:leading-8 text-fd-muted-foreground">
               Answer a few prompts and Keyloom scaffolds routes, providers, and
               environment variables for you.
             </p>
           </div>
           <div className="mx-auto mt-16 max-w-6xl">
-            <div className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr]">
-              <div className="relative isolate">
+            <div className="grid gap-6 sm:gap-8 lg:gap-10 lg:grid-cols-[1.15fr_0.85fr]">
+              <div className="relative isolate w-full min-w-0">
                 <div
                   className="absolute -top-12 -left-16 h-48 w-48 rounded-full bg-fd-primary/10 blur-3xl"
                   aria-hidden="true"
@@ -443,7 +445,7 @@ export const { GET, POST } = createNextHandler(config);`,
                   className="absolute inset-0 rounded-3xl border border-fd-border/40 bg-gradient-to-br from-fd-card via-fd-card/90 to-fd-background/80 shadow-xl backdrop-blur-sm"
                   aria-hidden="true"
                 />
-                <div className="relative overflow-hidden rounded-3xl border border-transparent p-6 sm:p-8">
+                <div className="relative overflow-hidden rounded-3xl border border-transparent p-3 sm:p-6 lg:p-8">
                   <div className="flex items-center justify-between border-b border-fd-border/40 pb-4">
                     <span className="text-xs font-medium uppercase tracking-[0.18em] text-fd-muted-foreground">
                       CLI flow
@@ -452,8 +454,8 @@ export const { GET, POST } = createNextHandler(config);`,
                       ~5 min setup
                     </span>
                   </div>
-                  <div className="mt-6">
-                    <Terminal className="max-w-none border border-fd-border/40 bg-fd-background/90 text-left shadow-lg">
+                  <div className="mt-6 w-full min-w-0">
+                    <Terminal className="w-full max-w-full border border-fd-border/40 bg-fd-background/90 text-left shadow-lg">
                       <TypingAnimation className="font-mono text-sm text-fd-primary">
                         ~/apps/my-app % npx keyloom init
                       </TypingAnimation>
@@ -537,27 +539,27 @@ export const { GET, POST } = createNextHandler(config);`,
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-4 sm:gap-6 w-full min-w-0">
                 {quickSetupSteps.map((step, index) => (
                   <div
                     key={step.title}
-                    className="relative flex gap-4 rounded-2xl border border-fd-border/50 bg-fd-card/80 p-6 shadow-md"
+                    className="relative flex gap-3 sm:gap-4 rounded-2xl border border-fd-border/50 bg-fd-card/80 p-4 sm:p-6 shadow-md w-full min-w-0"
                   >
-                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-fd-secondary text-sm font-semibold text-fd-foreground">
+                    <div className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full bg-fd-secondary text-sm font-semibold text-fd-foreground flex-shrink-0">
                       {index + 1}
                     </div>
-                    <div className="space-y-3">
+                    <div className="space-y-3 min-w-0 flex-1">
                       <div>
-                        <h3 className="text-base font-semibold text-fd-foreground">
+                        <h3 className="text-sm sm:text-base font-semibold text-fd-foreground">
                           {step.title}
                         </h3>
-                        <p className="mt-1 text-sm text-fd-muted-foreground">
+                        <p className="mt-1 text-xs sm:text-sm text-fd-muted-foreground">
                           {step.description}
                         </p>
                       </div>
                       {step.action ? (
-                        <div className="inline-flex items-center gap-2 rounded-md bg-fd-muted px-3 py-2 text-xs font-medium text-fd-muted-foreground">
-                          <span className="font-mono text-fd-foreground">
+                        <div className="inline-flex items-center gap-2 rounded-md bg-fd-muted px-3 py-2 text-xs font-medium text-fd-muted-foreground max-w-full">
+                          <span className="font-mono text-fd-foreground text-xs break-all">
                             {step.action}
                           </span>
                         </div>
@@ -565,7 +567,7 @@ export const { GET, POST } = createNextHandler(config);`,
                     </div>
                   </div>
                 ))}
-                <div className="rounded-2xl border border-dashed border-fd-border/50 bg-fd-background/40 p-6 text-sm text-fd-muted-foreground shadow-inner">
+                <div className="rounded-2xl border border-dashed border-fd-border/50 bg-fd-background/40 p-4 sm:p-6 text-xs sm:text-sm text-fd-muted-foreground shadow-inner w-full min-w-0">
                   <p className="font-semibold text-fd-foreground">
                     Prefer to follow along?
                   </p>
@@ -575,7 +577,7 @@ export const { GET, POST } = createNextHandler(config);`,
                   </p>
                   <Link
                     href="/docs/get-started"
-                    className="mt-4 inline-flex items-center gap-2 rounded-md bg-fd-primary/10 px-4 py-3 min-h-[44px] text-sm font-semibold text-fd-primary transition-colors hover:bg-fd-primary/20"
+                    className="mt-4 inline-flex items-center gap-2 rounded-md bg-fd-primary/10 px-4 py-3 min-h-[44px] text-xs sm:text-sm font-semibold text-fd-primary transition-colors hover:bg-fd-primary/20"
                   >
                     Open the guided tutorial <ArrowRight className="h-4 w-4" />
                   </Link>
