@@ -4,7 +4,7 @@ description: Use Drizzle ORM to persist Keyloom users, sessions, OAuth accounts,
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
-import { Steps } from "fumadocs-ui/components/steps";
+import { Steps, Step } from "fumadocs-ui/components/steps";
 import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 
 # Drizzle Adapter
@@ -165,7 +165,8 @@ The adapter uses a comprehensive schema that supports all Keyloom features:
 - **RefreshToken**: Secure token storage with family tracking
 
 <Callout>
-The complete schema is available in the package at `@keyloom/adapter-drizzle/schema` and can be customized for your needs.
+  The complete schema is available in the package at
+  `@keyloom/adapter-drizzle/schema` and can be customized for your needs.
 </Callout>
 
 ## Migrations
@@ -251,20 +252,24 @@ export const db = drizzle(client);
 ### Common Issues
 
 **Migration Errors**
+
 - Ensure your database user has CREATE/ALTER permissions
 - Check that the database exists before running migrations
 - Verify the connection string format for your database
 
 **Type Errors**
+
 - Make sure all peer dependencies are installed
 - Check that your TypeScript version is compatible (>=5.0)
 - Ensure schema imports match your database dialect
 
 **Performance Issues**
+
 - Add appropriate indexes for your query patterns
 - Use connection pooling in production
 - Consider read replicas for high-traffic applications
 
 <Callout>
-For more advanced configuration and troubleshooting, see the [Drizzle ORM documentation](https://orm.drizzle.team/).
+  For more advanced configuration and troubleshooting, see the [Drizzle ORM
+  documentation](https://orm.drizzle.team/).
 </Callout>

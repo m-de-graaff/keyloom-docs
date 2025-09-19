@@ -4,7 +4,7 @@ description: Configure Sign in with Apple OAuth with Keyloom for iOS, macOS, and
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
-import { Steps } from "fumadocs-ui/components/steps";
+import { Steps, Step } from "fumadocs-ui/components/steps";
 
 # Apple Provider
 
@@ -135,7 +135,7 @@ interface AppleProviderOptions {
   /** Private key content from .p8 file */
   privateKey: string;
   /** Requested scope (default: 'name email') */
-  scope?: 'name email' | string;
+  scope?: "name email" | string;
 }
 ```
 
@@ -145,16 +145,18 @@ The Apple provider returns user information from the ID token:
 
 ```typescript
 interface AppleProfile {
-  id: string;           // Apple user ID (sub claim)
+  id: string; // Apple user ID (sub claim)
   email: string | null; // User's email (may be private relay)
-  name: string | null;  // User's name (only on first sign-in)
+  name: string | null; // User's name (only on first sign-in)
   image: string | null; // Always null (Apple doesn't provide avatars)
   emailVerified?: boolean; // Email verification status
 }
 ```
 
 <Callout type="info">
-Apple only provides the user's name on the **first sign-in**. Subsequent sign-ins will have `name: null`. Store the name in your database on first authentication.
+  Apple only provides the user's name on the **first sign-in**. Subsequent
+  sign-ins will have `name: null`. Store the name in your database on first
+  authentication.
 </Callout>
 
 ## Apple-Specific Behavior
@@ -171,7 +173,7 @@ User names are only provided during the first authentication. Handle this in you
 // In your sign-in callback
 async function handleAppleSignIn(profile: AppleProfile, account: Account) {
   const existingUser = await getUserByEmail(profile.email);
-  
+
   if (!existingUser && profile.name) {
     // First sign-in - store the name
     await createUser({
@@ -210,11 +212,11 @@ Store your private key securely:
 const privateKey = process.env.APPLE_PRIVATE_KEY!;
 
 // Option 2: File system (for production)
-import fs from 'fs';
-const privateKey = fs.readFileSync('/path/to/AuthKey_KEYID.p8', 'utf8');
+import fs from "fs";
+const privateKey = fs.readFileSync("/path/to/AuthKey_KEYID.p8", "utf8");
 
 // Option 3: Secret management service
-const privateKey = await getSecretFromVault('apple-private-key');
+const privateKey = await getSecretFromVault("apple-private-key");
 ```
 
 ### Client Secret Generation
@@ -239,7 +241,7 @@ class SignInWithAppleCoordinator: NSObject, ASAuthorizationControllerDelegate {
     func signInWithApple() {
         let request = ASAuthorizationAppleIDProvider().createRequest()
         request.requestedScopes = [.fullName, .email]
-        
+
         let controller = ASAuthorizationController(authorizationRequests: [request])
         controller.delegate = self
         controller.presentationContextProvider = self
@@ -253,21 +255,25 @@ class SignInWithAppleCoordinator: NSObject, ASAuthorizationControllerDelegate {
 ### Common Issues
 
 **Invalid Client Error**
+
 - Verify Services ID is correctly configured
 - Check that "Sign In with Apple" is enabled for the Services ID
 - Ensure the client ID matches your Services ID exactly
 
 **Invalid Grant Error**
+
 - Check that your private key is correctly formatted
 - Verify the Key ID matches the key in Apple Developer Portal
 - Ensure the Team ID is correct
 
 **Redirect URI Mismatch**
+
 - Verify return URLs in Services ID configuration
 - Check for exact match including protocol and path
 - Ensure domain is properly verified
 
 **JWT Signature Verification Failed**
+
 - Verify private key format (should include BEGIN/END markers)
 - Check that the key corresponds to the Key ID
 - Ensure the key hasn't been regenerated in Apple Developer Portal
@@ -282,7 +288,8 @@ Test your Apple integration:
 4. **iOS**: Test native iOS integration if applicable
 
 <Callout>
-Apple requires HTTPS for all callback URLs, including development. Use tools like ngrok for local HTTPS testing.
+  Apple requires HTTPS for all callback URLs, including development. Use tools
+  like ngrok for local HTTPS testing.
 </Callout>
 
 ## Security Considerations

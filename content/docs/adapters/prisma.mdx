@@ -3,7 +3,7 @@ title: Prisma Adapter
 description: Use Prisma to persist Keyloom users, sessions, OAuth accounts, and RBAC.
 ---
 
-import { Steps } from "fumadocs-ui/components/steps";
+import { Steps, Step } from "fumadocs-ui/components/steps";
 import { Callout } from "fumadocs-ui/components/callout";
 
 # Prisma Adapter
@@ -45,9 +45,11 @@ export default defineKeyloom({
 ```bash
 npx prisma migrate dev --name keyloom_init
 ```
+
 </Steps>
 
 <Callout>
-The Prisma adapter expects standard User, Session, Account tables and, if you enable RBAC, organization and membership tables. The CLI generator scaffolds these for you.
+  The Prisma adapter expects standard User, Session, Account tables and, if you
+  enable RBAC, organization and membership tables. The CLI generator scaffolds
+  these for you.
 </Callout>
-

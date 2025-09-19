@@ -3,7 +3,7 @@ title: Migrate from Auth0
 description: Complete step-by-step guide to migrate from Auth0 to Keyloom with user data preservation.
 ---
 
-import { Steps } from "fumadocs-ui/components/steps";
+import { Steps, Step } from "fumadocs-ui/components/steps";
 import { Callout } from "fumadocs-ui/components/callout";
 import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 
@@ -12,7 +12,8 @@ import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 This guide walks you through migrating from Auth0 to Keyloom while preserving your user data and maintaining authentication functionality.
 
 <Callout type="info">
-Migration typically takes 2-4 hours for most applications. Plan for a maintenance window if you need zero downtime.
+  Migration typically takes 2-4 hours for most applications. Plan for a
+  maintenance window if you need zero downtime.
 </Callout>
 
 ## Pre-Migration Checklist
@@ -98,40 +99,40 @@ Use Auth0's Management API to export user data:
 <Tab value="script" label="Node.js Script">
 
 ```javascript title="scripts/export-auth0-users.js"
-const { ManagementClient } = require('auth0');
+const { ManagementClient } = require("auth0");
 
 const management = new ManagementClient({
   domain: process.env.AUTH0_DOMAIN,
   clientId: process.env.AUTH0_CLIENT_ID,
   clientSecret: process.env.AUTH0_CLIENT_SECRET,
-  scope: 'read:users read:user_idp_tokens'
+  scope: "read:users read:user_idp_tokens",
 });
 
 async function exportUsers() {
   let users = [];
   let page = 0;
   const perPage = 100;
-  
+
   while (true) {
     const batch = await management.getUsers({
       page,
       per_page: perPage,
       include_totals: true,
     });
-    
+
     users = users.concat(batch.users);
-    
+
     if (batch.users.length < perPage) break;
     page++;
   }
-  
+
   console.log(`Exported ${users.length} users`);
-  
+
   // Transform Auth0 user format to Keyloom format
   const keyloomUsers = users.map(transformAuth0User);
-  
-  require('fs').writeFileSync(
-    'auth0-users-export.json',
+
+  require("fs").writeFileSync(
+    "auth0-users-export.json",
     JSON.stringify(keyloomUsers, null, 2)
   );
 }
@@ -146,12 +147,13 @@ function transformAuth0User(auth0User) {
     createdAt: new Date(auth0User.created_at),
     updatedAt: new Date(auth0User.updated_at),
     // Map Auth0 identities to Keyloom accounts
-    accounts: auth0User.identities?.map(identity => ({
-      provider: mapAuth0Provider(identity.provider),
-      providerAccountId: identity.user_id,
-      type: 'oauth',
-      // Note: tokens will need to be re-obtained
-    })) || [],
+    accounts:
+      auth0User.identities?.map((identity) => ({
+        provider: mapAuth0Provider(identity.provider),
+        providerAccountId: identity.user_id,
+        type: "oauth",
+        // Note: tokens will need to be re-obtained
+      })) || [],
     // Map Auth0 app_metadata to Keyloom format
     metadata: {
       roles: auth0User.app_metadata?.roles || [],
@@ -163,10 +165,10 @@ function transformAuth0User(auth0User) {
 
 function mapAuth0Provider(auth0Provider) {
   const providerMap = {
-    'google-oauth2': 'google',
-    'github': 'github',
-    'microsoft': 'microsoft',
-    'auth0': 'auth0', // For database connections
+    "google-oauth2": "google",
+    github: "github",
+    microsoft: "microsoft",
+    auth0: "auth0", // For database connections
     // Add other provider mappings as needed
   };
   return providerMap[auth0Provider] || auth0Provider;
@@ -204,17 +206,17 @@ auth0 users export --format json --output auth0-users.json
 Create a script to import the transformed user data:
 
 ```javascript title="scripts/import-users-to-keyloom.js"
-const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcryptjs');
-const fs = require('fs');
+const { PrismaClient } = require("@prisma/client");
+const bcrypt = require("bcryptjs");
+const fs = require("fs");
 
 const prisma = new PrismaClient();
 
 async function importUsers() {
-  const users = JSON.parse(fs.readFileSync('auth0-users-export.json', 'utf8'));
-  
+  const users = JSON.parse(fs.readFileSync("auth0-users-export.json", "utf8"));
+
   console.log(`Importing ${users.length} users...`);
-  
+
   for (const user of users) {
     try {
       // Create user
@@ -229,7 +231,7 @@ async function importUsers() {
           updatedAt: user.updatedAt,
         },
       });
-      
+
       // Create accounts (OAuth connections)
       for (const account of user.accounts) {
         await prisma.account.create({
@@ -242,7 +244,7 @@ async function importUsers() {
           },
         });
       }
-      
+
       // Handle password users (Auth0 database connections)
       if (user.password) {
         // Note: Auth0 password hashes cannot be directly imported
@@ -250,20 +252,23 @@ async function importUsers() {
         await prisma.credential.create({
           data: {
             userId: createdUser.id,
-            hashedPassword: await bcrypt.hash('TEMP_PASSWORD_RESET_REQUIRED', 12),
+            hashedPassword: await bcrypt.hash(
+              "TEMP_PASSWORD_RESET_REQUIRED",
+              12
+            ),
             // Flag for password reset requirement
             requiresReset: true,
           },
         });
       }
-      
+
       console.log(`Imported user: ${user.email}`);
     } catch (error) {
       console.error(`Failed to import user ${user.email}:`, error.message);
     }
   }
-  
-  console.log('User import completed');
+
+  console.log("User import completed");
 }
 
 importUsers()
@@ -292,7 +297,7 @@ async function sendPasswordResetEmails() {
       },
     },
   });
-  
+
   for (const user of users) {
     if (user.email) {
       await sendPasswordResetEmail(user.email);
@@ -310,11 +315,11 @@ async function sendPasswordResetEmails() {
 // Fallback to Auth0 for users who haven't migrated yet
 export async function authMiddleware(req, res, next) {
   const { email, password } = req.body;
-  
+
   // Try Keyloom first
   const user = await authenticateWithKeyloom(email, password);
   if (user) return next();
-  
+
   // Fallback to Auth0
   try {
     const auth0User = await authenticateWithAuth0(email, password);
@@ -324,10 +329,10 @@ export async function authMiddleware(req, res, next) {
       return next();
     }
   } catch (error) {
-    console.error('Auth0 fallback failed:', error);
+    console.error("Auth0 fallback failed:", error);
   }
-  
-  return res.status(401).json({ error: 'Authentication failed' });
+
+  return res.status(401).json({ error: "Authentication failed" });
 }
 ```
 
@@ -347,11 +352,11 @@ Replace Auth0 SDK calls with Keyloom:
 
 ```typescript title="Before (Auth0)"
 // pages/api/auth/[...auth0].js
-import { handleAuth } from '@auth0/nextjs-auth0';
+import { handleAuth } from "@auth0/nextjs-auth0";
 export default handleAuth();
 
 // pages/profile.js
-import { useUser } from '@auth0/nextjs-auth0/client';
+import { useUser } from "@auth0/nextjs-auth0/client";
 
 export default function Profile() {
   const { user, error, isLoading } = useUser();
@@ -386,7 +391,7 @@ export default async function Profile() {
 <Tab value="react" label="React SPA">
 
 ```typescript title="Before (Auth0)"
-import { Auth0Provider, useAuth0 } from '@auth0/auth0-react';
+import { Auth0Provider, useAuth0 } from "@auth0/auth0-react";
 
 function App() {
   return (
@@ -417,11 +422,11 @@ const auth = createAuthClient({
 
 function Profile() {
   const [user, setUser] = useState(null);
-  
+
   useEffect(() => {
     auth.getSession().then(setUser);
   }, []);
-  
+
   // ... component logic
 }
 ```
@@ -442,9 +447,10 @@ Convert Auth0 Rules and Actions to Keyloom hooks:
 
 ```javascript title="Auth0 Rule Example"
 function addCustomClaims(user, context, callback) {
-  const namespace = 'https://yourdomain.com/';
-  context.idToken[namespace + 'roles'] = user.app_metadata.roles || [];
-  context.idToken[namespace + 'permissions'] = user.app_metadata.permissions || [];
+  const namespace = "https://yourdomain.com/";
+  context.idToken[namespace + "roles"] = user.app_metadata.roles || [];
+  context.idToken[namespace + "permissions"] =
+    user.app_metadata.permissions || [];
   callback(null, user, context);
 }
 ```
@@ -459,23 +465,23 @@ export default defineKeyloom({
   hooks: {
     async beforeSignIn(user, account, profile) {
       // Add custom logic before sign in
-      console.log('User signing in:', user.email);
+      console.log("User signing in:", user.email);
       return true; // Allow sign in
     },
-    
+
     async afterSignIn(user, account, profile, isNewUser) {
       // Add roles and permissions to user
       if (isNewUser) {
         await assignDefaultRoles(user.id);
       }
-      
+
       // Log sign in event
-      await logAuditEvent('sign_in', user.id);
+      await logAuditEvent("sign_in", user.id);
     },
-    
+
     async beforeSignOut(user) {
       // Custom logic before sign out
-      await logAuditEvent('sign_out', user.id);
+      await logAuditEvent("sign_out", user.id);
     },
   },
 });
@@ -485,7 +491,7 @@ async function assignDefaultRoles(userId: string) {
   await prisma.userRole.create({
     data: {
       userId,
-      roleId: 'default-user-role',
+      roleId: "default-user-role",
     },
   });
 }
@@ -503,34 +509,34 @@ async function assignDefaultRoles(userId: string) {
 Thoroughly test your migration:
 
 ```typescript title="tests/migration.test.ts"
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test.describe('Auth0 to Keyloom Migration', () => {
-  test('existing users can sign in', async ({ page }) => {
-    await page.goto('/login');
-    
+test.describe("Auth0 to Keyloom Migration", () => {
+  test("existing users can sign in", async ({ page }) => {
+    await page.goto("/login");
+
     // Test OAuth sign in
     await page.click('[data-testid="google-signin"]');
     // ... test OAuth flow
-    
+
     // Test email/password sign in (after password reset)
-    await page.fill('[name="email"]', 'test@example.com');
-    await page.fill('[name="password"]', 'new-password');
+    await page.fill('[name="email"]', "test@example.com");
+    await page.fill('[name="password"]', "new-password");
     await page.click('[type="submit"]');
-    
+
     await expect(page.locator('[data-testid="user-name"]')).toBeVisible();
   });
-  
-  test('user data is preserved', async ({ page }) => {
+
+  test("user data is preserved", async ({ page }) => {
     // Test that user metadata, roles, etc. are preserved
-    await signIn(page, 'test@example.com');
-    
+    await signIn(page, "test@example.com");
+
     const userData = await page.evaluate(() => {
-      return fetch('/api/user').then(r => r.json());
+      return fetch("/api/user").then((r) => r.json());
     });
-    
-    expect(userData.roles).toContain('admin');
-    expect(userData.metadata.department).toBe('engineering');
+
+    expect(userData.roles).toContain("admin");
+    expect(userData.metadata.department).toBe("engineering");
   });
 });
 ```
@@ -575,6 +581,7 @@ Choose your cutover strategy:
 **Problem**: Auth0 password hashes cannot be imported directly.
 
 **Solutions**:
+
 - Force password reset for all users
 - Implement gradual migration with Auth0 fallback
 - Use magic link authentication temporarily
@@ -584,6 +591,7 @@ Choose your cutover strategy:
 **Problem**: Auth0 custom claims need to be mapped to Keyloom format.
 
 **Solution**:
+
 ```typescript
 // Map Auth0 app_metadata to Keyloom user metadata
 const keyloomUser = {
@@ -606,7 +614,8 @@ const keyloomUser = {
 
 **Problem**: MFA settings don't transfer from Auth0.
 
-**Solution**: 
+**Solution**:
+
 - Reset MFA for all users
 - Implement gradual MFA re-enrollment
 - Consider temporary MFA bypass during migration
@@ -632,7 +641,7 @@ If issues arise during migration:
 4. **Communication**: Notify users of temporary service restoration
 
 <Callout type="warning">
-Always test your rollback plan in a staging environment before going live.
+  Always test your rollback plan in a staging environment before going live.
 </Callout>
 
 ## Cost Savings Calculator
