@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { ArrowRight, Shield, Zap, Code, Database, Users, GitBranch } from 'lucide-react';
 import  PixelBlast  from '@/components/PixelBlast';
+import { AnimatedSpan, Terminal, TypingAnimation } from '@/components/terminal';
 import { CodeBlock, github, atomOneDark, irBlack } from 'react-code-blocks';
 
 
@@ -32,6 +33,24 @@ function ThemedCodeBlock({ language, text }: { language: string; text: string })
 }
 
 export default function HomePage() {
+  const quickSetupSteps = [
+    {
+      title: 'Install the CLI',
+      description: 'Scaffold your Keyloom project with one command and interactive prompts.',
+      action: 'npx @keyloom/cli init',
+    },
+    {
+      title: 'Connect your providers',
+      description: 'Pick from built-in OAuth presets or supply custom credentials and Keyloom wires the callbacks for you.',
+      action: 'providers: [github(), google()]',
+    },
+    {
+      title: 'Protect routes instantly',
+      description: 'Drop our middleware and hooks into your app to enforce authentication with sensible defaults.',
+      action: 'const session = await getSession()',
+    },
+  ];
+
   return (
     <main className="flex flex-1 flex-col">
       {/* Hero Section */}
@@ -104,7 +123,7 @@ export default function HomePage() {
       {/* Code Example Section */}
       <section className="py-24 sm:py-32">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl lg:text-center">
+          <div className="mx-auto max-w-3xl text-center">
             <h2 className="text-base font-semibold leading-7 text-fd-muted-foreground">
               Quick Setup
             </h2>
@@ -112,300 +131,115 @@ export default function HomePage() {
               Get authentication running in minutes
             </p>
             <p className="mt-6 text-lg leading-8 text-fd-muted-foreground">
-              One command to initialize, configure, and deploy production-ready authentication.
+              Answer a few prompts and Keyloom scaffolds routes, providers, and environment variables for you.
             </p>
           </div>
-          <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
-            <div className="grid grid-cols-1 gap-x-8 gap-y-16 lg:grid-cols-2">
-              <div>
-                <h3 className="text-lg font-semibold leading-8 text-fd-foreground">
-                  Initialize with CLI
-                </h3>
-                <div className="mt-4 overflow-auto rounded-lg border bg-fd-card shadow-lg">
-                  <div className="border-b bg-fd-muted px-4 py-2">
-                    <div className="text-xs font-medium text-fd-muted-foreground">Terminal</div>
+          <div className="mx-auto mt-16 max-w-6xl">
+            <div className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr]">
+              <div className="relative isolate">
+                <div
+                  className="absolute -top-12 -left-16 h-48 w-48 rounded-full bg-fd-primary/10 blur-3xl"
+                  aria-hidden="true"
+                />
+                <div
+                  className="absolute inset-0 rounded-3xl border border-fd-border/40 bg-gradient-to-br from-fd-card via-fd-card/90 to-fd-background/80 shadow-xl backdrop-blur-sm"
+                  aria-hidden="true"
+                />
+                <div className="relative overflow-hidden rounded-3xl border border-transparent p-6 sm:p-8">
+                  <div className="flex items-center justify-between border-b border-fd-border/40 pb-4">
+                    <span className="text-xs font-medium uppercase tracking-[0.18em] text-fd-muted-foreground">
+                      CLI flow
+                    </span>
+                    <span className="text-xs text-fd-muted-foreground/80">
+                      ~5 min setup
+                    </span>
                   </div>
-                  <div className="">
-                    <div className="text-sm leading-relaxed">
-                      <ThemedCodeBlock
-                        language="bash"
-                        text={`$ npx keyloom init
-✓ Created keyloom.config.ts
-✓ Added API routes
-✓ Generated database schema
-✓ Ready to authenticate!`}
-                      />
+                  <div className="mt-6">
+                    <Terminal className="max-w-none border border-fd-border/40 bg-fd-background/90 text-left shadow-lg">
+                      <TypingAnimation className="font-mono text-sm text-fd-primary">
+                        ~/apps/my-app % npx @keyloom/cli init
+                      </TypingAnimation>
+                      <TypingAnimation className="font-mono text-sm text-fd-muted-foreground">
+                        ? What framework are you using - Next.js
+                      </TypingAnimation>
+                      <TypingAnimation className="font-mono text-sm text-fd-muted-foreground">
+                        ? Select providers - GitHub, Google
+                      </TypingAnimation>
+                      <TypingAnimation className="font-mono text-sm text-fd-muted-foreground">
+                        ? Database adapter - Prisma + PlanetScale
+                      </TypingAnimation>
+                      <TypingAnimation className="font-mono text-sm text-emerald-400">
+                        Generated src/auth/config.ts
+                      </TypingAnimation>
+                      <TypingAnimation className="font-mono text-sm text-emerald-400">
+                        Synced environment variables with Keyloom Vault
+                      </TypingAnimation>
+                      <AnimatedSpan className="font-mono text-sm text-fd-muted-foreground/80">
+                        Next step: npm run dev
+                      </AnimatedSpan>
+                    </Terminal>
+                  </div>
+                  <div className="mt-6 grid gap-4 rounded-2xl border border-fd-border/30 bg-fd-muted/40 p-4 text-left sm:grid-cols-2">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-fd-muted-foreground">
+                        Includes
+                      </p>
+                      <ul className="mt-2 space-y-1 text-sm text-fd-muted-foreground">
+                        <li>API routes wired to Keyloom</li>
+                        <li>OAuth provider presets</li>
+                        <li>Example protected page</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-fd-muted-foreground">
+                        Works with
+                      </p>
+                      <ul className="mt-2 space-y-1 text-sm text-fd-muted-foreground">
+                        <li>Next.js App Router</li>
+                        <li>Prisma or Drizzle</li>
+                        <li>Edge or Node runtimes</li>
+                      </ul>
                     </div>
                   </div>
                 </div>
               </div>
-              <div>
-                <h3 className="text-lg font-semibold leading-8 text-fd-foreground">
-                  Configuration
-                </h3>
-                <div className="mt-4 overflow-auto rounded-lg border bg-fd-card shadow-lg">
-                  <div className="border-b bg-fd-muted px-4 py-2">
-                    <div className="text-xs font-medium text-fd-muted-foreground">keyloom.config.ts</div>
-                  </div>
-                  <div className="">
-                    <div className="text-sm leading-relaxed">
-                      <ThemedCodeBlock
-                        language="typescript"
-                        text={`export default defineKeyloom({
-  adapter: prismaAdapter(prisma),
-  providers: [
-    github({ clientId, clientSecret }),
-    google({ clientId, clientSecret }),
-  ],
-  rbac: { enabled: true },
-  session: { strategy: "database" },
-});`}
-                      />
+              <div className="flex flex-col gap-6">
+                {quickSetupSteps.map((step, index) => (
+                  <div
+                    key={step.title}
+                    className="relative flex gap-4 rounded-2xl border border-fd-border/50 bg-fd-card/80 p-6 shadow-md"
+                  >
+                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-fd-secondary text-sm font-semibold text-fd-foreground">
+                      {index + 1}
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <h3 className="text-base font-semibold text-fd-foreground">{step.title}</h3>
+                        <p className="mt-1 text-sm text-fd-muted-foreground">
+                          {step.description}
+                        </p>
+                      </div>
+                      {step.action ? (
+                        <div className="inline-flex items-center gap-2 rounded-md bg-fd-muted px-3 py-2 text-xs font-medium text-fd-muted-foreground">
+                          <span className="font-mono text-fd-foreground">{step.action}</span>
+                        </div>
+                      ) : null}
                     </div>
                   </div>
+                ))}
+                <div className="rounded-2xl border border-dashed border-fd-border/50 bg-fd-background/40 p-6 text-sm text-fd-muted-foreground shadow-inner">
+                  <p className="font-semibold text-fd-foreground">Prefer to follow along?</p>
+                  <p className="mt-2">
+                    Watch the full walkthrough to see environment syncing, provider setup, and deployment in real time.
+                  </p>
+                  <Link
+                    href="/docs/get-started"
+                    className="mt-4 inline-flex items-center gap-2 rounded-md bg-fd-primary/10 px-3 py-2 text-xs font-semibold text-fd-primary transition-colors hover:bg-fd-primary/20"
+                  >
+                    Open the guided tutorial <ArrowRight className="h-4 w-4" />
+                  </Link>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-24 sm:py-32 bg-fd-muted">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl lg:text-center">
-            <h2 className="text-base font-semibold leading-7 text-fd-muted-foreground">
-              Everything you need
-            </h2>
-            <p className="mt-2 text-3xl font-bold tracking-tight text-fd-foreground sm:text-4xl">
-              Enterprise-grade authentication features
-            </p>
-            <p className="mt-6 text-lg leading-8 text-fd-muted-foreground">
-              From simple OAuth to complex enterprise SSO, Keyloom handles it all with security and performance in mind.
-            </p>
-          </div>
-          <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-4xl">
-            <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-10 lg:max-w-none lg:grid-cols-2 lg:gap-y-16">
-              <div className="relative pl-16">
-                <dt className="text-base font-semibold leading-7 text-fd-foreground">
-                  <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg border bg-fd-secondary">
-                    <Shield className="h-6 w-6 text-fd-secondary-foreground" aria-hidden="true" />
-                  </div>
-                  Security First
-                </dt>
-                <dd className="mt-2 text-base leading-7 text-fd-muted-foreground">
-                  Built-in CSRF protection, secure session management, and industry-standard OAuth 2.0 flows.
-                </dd>
-              </div>
-              <div className="relative pl-16">
-                <dt className="text-base font-semibold leading-7 text-fd-foreground">
-                  <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg border bg-fd-secondary">
-                    <Zap className="h-6 w-6 text-fd-secondary-foreground" aria-hidden="true" />
-                  </div>
-                  Lightning Fast
-                </dt>
-                <dd className="mt-2 text-base leading-7 text-fd-muted-foreground">
-                  Optimized for performance with edge runtime support, efficient database queries, and smart caching.
-                </dd>
-              </div>
-              <div className="relative pl-16">
-                <dt className="text-base font-semibold leading-7 text-fd-foreground">
-                  <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg border bg-fd-secondary">
-                    <Code className="h-6 w-6 text-fd-secondary-foreground" aria-hidden="true" />
-                  </div>
-                  TypeScript Native
-                </dt>
-                <dd className="mt-2 text-base leading-7 text-fd-muted-foreground">
-                  Full type safety, excellent IntelliSense, and compile-time error checking for robust applications.
-                </dd>
-              </div>
-              <div className="relative pl-16">
-                <dt className="text-base font-semibold leading-7 text-fd-foreground">
-                  <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg border bg-fd-secondary">
-                    <Database className="h-6 w-6 text-fd-secondary-foreground" aria-hidden="true" />
-                  </div>
-                  Database Agnostic
-                </dt>
-                <dd className="mt-2 text-base leading-7 text-fd-muted-foreground">
-                  Works with PostgreSQL, MySQL, MongoDB, SQLite, and more. Bring your own database or use our adapters.
-                </dd>
-              </div>
-              <div className="relative pl-16">
-                <dt className="text-base font-semibold leading-7 text-fd-foreground">
-                  <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg border bg-fd-secondary">
-                    <Users className="h-6 w-6 text-fd-secondary-foreground" aria-hidden="true" />
-                  </div>
-                  Built-in RBAC
-                </dt>
-                <dd className="mt-2 text-base leading-7 text-fd-muted-foreground">
-                  Organizations, roles, permissions, and invitations out of the box. Scale from simple to enterprise.
-                </dd>
-              </div>
-              <div className="relative pl-16">
-                <dt className="text-base font-semibold leading-7 text-fd-foreground">
-                  <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg border bg-fd-secondary">
-                    <GitBranch className="h-6 w-6 text-fd-secondary-foreground" aria-hidden="true" />
-                  </div>
-                  Zero Vendor Lock-in
-                </dt>
-                <dd className="mt-2 text-base leading-7 text-fd-muted-foreground">
-                  Open source, self-hosted, and fully customizable. Your data stays in your control forever.
-                </dd>
-              </div>
-            </dl>
-          </div>
-        </div>
-      </section>
-
-      {/* Comparison Section */}
-      <section className="py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl lg:text-center">
-            <h2 className="text-base font-semibold leading-7 text-fd-muted-foreground">
-              Why choose Keyloom?
-            </h2>
-            <p className="mt-2 text-3xl font-bold tracking-tight text-fd-foreground sm:text-4xl">
-              Better than the alternatives
-            </p>
-            <p className="mt-6 text-lg leading-8 text-fd-muted-foreground">
-              Compare Keyloom with other authentication solutions and see why developers are making the switch.
-            </p>
-          </div>
-          <div className="mx-auto mt-16 max-w-4xl">
-            <div className="overflow-hidden rounded-lg border bg-fd-card shadow-sm">
-              <table className="min-w-full divide-y">
-                <thead className="bg-fd-muted">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-fd-muted-foreground">
-                      Feature
-                    </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wide text-fd-muted-foreground">
-                      Keyloom
-                    </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wide text-fd-muted-foreground">
-                      Auth0
-                    </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wide text-fd-muted-foreground">
-                      Firebase
-                    </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wide text-fd-muted-foreground">
-                      Supabase
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y bg-fd-card">
-                  <tr>
-                    <td className="px-6 py-4 text-sm font-medium text-fd-foreground">
-                      Open Source
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex h-2 w-2 rounded-full bg-fd-primary"></span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex h-2 w-2 rounded-full bg-fd-muted-foreground/50"></span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex h-2 w-2 rounded-full bg-fd-muted-foreground/50"></span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex h-2 w-2 rounded-full bg-fd-primary"></span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 text-sm font-medium text-fd-foreground">
-                      Self-Hosted
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex h-2 w-2 rounded-full bg-fd-primary"></span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex h-2 w-2 rounded-full bg-fd-muted-foreground/50"></span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex h-2 w-2 rounded-full bg-fd-muted-foreground/50"></span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex h-2 w-2 rounded-full bg-fd-primary"></span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 text-sm font-medium text-fd-foreground">
-                      Built-in RBAC
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex h-2 w-2 rounded-full bg-fd-primary"></span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex h-2 w-2 rounded-full bg-fd-primary"></span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex h-2 w-2 rounded-full bg-fd-muted-foreground/50"></span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex h-2 w-2 rounded-full bg-fd-muted-foreground/50"></span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 text-sm font-medium text-fd-foreground">
-                      Edge Runtime
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex h-2 w-2 rounded-full bg-fd-primary"></span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex h-2 w-2 rounded-full bg-fd-primary"></span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex h-2 w-2 rounded-full bg-fd-muted-foreground/50"></span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex h-2 w-2 rounded-full bg-fd-muted-foreground/50"></span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 text-sm font-medium text-fd-foreground">
-                      TypeScript First
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex h-2 w-2 rounded-full bg-fd-primary"></span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex h-2 w-2 rounded-full bg-fd-primary"></span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex h-2 w-2 rounded-full bg-fd-muted-foreground/50"></span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex h-2 w-2 rounded-full bg-fd-primary"></span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 text-sm font-medium text-fd-foreground">
-                      Zero Usage Fees
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex h-2 w-2 rounded-full bg-fd-primary"></span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex h-2 w-2 rounded-full bg-fd-muted-foreground/50"></span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex h-2 w-2 rounded-full bg-fd-muted-foreground/50"></span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex h-2 w-2 rounded-full bg-fd-muted-foreground/50"></span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div className="mt-8 text-center">
-              <Link
-                href="/docs/get-started/comparison"
-                className="text-sm font-semibold text-fd-foreground hover:opacity-80"
-              >
-                View detailed comparison <ArrowRight className="ml-1 inline h-4 w-4" />
-              </Link>
             </div>
           </div>
         </div>
@@ -490,3 +324,5 @@ export default function HomePage() {
     </main>
   );
 }
+
+
