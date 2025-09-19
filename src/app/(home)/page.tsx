@@ -5,7 +5,7 @@ import PixelBlast from "@/components/PixelBlast";
 import { AnimatedSpan, Terminal, TypingAnimation } from "@/components/terminal";
 import { CodeBlock, github, atomOneDark, irBlack } from "react-code-blocks";
 import { CodeComparison } from "@/components/code-comparison";
-import { Highlighter } from "@/components/highlighter";
+
 import LogoLoop from "@/components/loop";
 
 // Theme-aware CodeBlock component
@@ -46,42 +46,64 @@ export default function HomePage() {
       title: "Install the CLI",
       description:
         "Add the dev-only CLI and run the interactive init to detect your framework, install deps, and scaffold config.",
-      action: "pnpm add -D @keyloom/cli && npx keyloom init",
+      action: "pnpm add -D @keyloom/cli",
     },
     {
       title: "Connect your providers",
-      description:
-        "Configure providers in keyloom.config.ts and set client IDs/secrets in .env (GitHub, Google, Discord, or custom).",
+      description: "Add OAuth providers with simple config",
       action: "providers: [github(), google()]",
     },
     {
       title: "Protect routes instantly",
-      description:
-        "Enable the middleware and route manifest for immediate access control across pages and APIs.",
+      description: "Add middleware for instant route protection",
       action: "export default createAuthMiddleware(config, { routes })",
     },
   ];
 
-  const codeBefore = `import { NextResponse } from 'next/server';
+  const codeBefore = `// lib/auth.ts - Manual OAuth + session setup
+import { NextAuthOptions } from 'next-auth';
+import GithubProvider from 'next-auth/providers/github';
+import { PrismaAdapter } from '@next-auth/prisma-adapter';
+import { prisma } from './prisma';
 
-export async function GET() {
-  // Public route without auth
-  return NextResponse.json({ ok: true });
-}`;
+export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma),
+  providers: [
+    GithubProvider({
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+    }),
+  ],
+  callbacks: {
+    session: ({ session, token }) => ({
+      ...session,
+      user: { ...session.user, id: token.sub },
+    }),
+    jwt: ({ token, user }) => {
+      if (user) token.sub = user.id;
+      return token;
+    },
+  },
+  pages: { signIn: '/auth/signin' },
+  session: { strategy: 'jwt' },
+};
 
-  const codeAfter = `import { NextResponse } from 'next/server';
-import { withAuth } from '@keyloom/next';
+// api/auth/[...nextauth].ts
+import NextAuth from 'next-auth';
+import { authOptions } from '@/lib/auth';
+export default NextAuth(authOptions);`;
 
-export const GET = withAuth(async (ctx) => {
-  // [!code focus] Only authenticated users reach here
-  return NextResponse.json({ user: ctx.session.user });
+  const codeAfter = `// keyloom.config.ts - Complete auth setup
+export default defineConfig({
+  providers: [github()],
+  session: { strategy: 'database' }
 });`;
 
   const logos = [
     {
       node: (
         <img
-          className="h-7 w-auto object-contain dark:invert"
+          className="h-7 w-auto object-contain opacity-60 hover:opacity-80 transition-opacity filter grayscale"
           src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nextjs/nextjs-original.svg"
           alt="Next.js"
           title="Next.js"
@@ -93,7 +115,7 @@ export const GET = withAuth(async (ctx) => {
     {
       node: (
         <img
-          className="h-7 w-auto object-contain"
+          className="h-7 w-auto object-contain opacity-60 hover:opacity-80 transition-opacity filter grayscale"
           src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg"
           alt="React"
           title="React"
@@ -105,7 +127,7 @@ export const GET = withAuth(async (ctx) => {
     {
       node: (
         <img
-          className="h-7 w-auto object-contain"
+          className="h-7 w-auto object-contain opacity-60 hover:opacity-80 transition-opacity filter grayscale"
           src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg"
           alt="Node.js"
           title="Node.js"
@@ -117,7 +139,7 @@ export const GET = withAuth(async (ctx) => {
     {
       node: (
         <img
-          className="h-7 w-auto object-contain"
+          className="h-7 w-auto object-contain opacity-60 hover:opacity-80 transition-opacity filter grayscale"
           src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/prisma/prisma-original.svg"
           alt="Prisma"
           title="Prisma"
@@ -129,7 +151,7 @@ export const GET = withAuth(async (ctx) => {
     {
       node: (
         <img
-          className="h-7 w-auto object-contain"
+          className="h-7 w-auto object-contain opacity-60 hover:opacity-80 transition-opacity filter grayscale"
           src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg"
           alt="PostgreSQL"
           title="PostgreSQL"
@@ -141,7 +163,7 @@ export const GET = withAuth(async (ctx) => {
     {
       node: (
         <img
-          className="h-7 w-auto object-contain"
+          className="h-7 w-auto object-contain opacity-60 hover:opacity-80 transition-opacity filter grayscale"
           src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tailwindcss/tailwindcss-original.svg"
           alt="Tailwind CSS"
           title="Tailwind CSS"
@@ -153,7 +175,7 @@ export const GET = withAuth(async (ctx) => {
     {
       node: (
         <img
-          className="h-7 w-auto object-contain dark:invert"
+          className="h-7 w-auto object-contain opacity-60 hover:opacity-80 transition-opacity filter grayscale"
           src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vercel/vercel-original.svg"
           alt="Vercel"
           title="Vercel"
@@ -165,7 +187,7 @@ export const GET = withAuth(async (ctx) => {
     {
       node: (
         <img
-          className="h-7 w-auto object-contain dark:invert"
+          className="h-7 w-auto object-contain opacity-60 hover:opacity-80 transition-opacity filter grayscale"
           src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg"
           alt="GitHub"
           title="GitHub"
@@ -429,9 +451,9 @@ export const GET = withAuth(async (ctx) => {
             </p>
           </div>
 
-          <div className="mx-auto mt-12 grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="mx-auto mt-12 max-w-5xl">
             {/* CodeComparison Card */}
-            <div className="lg:col-span-2 relative overflow-hidden rounded-3xl border border-fd-border/40 bg-fd-card/80 p-0 shadow-xl">
+            <div className="relative overflow-hidden rounded-3xl border border-fd-border/40 bg-fd-card/80 p-0 shadow-xl">
               <div className="flex items-center justify-between border-b border-fd-border/40 px-6 py-4">
                 <span className="text-xs font-medium uppercase tracking-[0.18em] text-fd-muted-foreground">
                   Before / After
@@ -445,46 +467,10 @@ export const GET = withAuth(async (ctx) => {
                   beforeCode={codeBefore}
                   afterCode={codeAfter}
                   language="ts"
-                  filename="route.ts"
+                  filename="auth-setup.ts"
                   lightTheme="github-light"
                   darkTheme="github-dark"
                 />
-              </div>
-            </div>
-
-            {/* Highlighter Card */}
-            <div className="relative overflow-hidden rounded-3xl border border-fd-border/40 bg-fd-card/80 p-6 shadow-xl">
-              <div className="mb-4 flex items-center justify-between border-b border-fd-border/40 pb-4">
-                <span className="text-xs font-medium uppercase tracking-[0.18em] text-fd-muted-foreground">
-                  Inline emphasis
-                </span>
-                <span className="text-xs text-fd-muted-foreground/80">
-                  Rough Notation
-                </span>
-              </div>
-              <div className="space-y-4 text-fd-foreground">
-                <p className="text-sm leading-6 text-fd-muted-foreground">
-                  Use{" "}
-                  <Highlighter action="underline" color="#8b5cf6" isView>
-                    annotations
-                  </Highlighter>{" "}
-                  to draw attention,{" "}
-                  <Highlighter action="box" color="#10b981" isView>
-                    explain config
-                  </Highlighter>
-                  , and
-                  <Highlighter action="highlight" color="#fde68a" isView>
-                    guide readers
-                  </Highlighter>{" "}
-                  through your docs.
-                </p>
-                <p className="text-sm leading-6 text-fd-muted-foreground">
-                  It supports{" "}
-                  <Highlighter action="bracket" color="#f43f5e" isView>
-                    multiple styles
-                  </Highlighter>{" "}
-                  and adapts to content reflows.
-                </p>
               </div>
             </div>
           </div>
