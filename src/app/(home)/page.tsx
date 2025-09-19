@@ -4,6 +4,9 @@ import { ArrowRight } from "lucide-react";
 import PixelBlast from "@/components/PixelBlast";
 import { AnimatedSpan, Terminal, TypingAnimation } from "@/components/terminal";
 import { CodeBlock, github, atomOneDark, irBlack } from "react-code-blocks";
+import { CodeComparison } from "@/components/code-comparison";
+import { Highlighter } from "@/components/highlighter";
+import LogoLoop from "@/components/loop";
 
 // Theme-aware CodeBlock component
 function ThemedCodeBlock({
@@ -56,6 +59,120 @@ export default function HomePage() {
       description:
         "Enable the middleware and route manifest for immediate access control across pages and APIs.",
       action: "export default createAuthMiddleware(config, { routes })",
+    },
+  ];
+
+  const codeBefore = `import { NextResponse } from 'next/server';
+
+export async function GET() {
+  // Public route without auth
+  return NextResponse.json({ ok: true });
+}`;
+
+  const codeAfter = `import { NextResponse } from 'next/server';
+import { withAuth } from '@keyloom/next';
+
+export const GET = withAuth(async (ctx) => {
+  // [!code focus] Only authenticated users reach here
+  return NextResponse.json({ user: ctx.session.user });
+});`;
+
+  const logos = [
+    {
+      node: (
+        <img
+          className="h-7 w-auto object-contain dark:invert"
+          src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nextjs/nextjs-original.svg"
+          alt="Next.js"
+          title="Next.js"
+        />
+      ),
+      href: "https://nextjs.org",
+      ariaLabel: "Next.js",
+    },
+    {
+      node: (
+        <img
+          className="h-7 w-auto object-contain"
+          src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg"
+          alt="React"
+          title="React"
+        />
+      ),
+      href: "https://react.dev",
+      ariaLabel: "React",
+    },
+    {
+      node: (
+        <img
+          className="h-7 w-auto object-contain"
+          src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg"
+          alt="Node.js"
+          title="Node.js"
+        />
+      ),
+      href: "https://nodejs.org",
+      ariaLabel: "Node.js",
+    },
+    {
+      node: (
+        <img
+          className="h-7 w-auto object-contain"
+          src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/prisma/prisma-original.svg"
+          alt="Prisma"
+          title="Prisma"
+        />
+      ),
+      href: "https://prisma.io",
+      ariaLabel: "Prisma",
+    },
+    {
+      node: (
+        <img
+          className="h-7 w-auto object-contain"
+          src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg"
+          alt="PostgreSQL"
+          title="PostgreSQL"
+        />
+      ),
+      href: "https://www.postgresql.org/",
+      ariaLabel: "PostgreSQL",
+    },
+    {
+      node: (
+        <img
+          className="h-7 w-auto object-contain"
+          src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tailwindcss/tailwindcss-original.svg"
+          alt="Tailwind CSS"
+          title="Tailwind CSS"
+        />
+      ),
+      href: "https://tailwindcss.com",
+      ariaLabel: "Tailwind CSS",
+    },
+    {
+      node: (
+        <img
+          className="h-7 w-auto object-contain dark:invert"
+          src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vercel/vercel-original.svg"
+          alt="Vercel"
+          title="Vercel"
+        />
+      ),
+      href: "https://vercel.com",
+      ariaLabel: "Vercel",
+    },
+    {
+      node: (
+        <img
+          className="h-7 w-auto object-contain dark:invert"
+          src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg"
+          alt="GitHub"
+          title="GitHub"
+        />
+      ),
+      href: "https://github.com",
+      ariaLabel: "GitHub",
     },
   ];
 
@@ -296,6 +413,102 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Showcase Components (Bento Grid) */}
+      <section className="py-16 sm:py-24">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto max-w-3xl text-center">
+            <h2 className="text-base font-semibold leading-7 text-fd-muted-foreground">
+              Powerful primitives
+            </h2>
+            <p className="mt-2 text-3xl font-bold tracking-tight text-fd-foreground sm:text-4xl">
+              Build faster with focused components
+            </p>
+          </div>
+
+          <div className="mx-auto mt-12 grid grid-cols-1 gap-6 lg:grid-cols-3">
+            {/* CodeComparison Card */}
+            <div className="lg:col-span-2 relative overflow-hidden rounded-3xl border border-fd-border/40 bg-fd-card/80 p-0 shadow-xl">
+              <div className="flex items-center justify-between border-b border-fd-border/40 px-6 py-4">
+                <span className="text-xs font-medium uppercase tracking-[0.18em] text-fd-muted-foreground">
+                  Before / After
+                </span>
+                <span className="text-xs text-fd-muted-foreground/80">
+                  Shiki highlighting
+                </span>
+              </div>
+              <div className="p-4 sm:p-6">
+                <CodeComparison
+                  beforeCode={codeBefore}
+                  afterCode={codeAfter}
+                  language="ts"
+                  filename="route.ts"
+                  lightTheme="github-light"
+                  darkTheme="github-dark"
+                />
+              </div>
+            </div>
+
+            {/* Highlighter Card */}
+            <div className="relative overflow-hidden rounded-3xl border border-fd-border/40 bg-fd-card/80 p-6 shadow-xl">
+              <div className="mb-4 flex items-center justify-between border-b border-fd-border/40 pb-4">
+                <span className="text-xs font-medium uppercase tracking-[0.18em] text-fd-muted-foreground">
+                  Inline emphasis
+                </span>
+                <span className="text-xs text-fd-muted-foreground/80">
+                  Rough Notation
+                </span>
+              </div>
+              <div className="space-y-4 text-fd-foreground">
+                <p className="text-sm leading-6 text-fd-muted-foreground">
+                  Use{" "}
+                  <Highlighter action="underline" color="#8b5cf6" isView>
+                    annotations
+                  </Highlighter>{" "}
+                  to draw attention,{" "}
+                  <Highlighter action="box" color="#10b981" isView>
+                    explain config
+                  </Highlighter>
+                  , and
+                  <Highlighter action="highlight" color="#fde68a" isView>
+                    guide readers
+                  </Highlighter>{" "}
+                  through your docs.
+                </p>
+                <p className="text-sm leading-6 text-fd-muted-foreground">
+                  It supports{" "}
+                  <Highlighter action="bracket" color="#f43f5e" isView>
+                    multiple styles
+                  </Highlighter>{" "}
+                  and adapts to content reflows.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Technology Logos */}
+      <section className="py-8 sm:py-12">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="text-sm font-medium uppercase tracking-[0.18em] text-fd-muted-foreground">
+              Built for your stack
+            </p>
+          </div>
+          <div className="mt-6">
+            <LogoLoop
+              logos={logos}
+              speed={90}
+              gap={28}
+              logoHeight={28}
+              fadeOut
+              scaleOnHover
+              ariaLabel="Technology logos"
+            />
           </div>
         </div>
       </section>
