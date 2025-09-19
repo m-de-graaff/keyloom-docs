@@ -1,9 +1,8 @@
+'use client'
 import Link from 'next/link';
 import { ArrowRight, Shield, Zap, Code, Database, Users, GitBranch } from 'lucide-react';
-import { JetBrains_Mono } from 'next/font/google';
 import  PixelBlast  from '@/components/PixelBlast';
 import { CodeBlock } from 'react-code-blocks';
-const mono = JetBrains_Mono({ subsets: ['latin'] });
 
 
 export default function HomePage() {
@@ -81,7 +80,7 @@ export default function HomePage() {
                     <div className="text-xs font-medium text-fd-muted-foreground">Terminal</div>
                   </div>
                   <div className="p-6">
-                    <div className={`${mono.className} text-sm leading-relaxed text-fd-card-foreground`}>
+                    <div className={`text-sm leading-relaxed text-fd-card-foreground`}>
                     <CodeBlock
                       language="bash"
                       text={`$ npx keyloom init
@@ -103,7 +102,7 @@ export default function HomePage() {
                     <div className="text-xs font-medium text-fd-muted-foreground">keyloom.config.ts</div>
                   </div>
                   <div className="p-6">
-                    <div className={`${mono.className} text-sm leading-relaxed text-fd-card-foreground`}>
+                    <div className={`text-sm leading-relaxed text-fd-card-foreground`}>
                       <CodeBlock
                         language="typescript"
                         text={`export default defineKeyloom({
