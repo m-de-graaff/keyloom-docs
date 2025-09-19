@@ -9,11 +9,19 @@ import { FileIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState, useMemo } from "react";
 
-interface CodeComparisonProps {
-  beforeCode: string;
-  afterCode: string;
-  language: string;
+interface CodeFile {
   filename: string;
+  code: string;
+  language: string;
+}
+
+interface CodeComparisonProps {
+  beforeCode?: string;
+  afterCode?: string;
+  beforeFiles?: CodeFile[];
+  afterFiles?: CodeFile[];
+  language?: string;
+  filename?: string;
   lightTheme: string;
   darkTheme: string;
   highlightColor?: string;
@@ -22,8 +30,10 @@ interface CodeComparisonProps {
 export function CodeComparison({
   beforeCode,
   afterCode,
-  language,
-  filename,
+  beforeFiles,
+  afterFiles,
+  language = "typescript",
+  filename = "code",
   lightTheme,
   darkTheme,
   highlightColor = "#ff3333",
@@ -33,6 +43,17 @@ export function CodeComparison({
   const [highlightedAfter, setHighlightedAfter] = useState("");
   const [hasLeftFocus, setHasLeftFocus] = useState(false);
   const [hasRightFocus, setHasRightFocus] = useState(false);
+  const [activeBeforeTab, setActiveBeforeTab] = useState(0);
+  const [activeAfterTab, setActiveAfterTab] = useState(0);
+
+  // Use multi-file mode if files are provided, otherwise use single-file mode
+  const isMultiFile = beforeFiles && afterFiles;
+  const currentBeforeFile = isMultiFile
+    ? beforeFiles[activeBeforeTab]
+    : { filename, code: beforeCode || "", language };
+  const currentAfterFile = isMultiFile
+    ? afterFiles[activeAfterTab]
+    : { filename, code: afterCode || "", language };
 
   const selectedTheme = useMemo(() => {
     const currentTheme = theme === "system" ? systemTheme : theme;
@@ -54,8 +75,8 @@ export function CodeComparison({
           "@shikijs/transformers"
         );
 
-        const before = await codeToHtml(beforeCode, {
-          lang: language,
+        const before = await codeToHtml(currentBeforeFile.code, {
+          lang: currentBeforeFile.language,
           theme: selectedTheme,
           transformers: [
             transformerNotationHighlight({ matchAlgorithm: "v3" }),
@@ -63,8 +84,8 @@ export function CodeComparison({
             transformerNotationFocus({ matchAlgorithm: "v3" }),
           ],
         });
-        const after = await codeToHtml(afterCode, {
-          lang: language,
+        const after = await codeToHtml(currentAfterFile.code, {
+          lang: currentAfterFile.language,
           theme: selectedTheme,
           transformers: [
             transformerNotationHighlight({ matchAlgorithm: "v3" }),
@@ -76,12 +97,12 @@ export function CodeComparison({
         setHighlightedAfter(after);
       } catch (error) {
         console.error("Error highlighting code:", error);
-        setHighlightedBefore(`<pre>${beforeCode}</pre>`);
-        setHighlightedAfter(`<pre>${afterCode}</pre>`);
+        setHighlightedBefore(`<pre>${currentBeforeFile.code}</pre>`);
+        setHighlightedAfter(`<pre>${currentAfterFile.code}</pre>`);
       }
     }
     highlightCode();
-  }, [beforeCode, afterCode, language, selectedTheme]);
+  }, [currentBeforeFile, currentAfterFile, selectedTheme]);
 
   const renderCode = (code: string, highlighted: string) => {
     if (highlighted) {
@@ -112,6 +133,37 @@ export function CodeComparison({
     }
   };
 
+  const renderTabs = (
+    files: CodeFile[],
+    activeTab: number,
+    setActiveTab: (index: number) => void,
+    side: "before" | "after"
+  ) => {
+    if (!isMultiFile || files.length <= 1) return null;
+
+    return (
+      <div className="flex border-b border-primary/20 bg-muted/50">
+        {files.map((file, index) => (
+          <button
+            key={index}
+            onClick={() => setActiveTab(index)}
+            className={cn(
+              "px-3 py-2 text-xs font-medium transition-colors border-r border-primary/20 last:border-r-0",
+              activeTab === index
+                ? "bg-accent text-foreground"
+                : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+            )}
+          >
+            {file.filename}
+          </button>
+        ))}
+        <div className="ml-auto px-3 py-2 text-xs text-muted-foreground">
+          {side}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="mx-auto w-full max-w-5xl">
       <div className="group relative w-full overflow-hidden rounded-md border border-border">
@@ -124,12 +176,21 @@ export function CodeComparison({
               "[&>div>pre>code>:not(.focused)]:transition-all [&>div>pre>code>:not(.focused)]:duration-300"
             )}
           >
-            <div className="flex items-center border-b border-primary/20 bg-accent p-2 text-sm text-foreground">
-              <FileIcon className="mr-2 h-4 w-4" />
-              {filename}
-              <span className="ml-auto hidden md:block">before</span>
-            </div>
-            {renderCode(beforeCode, highlightedBefore)}
+            {isMultiFile ? (
+              renderTabs(
+                beforeFiles!,
+                activeBeforeTab,
+                setActiveBeforeTab,
+                "before"
+              )
+            ) : (
+              <div className="flex items-center border-b border-primary/20 bg-accent p-2 text-sm text-foreground">
+                <FileIcon className="mr-2 h-4 w-4" />
+                {currentBeforeFile.filename}
+                <span className="ml-auto hidden md:block">before</span>
+              </div>
+            )}
+            {renderCode(currentBeforeFile.code, highlightedBefore)}
           </div>
           <div
             className={cn(
@@ -139,12 +200,21 @@ export function CodeComparison({
               "[&>div>pre>code>:not(.focused)]:transition-all [&>div>pre>code>:not(.focused)]:duration-300"
             )}
           >
-            <div className="flex items-center border-b border-primary/20 bg-accent p-2 text-sm text-foreground">
-              <FileIcon className="mr-2 h-4 w-4" />
-              {filename}
-              <span className="ml-auto hidden md:block">after</span>
-            </div>
-            {renderCode(afterCode, highlightedAfter)}
+            {isMultiFile ? (
+              renderTabs(
+                afterFiles!,
+                activeAfterTab,
+                setActiveAfterTab,
+                "after"
+              )
+            ) : (
+              <div className="flex items-center border-b border-primary/20 bg-accent p-2 text-sm text-foreground">
+                <FileIcon className="mr-2 h-4 w-4" />
+                {currentAfterFile.filename}
+                <span className="ml-auto hidden md:block">after</span>
+              </div>
+            )}
+            {renderCode(currentAfterFile.code, highlightedAfter)}
           </div>
         </div>
         <div className="absolute left-1/2 top-1/2 hidden h-8 w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-md border border-primary/20 bg-accent text-xs text-foreground md:flex">

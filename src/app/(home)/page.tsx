@@ -60,8 +60,11 @@ export default function HomePage() {
     },
   ];
 
-  const codeBefore = `// lib/auth.ts - Manual auth implementation
-import { NextAuthOptions } from 'next-auth';
+  const beforeFiles = [
+    {
+      filename: "lib/auth.ts",
+      language: "typescript",
+      code: `import { NextAuthOptions } from 'next-auth';
 import GithubProvider from 'next-auth/providers/github';
 import GoogleProvider from 'next-auth/providers/google';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
@@ -86,7 +89,10 @@ export const authOptions: NextAuthOptions = {
           where: { id: token.sub },
           include: { accounts: true, sessions: true }
         });
-        return { ...session, user: { ...session.user, id: token.sub, role: user?.role } };
+        return {
+          ...session,
+          user: { ...session.user, id: token.sub, role: user?.role }
+        };
       }
       return session;
     },
@@ -135,10 +141,12 @@ export const authOptions: NextAuthOptions = {
       });
     }
   }
-};
-
-// middleware.ts - Route protection
-import { withAuth } from 'next-auth/middleware';
+};`,
+    },
+    {
+      filename: "middleware.ts",
+      language: "typescript",
+      code: `import { withAuth } from 'next-auth/middleware';
 import { NextResponse } from 'next/server';
 
 export default withAuth(
@@ -175,14 +183,28 @@ export default withAuth(
 
 export const config = {
   matcher: ['/dashboard/:path*', '/admin/:path*', '/api/protected/:path*']
-};
-
-// api/auth/[...nextauth].ts
-import NextAuth from 'next-auth';
+};`,
+    },
+    {
+      filename: "api/auth/[...nextauth].ts",
+      language: "typescript",
+      code: `import NextAuth from 'next-auth';
 import { authOptions } from '@/lib/auth';
-export default NextAuth(authOptions);
 
-// prisma/schema.prisma - Database schema
+export default NextAuth(authOptions);`,
+    },
+    {
+      filename: "prisma/schema.prisma",
+      language: "prisma",
+      code: `generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -230,32 +252,73 @@ model VerificationToken {
 enum Role {
   USER
   ADMIN
-}`;
+}`,
+    },
+  ];
 
-  const codeAfter = `// keyloom.config.ts - Complete auth setup
-import { defineConfig, github, google } from '@keyloom/core';
+  const afterFiles = [
+    {
+      filename: "keyloom.config.ts",
+      language: "typescript",
+      code: `import { defineKeyloom } from '@keyloom/core';
+import adapter from '@keyloom/adapters/prisma';
+import github from '@keyloom/providers/github';
+import google from '@keyloom/providers/google';
 
-export default defineConfig({
-  providers: [github()],
-  session: { strategy: 'database' },
-  roles: ['USER', 'ADMIN'],
-  middleware: {
-    routes: {
-      '/dashboard/*': 'authenticated',
-      '/admin/*': 'role:ADMIN',
-      '/api/protected/*': 'authenticated'
-    }
-  }
+export default defineKeyloom({
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
+  session: { strategy: 'database', ttlMinutes: 60, rolling: true },
+  adapter: adapter({ url: process.env.DATABASE_URL! }),
+  providers: [
+    github({
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!
+    }),
+    google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!
+    }),
+  ],
+  secrets: { authSecret: process.env.AUTH_SECRET! },
+});`,
+    },
+    {
+      filename: "middleware.ts",
+      language: "typescript",
+      code: `import { createAuthMiddleware } from '@keyloom/nextjs/middleware';
+import config from '@/keyloom.config';
+
+export default createAuthMiddleware(config, {
+  publicRoutes: ['/', '/sign-in', '/api/auth/csrf'],
 });
 
-// That's it! Keyloom handles:
-// ✅ OAuth provider setup & callbacks
-// ✅ Database schema & migrations
-// ✅ Session management & JWT
-// ✅ Route protection middleware
-// ✅ Role-based access control
-// ✅ Error handling & redirects
-// ✅ TypeScript types & validation`;
+export const config = {
+  matcher: ['/((?!_next|.*\\.(?:ico|png|jpg|svg|css|js|map)).*)']
+};`,
+    },
+    {
+      filename: "app/api/auth/[...keyloom]/route.ts",
+      language: "typescript",
+      code: `import { createNextHandler } from '@keyloom/nextjs';
+import config from '@/keyloom.config';
+
+export const { GET, POST } = createNextHandler(config);`,
+    },
+    {
+      filename: "Generated automatically",
+      language: "text",
+      code: `✅ Database schema & migrations handled automatically
+✅ Session management & JWT tokens
+✅ OAuth provider callbacks & flows
+✅ Route protection & RBAC middleware
+✅ CSRF protection & security headers
+✅ TypeScript types & validation
+✅ Error handling & redirects
+✅ Cookie management & settings
+
+Total setup: ~20 lines vs ~150+ lines manually`,
+    },
+  ];
 
   const logos = [
     {
@@ -622,10 +685,8 @@ export default defineConfig({
               </div>
               <div className="p-4 sm:p-6">
                 <CodeComparison
-                  beforeCode={codeBefore}
-                  afterCode={codeAfter}
-                  language="ts"
-                  filename="complete-auth-setup"
+                  beforeFiles={beforeFiles}
+                  afterFiles={afterFiles}
                   lightTheme="github-light"
                   darkTheme="github-dark"
                 />
