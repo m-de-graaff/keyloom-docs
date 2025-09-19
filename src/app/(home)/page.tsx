@@ -53,7 +53,7 @@ export default function HomePage() {
           {/* Dark mode dots */}
           <div className="hidden dark:block">
             <PixelBlast 
-              color='#494949'
+              color='#666666'
               pixelSize={3}
               patternScale={2}
               patternDensity={1.3}
