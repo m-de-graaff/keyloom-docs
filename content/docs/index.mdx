@@ -18,23 +18,28 @@ Security-first authentication with enterprise-grade features, exceptional develo
 ## Key Features
 
 ### Security First
+
 Built with security as the primary design principle, featuring CSRF protection, secure sessions, and modern cryptography.
 
 ### Developer Experience
+
 TypeScript-first with comprehensive CLI tools, excellent documentation, and intuitive APIs for rapid development.
 
 ### Enterprise Ready
+
 RBAC, multi-tenancy, audit logging, and compliance features ready for production at any scale.
 
 ## Comprehensive Feature Set
 
 ### Core Features
+
 - Multiple Auth Providers: GitHub, Google, Discord, Apple, Auth0, GitLab, Microsoft, and X (Twitter)
 - Database Agnostic: Prisma, Drizzle, PostgreSQL, MySQL, MongoDB support
 - Framework Support: First-class Next.js integration
 - Security First: CSRF protection, secure sessions, rate limiting
 
 ### Advanced Features
+
 - TypeScript First: Complete type safety across all packages
 - Flexible Sessions: JWT, database, or hybrid strategies
 - RBAC & Multi-tenancy: Built-in organization and role management
@@ -43,6 +48,7 @@ RBAC, multi-tenancy, audit logging, and compliance features ready for production
 ## Modular Architecture
 
 ### Core Packages
+
 - **@keyloom/core**: Core authentication logic and RBAC engine
 - **@keyloom/nextjs**: Next.js integration and middleware
 - **@keyloom/server**: Standalone server implementation
@@ -104,6 +110,9 @@ RBAC, multi-tenancy, audit logging, and compliance features ready for production
 import { defineKeyloom } from "@keyloom/core";
 import { prismaAdapter } from "@keyloom/adapters/prisma";
 import github from "@keyloom/providers/github";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export default defineKeyloom({
   baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
@@ -112,9 +121,7 @@ export default defineKeyloom({
     ttlMinutes: 60,
     rolling: true,
   },
-  adapter: prismaAdapter({
-    url: process.env.DATABASE_URL!,
-  }),
+  adapter: prismaAdapter(prisma),
   providers: [
     github({
       clientId: process.env.GITHUB_CLIENT_ID!,
@@ -193,14 +200,19 @@ const session = await keyloom.login({
 ## Community & Support
 
 ### Get Help & Contribute
+
 - [GitHub Repository](https://github.com/m-de-graaff/keyloom)
 - [Report Issues & Bugs](https://github.com/m-de-graaff/keyloom/issues)
 - [Community Discussions](https://github.com/m-de-graaff/keyloom/discussions)
 
 ### Security & License
+
 - Security Issues: mark_degraaff@outlook.com
 - MIT Licensed: Open source and free to use
 
 <Callout type="info">
-**Ready to get started?** Check out our [Get Started guide](/docs/get-started) for step-by-step instructions, or explore our [Introduction](/docs/introduction) to learn more about Keyloom's features and architecture.
+  **Ready to get started?** Check out our [Get Started guide](/docs/get-started)
+  for step-by-step instructions, or explore our
+  [Introduction](/docs/introduction) to learn more about Keyloom's features and
+  architecture.
 </Callout>

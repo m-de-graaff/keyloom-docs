@@ -37,8 +37,14 @@ export default defineKeyloom({
   baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
   session: { strategy: "database" },
   providers: [
-    github({ clientId: process.env.GITHUB_CLIENT_ID!, clientSecret: process.env.GITHUB_CLIENT_SECRET! }),
-    google({ clientId: process.env.GOOGLE_CLIENT_ID!, clientSecret: process.env.GOOGLE_CLIENT_SECRET! }),
+    github({
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+    }),
+    google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
   ],
 });
 ```
@@ -64,12 +70,15 @@ export default createAuthMiddleware(config, { routes });
 
 ```ts
 import { getSession, guard } from "@keyloom/nextjs";
+import config from "@/keyloom.config";
+
 await guard({ visibility: "private" }, config);
-const { user } = await getSession(config);
+const { session, user } = await getSession(config);
 ```
 
 </Steps>
 
 <Callout>
-Keep your Prisma User/Account/Session models; add the Keyloom RBAC models via the CLI migration generator.
+  Keep your Prisma User/Account/Session models; add the Keyloom RBAC models via
+  the CLI migration generator.
 </Callout>

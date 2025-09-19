@@ -40,6 +40,7 @@ yarn global add @keyloom/cli
 ```bash tab="bun"
 bun add -g @keyloom/cli
 ```
+
 </CodeBlockTabs>
 
 </Step>
@@ -55,6 +56,7 @@ keyloom init
 ```
 
 The CLI will guide you through:
+
 - **Framework selection** (Next.js App Router, Pages Router, or standalone)
 - **Database adapter** (Prisma, Drizzle, PostgreSQL, MongoDB, etc.)
 - **OAuth providers** (GitHub, Google, Discord, Apple, etc.)
@@ -85,6 +87,7 @@ The `AUTH_SECRET` must be exactly 32 bytes when base64url decoded. You can gener
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
 ```
+
 </Callout>
 
 <AuthSecretGenerator />
@@ -127,6 +130,7 @@ yarn dev
 ```bash tab="bun"
 bun dev
 ```
+
 </CodeBlockTabs>
 
 Visit `http://localhost:3000/api/auth/signin` to see your authentication pages.
@@ -143,6 +147,7 @@ keyloom doctor
 ```
 
 This checks:
+
 - Configuration validity
 - Environment variables
 - Database connectivity
@@ -180,6 +185,7 @@ yarn add @keyloom/core @keyloom/nextjs
 ```bash tab="bun"
 bun add @keyloom/core @keyloom/nextjs
 ```
+
 </CodeBlockTabs>
 
 Add an adapter and providers:
@@ -200,6 +206,7 @@ yarn add @keyloom/adapters @keyloom/providers
 ```bash tab="bun"
 bun add @keyloom/adapters @keyloom/providers
 ```
+
 </CodeBlockTabs>
 
 </Step>
@@ -214,6 +221,9 @@ Create `keyloom.config.ts` in your project root:
 import { defineKeyloom } from "@keyloom/core";
 import { prismaAdapter } from "@keyloom/adapters/prisma";
 import github from "@keyloom/providers/github";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export default defineKeyloom({
   baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
@@ -222,9 +232,7 @@ export default defineKeyloom({
     ttlMinutes: 60,
     rolling: true,
   },
-  adapter: prismaAdapter({
-    url: process.env.DATABASE_URL!,
-  }),
+  adapter: prismaAdapter(prisma),
   providers: [
     github({
       clientId: process.env.GITHUB_CLIENT_ID!,
@@ -349,6 +357,7 @@ yarn add @keyloom/core
 ```bash tab="bun"
 bun add @keyloom/core
 ```
+
 </CodeBlockTabs>
 
 </Step>
@@ -467,11 +476,11 @@ export const providers = [
 ### Create Keyloom Instance
 
 ```typescript title="lib/keyloom.ts"
-import { createKeyloom } from "@keyloom/core";
+import { defineKeyloom } from "@keyloom/core";
 import { adapter } from "./adapter";
 import { providers } from "./providers";
 
-export const keyloom = createKeyloom({
+export const keyloom = defineKeyloom({
   baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
   session: {
     strategy: "database",
@@ -590,6 +599,7 @@ The AUTH_SECRET must be exactly 32 bytes when base64url decoded. Generate a new 
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
 ```
+
 </Callout>
 
 <Callout type="error">
@@ -601,15 +611,17 @@ Verify your DATABASE_URL format and ensure the database server is running:
 # PostgreSQL example
 DATABASE_URL=postgresql://username:password@localhost:5432/database_name
 ```
+
 </Callout>
 
 <Callout type="error">
 **Error: OAuth callback mismatch**
 
 Ensure your OAuth provider callback URLs match exactly:
+
 - Development: `http://localhost:3000/api/auth/callback/[provider]`
 - Production: `https://yourdomain.com/api/auth/callback/[provider]`
-</Callout>
+  </Callout>
 
 ### Getting Help
 
