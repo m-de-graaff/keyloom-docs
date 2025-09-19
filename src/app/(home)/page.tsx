@@ -1,13 +1,18 @@
-'use client'
-import Link from 'next/link';
-import { ArrowRight, Shield, Zap, Code, Database, Users, GitBranch } from 'lucide-react';
-import  PixelBlast  from '@/components/PixelBlast';
-import { AnimatedSpan, Terminal, TypingAnimation } from '@/components/terminal';
-import { CodeBlock, github, atomOneDark, irBlack } from 'react-code-blocks';
-
+"use client";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import PixelBlast from "@/components/PixelBlast";
+import { AnimatedSpan, Terminal, TypingAnimation } from "@/components/terminal";
+import { CodeBlock, github, atomOneDark, irBlack } from "react-code-blocks";
 
 // Theme-aware CodeBlock component
-function ThemedCodeBlock({ language, text }: { language: string; text: string }) {
+function ThemedCodeBlock({
+  language,
+  text,
+}: {
+  language: string;
+  text: string;
+}) {
   return (
     <>
       {/* Light mode code block */}
@@ -35,19 +40,22 @@ function ThemedCodeBlock({ language, text }: { language: string; text: string })
 export default function HomePage() {
   const quickSetupSteps = [
     {
-      title: 'Install the CLI',
-      description: 'Scaffold your Keyloom project with one command and interactive prompts.',
-      action: 'npx @keyloom/cli init',
+      title: "Install the CLI",
+      description:
+        "Add the dev-only CLI and run the interactive init to detect your framework, install deps, and scaffold config.",
+      action: "pnpm add -D @keyloom/cli && npx keyloom init",
     },
     {
-      title: 'Connect your providers',
-      description: 'Pick from built-in OAuth presets or supply custom credentials and Keyloom wires the callbacks for you.',
-      action: 'providers: [github(), google()]',
+      title: "Connect your providers",
+      description:
+        "Configure providers in keyloom.config.ts and set client IDs/secrets in .env (GitHub, Google, Discord, or custom).",
+      action: "providers: [github(), google()]",
     },
     {
-      title: 'Protect routes instantly',
-      description: 'Drop our middleware and hooks into your app to enforce authentication with sensible defaults.',
-      action: 'const session = await getSession()',
+      title: "Protect routes instantly",
+      description:
+        "Enable the middleware and route manifest for immediate access control across pages and APIs.",
+      action: "export default createAuthMiddleware(config, { routes })",
     },
   ];
 
@@ -58,12 +66,12 @@ export default function HomePage() {
         <div className="absolute inset-0">
           {/* Light mode dots */}
           <div className="block dark:hidden">
-            <PixelBlast 
-              color='#dadada'
+            <PixelBlast
+              color="#dadada"
               pixelSize={3}
               patternScale={2}
               patternDensity={1.3}
-              pixelSizeJitter={.45}
+              pixelSizeJitter={0.45}
               speed={0.5}
               edgeFade={0.03}
               enableRipples
@@ -71,12 +79,12 @@ export default function HomePage() {
           </div>
           {/* Dark mode dots */}
           <div className="hidden dark:block">
-            <PixelBlast 
-              color='#666666'
+            <PixelBlast
+              color="#666666"
               pixelSize={3}
               patternScale={2}
               patternDensity={1.3}
-              pixelSizeJitter={.45}
+              pixelSizeJitter={0.45}
               speed={0.5}
               edgeFade={0.03}
               enableRipples
@@ -92,18 +100,21 @@ export default function HomePage() {
               <div className="mb-8 flex justify-center">
                 {/* Make the badge interactive */}
                 <div className="relative rounded-full border bg-fd-secondary/90 px-4 py-2 text-sm leading-6 text-fd-muted-foreground transition-colors hover:bg-fd-secondary pointer-events-auto">
-                  Open source authentication framework.{' '}
-                  <Link href="/docs" className="font-medium text-fd-foreground hover:opacity-80">
+                  Open source authentication framework.{" "}
+                  <Link
+                    href="/docs"
+                    className="font-medium text-fd-foreground hover:opacity-80"
+                  >
                     <span className="absolute inset-0" aria-hidden="true" />
                     Read the docs <span aria-hidden="true">&rarr;</span>
                   </Link>
                 </div>
               </div>
               <h1 className="text-4xl font-bold tracking-tight text-fd-foreground sm:text-6xl lg:text-7xl">
-                The most comprehensive{' '}
+                The most comprehensive{" "}
                 <span className="text-fd-foreground">
                   authentication framework
-                </span>{' '}
+                </span>{" "}
                 for TypeScript
               </h1>
               <div className="mt-12 flex items-center justify-center gap-x-6">
@@ -131,7 +142,8 @@ export default function HomePage() {
               Get authentication running in minutes
             </p>
             <p className="mt-6 text-lg leading-8 text-fd-muted-foreground">
-              Answer a few prompts and Keyloom scaffolds routes, providers, and environment variables for you.
+              Answer a few prompts and Keyloom scaffolds routes, providers, and
+              environment variables for you.
             </p>
           </div>
           <div className="mx-auto mt-16 max-w-6xl">
@@ -157,49 +169,85 @@ export default function HomePage() {
                   <div className="mt-6">
                     <Terminal className="max-w-none border border-fd-border/40 bg-fd-background/90 text-left shadow-lg">
                       <TypingAnimation className="font-mono text-sm text-fd-primary">
-                        ~/apps/my-app % npx @keyloom/cli init
+                        ~/apps/my-app % npx keyloom init
                       </TypingAnimation>
                       <TypingAnimation className="font-mono text-sm text-fd-muted-foreground">
-                        ? What framework are you using - Next.js
+                        ▲ Next.js App Router project detected
                       </TypingAnimation>
                       <TypingAnimation className="font-mono text-sm text-fd-muted-foreground">
-                        ? Select providers - GitHub, Google
+                        Keyloom Init
                       </TypingAnimation>
                       <TypingAnimation className="font-mono text-sm text-fd-muted-foreground">
-                        ? Database adapter - Prisma + PlanetScale
+                        › Step 1 of 6: Project configuration
+                      </TypingAnimation>
+                      <TypingAnimation className="font-mono text-sm text-fd-muted-foreground">
+                        ? Session strategy (Use arrow keys) › database
+                      </TypingAnimation>
+                      <TypingAnimation className="font-mono text-sm text-fd-muted-foreground">
+                        ? Database adapter › prisma
+                      </TypingAnimation>
+                      <TypingAnimation className="font-mono text-sm text-fd-muted-foreground">
+                        ? OAuth providers › ◉ GitHub ◉ Google ○ Discord
+                      </TypingAnimation>
+                      <TypingAnimation className="font-mono text-sm text-fd-muted-foreground">
+                        ? Enable RBAC (Role-Based Access Control)? › Yes
+                      </TypingAnimation>
+                      <TypingAnimation className="font-mono text-sm text-fd-muted-foreground">
+                        ? Setup default roles and permissions? › Yes
+                      </TypingAnimation>
+                      <TypingAnimation className="font-mono text-sm text-fd-muted-foreground">
+                        › Step 2 of 6: Install dependencies
                       </TypingAnimation>
                       <TypingAnimation className="font-mono text-sm text-emerald-400">
-                        Generated src/auth/config.ts
+                        ✔ Dependencies installed
+                      </TypingAnimation>
+                      <TypingAnimation className="font-mono text-sm text-fd-muted-foreground">
+                        › Step 3 of 6: Generate configuration
                       </TypingAnimation>
                       <TypingAnimation className="font-mono text-sm text-emerald-400">
-                        Synced environment variables with Keyloom Vault
+                        ✔ Wrote keyloom.config.ts
+                      </TypingAnimation>
+                      <TypingAnimation className="font-mono text-sm text-fd-muted-foreground">
+                        › Step 4 of 6: Scaffold files
+                      </TypingAnimation>
+                      <TypingAnimation className="font-mono text-sm text-emerald-400">
+                        ✔ Wrote app/api/auth/[...keyloom]/route.ts
+                      </TypingAnimation>
+                      <TypingAnimation className="font-mono text-sm text-emerald-400">
+                        ✔ Wrote middleware.ts
+                      </TypingAnimation>
+                      <TypingAnimation className="font-mono text-sm text-emerald-400">
+                        ✔ Wrote .env.example
+                      </TypingAnimation>
+                      <TypingAnimation className="font-mono text-sm text-fd-muted-foreground">
+                        › Step 5 of 6: Generate migration artifacts
+                      </TypingAnimation>
+                      <TypingAnimation className="font-mono text-sm text-emerald-400">
+                        ✔ Generated migration artifacts
+                      </TypingAnimation>
+                      <TypingAnimation className="font-mono text-sm text-fd-muted-foreground">
+                        › Step 6 of 6: Generate route manifest
+                      </TypingAnimation>
+                      <TypingAnimation className="font-mono text-sm text-emerald-400">
+                        ✔ Route manifest generated
+                      </TypingAnimation>
+                      <TypingAnimation className="font-mono text-sm text-emerald-400">
+                        ✔ Wrote .keyloom/routes.generated.ts
+                      </TypingAnimation>
+                      <TypingAnimation className="font-mono text-sm text-emerald-400">
+                        ✔ Wrote .keyloom/routes.generated.json
+                      </TypingAnimation>
+                      <TypingAnimation className="font-mono text-sm text-fd-muted-foreground">
+                        Summary
+                      </TypingAnimation>
+                      <TypingAnimation className="font-mono text-sm text-emerald-400">
+                        ✔ Created 4 file(s)
                       </TypingAnimation>
                       <AnimatedSpan className="font-mono text-sm text-fd-muted-foreground/80">
-                        Next step: npm run dev
+                        Next steps: configure keyloom.config, set env vars, run
+                        migrations
                       </AnimatedSpan>
                     </Terminal>
-                  </div>
-                  <div className="mt-6 grid gap-4 rounded-2xl border border-fd-border/30 bg-fd-muted/40 p-4 text-left sm:grid-cols-2">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-fd-muted-foreground">
-                        Includes
-                      </p>
-                      <ul className="mt-2 space-y-1 text-sm text-fd-muted-foreground">
-                        <li>API routes wired to Keyloom</li>
-                        <li>OAuth provider presets</li>
-                        <li>Example protected page</li>
-                      </ul>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-fd-muted-foreground">
-                        Works with
-                      </p>
-                      <ul className="mt-2 space-y-1 text-sm text-fd-muted-foreground">
-                        <li>Next.js App Router</li>
-                        <li>Prisma or Drizzle</li>
-                        <li>Edge or Node runtimes</li>
-                      </ul>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -214,23 +262,30 @@ export default function HomePage() {
                     </div>
                     <div className="space-y-3">
                       <div>
-                        <h3 className="text-base font-semibold text-fd-foreground">{step.title}</h3>
+                        <h3 className="text-base font-semibold text-fd-foreground">
+                          {step.title}
+                        </h3>
                         <p className="mt-1 text-sm text-fd-muted-foreground">
                           {step.description}
                         </p>
                       </div>
                       {step.action ? (
                         <div className="inline-flex items-center gap-2 rounded-md bg-fd-muted px-3 py-2 text-xs font-medium text-fd-muted-foreground">
-                          <span className="font-mono text-fd-foreground">{step.action}</span>
+                          <span className="font-mono text-fd-foreground">
+                            {step.action}
+                          </span>
                         </div>
                       ) : null}
                     </div>
                   </div>
                 ))}
                 <div className="rounded-2xl border border-dashed border-fd-border/50 bg-fd-background/40 p-6 text-sm text-fd-muted-foreground shadow-inner">
-                  <p className="font-semibold text-fd-foreground">Prefer to follow along?</p>
+                  <p className="font-semibold text-fd-foreground">
+                    Prefer to follow along?
+                  </p>
                   <p className="mt-2">
-                    Watch the full walkthrough to see environment syncing, provider setup, and deployment in real time.
+                    Watch the full walkthrough to see environment syncing,
+                    provider setup, and deployment in real time.
                   </p>
                   <Link
                     href="/docs/get-started"
@@ -244,85 +299,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* Getting Started Section */}
-      <section className="py-24 sm:py-32 bg-fd-muted">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl lg:text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-fd-foreground sm:text-4xl">
-              Ready to get started?
-            </h2>
-            <p className="mt-6 text-lg leading-8 text-fd-muted-foreground">
-              Join thousands of developers building secure applications with Keyloom.
-              Get up and running in under 5 minutes.
-            </p>
-          </div>
-          <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
-            <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-3">
-              <div className="flex flex-col">
-                <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-fd-foreground">
-                  <div className="h-5 w-5 flex-none rounded-full bg-fd-secondary flex items-center justify-center">
-                    <span className="text-xs font-bold text-fd-foreground">1</span>
-                  </div>
-                  Install Keyloom
-                </dt>
-                <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-fd-muted-foreground">
-                  <p className="flex-auto">
-                    Add Keyloom to your project with a single command and initialize your configuration.
-                  </p>
-                  <div className="mt-4 rounded border bg-fd-card p-3 text-sm font-mono text-fd-card-foreground">
-                    npm install @keyloom/core
-                  </div>
-                </dd>
-              </div>
-              <div className="flex flex-col">
-                <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-fd-foreground">
-                  <div className="h-5 w-5 flex-none rounded-full bg-fd-secondary flex items-center justify-center">
-                    <span className="text-xs font-bold text-fd-foreground">2</span>
-                  </div>
-                  Configure Providers
-                </dt>
-                <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-fd-muted-foreground">
-                  <p className="flex-auto">
-                    Set up OAuth providers like GitHub, Google, or create custom ones for your needs.
-                  </p>
-                  <div className="mt-4 rounded border bg-fd-card p-3 text-sm font-mono text-fd-card-foreground">
-                    providers: [github(), google()]
-                  </div>
-                </dd>
-              </div>
-              <div className="flex flex-col">
-                <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-fd-foreground">
-                  <div className="h-5 w-5 flex-none rounded-full bg-fd-secondary flex items-center justify-center">
-                    <span className="text-xs font-bold text-fd-foreground">3</span>
-                  </div>
-                  Start Authenticating
-                </dt>
-                <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-fd-muted-foreground">
-                  <p className="flex-auto">
-                    Use our React hooks, middleware, and utilities to secure your application.
-                  </p>
-                  <div className="mt-4 rounded border bg-fd-card p-3 text-sm font-mono text-fd-card-foreground">
-                    const {`{ user }`} = useSession()
-                  </div>
-                </dd>
-              </div>
-            </dl>
-            <div className="mt-16 flex justify-center">
-              <Link
-                href="/docs/get-started"
-                className="rounded-md bg-fd-primary px-3.5 py-2.5 text-sm font-semibold text-fd-primary-foreground shadow-sm transition-colors hover:bg-fd-primary/80"
-              >
-                Start building now
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-
     </main>
   );
 }
-
-
