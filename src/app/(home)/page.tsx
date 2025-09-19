@@ -10,19 +10,19 @@ export default function HomePage() {
   return (
     <main className="flex flex-1 flex-col">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-fd-muted">
+      <section className="relative overflow-hidden bg-fd-muted min-h-screen flex items-center">
         <div className="absolute inset-0">
           <PixelBlast 
-            pixelSize={4}
+            pixelSize={3}
             patternScale={2}
-            patternDensity={1}
-            pixelSizeJitter={0}
+            patternDensity={1.3}
+            pixelSizeJitter={.45}
             speed={0.5}
-            edgeFade={0.25}
+            edgeFade={0.03}
             enableRipples
           />
         </div>
-        <div className="relative mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8">
+        <div className="relative mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8 w-full">
           <div className="mx-auto max-w-2xl text-center">
             <div className="mb-8 flex justify-center">
               <div className="relative rounded-full border bg-fd-secondary/60 px-3 py-1 text-sm leading-6 text-fd-muted-foreground transition-colors hover:bg-fd-secondary">
