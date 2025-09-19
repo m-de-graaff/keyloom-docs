@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { ArrowRight, Shield, Zap, Code, Database, Users, GitBranch } from 'lucide-react';
 import  PixelBlast  from '@/components/PixelBlast';
-import { CodeBlock, github, atomOneDark } from 'react-code-blocks';
+import { CodeBlock, github, atomOneDark, irBlack } from 'react-code-blocks';
 
 
 // Theme-aware CodeBlock component
@@ -23,7 +23,7 @@ function ThemedCodeBlock({ language, text }: { language: string; text: string })
         <CodeBlock
           language={language}
           text={text}
-          theme={atomOneDark}
+          theme={irBlack}
           showLineNumbers={false}
         />
       </div>
@@ -105,7 +105,7 @@ export default function HomePage() {
                   <div className="border-b bg-fd-muted px-4 py-2">
                     <div className="text-xs font-medium text-fd-muted-foreground">Terminal</div>
                   </div>
-                  <div className="p-6">
+                  <div className="">
                     <div className="text-sm leading-relaxed">
                       <ThemedCodeBlock
                         language="bash"
@@ -127,7 +127,7 @@ export default function HomePage() {
                   <div className="border-b bg-fd-muted px-4 py-2">
                     <div className="text-xs font-medium text-fd-muted-foreground">keyloom.config.ts</div>
                   </div>
-                  <div className="p-6">
+                  <div className="">
                     <div className="text-sm leading-relaxed">
                       <ThemedCodeBlock
                         language="typescript"
