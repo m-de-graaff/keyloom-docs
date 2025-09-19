@@ -1,5 +1,8 @@
 import Link from 'next/link';
-import { ArrowRight, Shield, Zap, Code, Database, Users, Star, GitBranch } from 'lucide-react';
+import { ArrowRight, Shield, Zap, Code, Database, GitBranch } from 'lucide-react';
+import { JetBrains_Mono } from 'next/font/google';
+const mono = JetBrains_Mono({ subsets: ['latin'] });
+
 
 export default function HomePage() {
   return (
@@ -67,25 +70,24 @@ export default function HomePage() {
                 <h3 className="text-lg font-semibold leading-8 text-gray-900 dark:text-white">
                   Initialize with CLI
                 </h3>
-                <div className="mt-4 rounded-lg bg-gray-900 p-4 text-sm">
-                  <code className="text-green-400">$</code>{' '}
-                  <code className="text-white">npx keyloom init</code>
-                  <br />
-                  <code className="text-gray-400">✓ Created keyloom.config.ts</code>
-                  <br />
-                  <code className="text-gray-400">✓ Added API routes</code>
-                  <br />
-                  <code className="text-gray-400">✓ Generated database schema</code>
-                  <br />
-                  <code className="text-gray-400">✓ Ready to authenticate!</code>
+                <div className="mt-4 overflow-auto rounded-lg border border-slate-800 bg-slate-950 p-4 text-sm shadow-sm">
+                  <div className="mb-2 text-xs uppercase tracking-wider text-slate-400">Terminal</div>
+                  <pre className={`${mono.className} leading-6 text-slate-50`}>
+{`$ npx keyloom init
+✓ Created keyloom.config.ts
+✓ Added API routes
+✓ Generated database schema
+✓ Ready to authenticate!`}
+                  </pre>
                 </div>
               </div>
               <div>
                 <h3 className="text-lg font-semibold leading-8 text-gray-900 dark:text-white">
                   Configuration
                 </h3>
-                <div className="mt-4 rounded-lg bg-gray-900 p-4 text-sm overflow-x-auto">
-                  <pre className="text-white">
+                <div className="mt-4 overflow-auto rounded-lg border border-slate-800 bg-slate-950 p-4 text-sm shadow-sm">
+                  <div className="mb-2 text-xs uppercase tracking-wider text-slate-400">keyloom.config.ts</div>
+                  <pre className={`${mono.className} leading-6 text-slate-50`}>
 {`export default defineKeyloom({
   adapter: prismaAdapter(prisma),
   providers: [
@@ -419,46 +421,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Social Proof Section */}
-      <section className="py-24 sm:py-32 bg-gray-50 dark:bg-gray-900">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl lg:text-center">
-            <h2 className="text-base font-semibold leading-7 text-blue-600 dark:text-blue-400">
-              Trusted by developers
-            </h2>
-            <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
-              Join the growing community
-            </p>
-          </div>
-          <div className="mx-auto mt-16 grid max-w-2xl grid-cols-1 gap-8 lg:mx-0 lg:max-w-none lg:grid-cols-3">
-            <div className="flex flex-col items-center justify-center rounded-2xl bg-white dark:bg-gray-800 p-8 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700">
-              <Star className="h-8 w-8 text-yellow-400 mb-4" />
-              <div className="text-3xl font-bold text-gray-900 dark:text-white">2.1k+</div>
-              <div className="text-sm text-gray-600 dark:text-gray-300">GitHub Stars</div>
-            </div>
-            <div className="flex flex-col items-center justify-center rounded-2xl bg-white dark:bg-gray-800 p-8 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700">
-              <Users className="h-8 w-8 text-blue-500 mb-4" />
-              <div className="text-3xl font-bold text-gray-900 dark:text-white">10k+</div>
-              <div className="text-sm text-gray-600 dark:text-gray-300">Monthly Downloads</div>
-            </div>
-            <div className="flex flex-col items-center justify-center rounded-2xl bg-white dark:bg-gray-800 p-8 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700">
-              <Code className="h-8 w-8 text-green-500 mb-4" />
-              <div className="text-3xl font-bold text-gray-900 dark:text-white">500+</div>
-              <div className="text-sm text-gray-600 dark:text-gray-300">Production Apps</div>
-            </div>
-          </div>
-          <div className="mt-16 text-center">
-            <Link
-              href="https://github.com/keyloom/keyloom"
-              className="inline-flex items-center gap-x-2 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300"
-            >
-              <Star className="h-4 w-4" />
-              Star us on GitHub
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
+
     </main>
   );
 }
