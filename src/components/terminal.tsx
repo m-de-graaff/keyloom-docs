@@ -172,7 +172,7 @@ export const TypingAnimation = ({
   return (
     <MotionComponent
       ref={elementRef}
-      className={cn("text-sm font-normal tracking-tight", className)}
+      className={cn("text-sm sm:text-sm font-normal tracking-tight", className)}
       {...props}
     >
       {displayedText}
@@ -229,7 +229,7 @@ export const Terminal = ({
     <div
       ref={containerRef}
       className={cn(
-        "z-0 h-full max-h-[600px] w-full max-w-lg rounded-xl border border-border bg-background",
+        "z-0 h-full max-h-[600px] w-full max-w-full sm:max-w-lg rounded-xl border border-border bg-background",
         className
       )}
     >

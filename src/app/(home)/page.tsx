@@ -348,7 +348,7 @@ export const { GET, POST } = createNextHandler(config);`,
   return (
     <main className="flex flex-1 flex-col">
       {/* Hero Section */}
-      <section className="relative overflow-hidden min-h-screen flex items-center">
+      <section className="relative overflow-hidden min-h-[100dvh] sm:min-h-screen flex items-center">
         <div className="absolute inset-0">
           {/* Light mode dots */}
           <div className="block dark:hidden">
@@ -407,7 +407,7 @@ export const { GET, POST } = createNextHandler(config);`,
                 {/* Make the button interactive */}
                 <Link
                   href="/docs/get-started"
-                  className="rounded-md bg-fd-primary px-6 py-3 text-base font-semibold text-fd-primary-foreground transition-all hover:bg-fd-primary/90 pointer-events-auto"
+                  className="rounded-md bg-fd-primary px-6 py-3 min-h-[44px] flex items-center justify-center text-base font-semibold text-fd-primary-foreground transition-all hover:bg-fd-primary/90 pointer-events-auto"
                 >
                   Get started
                 </Link>
@@ -575,7 +575,7 @@ export const { GET, POST } = createNextHandler(config);`,
                   </p>
                   <Link
                     href="/docs/get-started"
-                    className="mt-4 inline-flex items-center gap-2 rounded-md bg-fd-primary/10 px-3 py-2 text-xs font-semibold text-fd-primary transition-colors hover:bg-fd-primary/20"
+                    className="mt-4 inline-flex items-center gap-2 rounded-md bg-fd-primary/10 px-4 py-3 min-h-[44px] text-sm font-semibold text-fd-primary transition-colors hover:bg-fd-primary/20"
                   >
                     Open the guided tutorial <ArrowRight className="h-4 w-4" />
                   </Link>
@@ -609,7 +609,7 @@ export const { GET, POST } = createNextHandler(config);`,
                   Keyloom VS Next-Auth
                 </span>
               </div>
-              <div className="p-4 sm:p-6">
+              <div className="p-2 sm:p-4 lg:p-6">
                 <CodeComparison
                   beforeFiles={beforeFiles}
                   afterFiles={afterFiles}
