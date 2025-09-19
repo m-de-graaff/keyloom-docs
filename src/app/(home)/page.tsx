@@ -60,9 +60,10 @@ export default function HomePage() {
     },
   ];
 
-  const codeBefore = `// lib/auth.ts - Manual OAuth + session setup
+  const codeBefore = `// lib/auth.ts - Manual auth implementation
 import { NextAuthOptions } from 'next-auth';
 import GithubProvider from 'next-auth/providers/github';
+import GoogleProvider from 'next-auth/providers/google';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { prisma } from './prisma';
 
@@ -73,37 +74,194 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.GITHUB_CLIENT_ID!,
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
     }),
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
   ],
   callbacks: {
-    session: ({ session, token }) => ({
-      ...session,
-      user: { ...session.user, id: token.sub },
-    }),
-    jwt: ({ token, user }) => {
-      if (user) token.sub = user.id;
+    session: async ({ session, token }) => {
+      if (token.sub) {
+        const user = await prisma.user.findUnique({
+          where: { id: token.sub },
+          include: { accounts: true, sessions: true }
+        });
+        return { ...session, user: { ...session.user, id: token.sub, role: user?.role } };
+      }
+      return session;
+    },
+    jwt: ({ token, user, account }) => {
+      if (user) {
+        token.sub = user.id;
+        token.role = user.role;
+      }
       return token;
     },
+    signIn: async ({ user, account, profile }) => {
+      try {
+        if (account?.provider === 'github' || account?.provider === 'google') {
+          const existingUser = await prisma.user.findUnique({
+            where: { email: user.email! }
+          });
+          if (!existingUser) {
+            await prisma.user.create({
+              data: {
+                email: user.email!,
+                name: user.name,
+                image: user.image,
+                role: 'USER'
+              }
+            });
+          }
+        }
+        return true;
+      } catch (error) {
+        console.error('Sign in error:', error);
+        return false;
+      }
+    },
   },
-  pages: { signIn: '/auth/signin' },
-  session: { strategy: 'jwt' },
+  pages: {
+    signIn: '/auth/signin',
+    error: '/auth/error',
+    signOut: '/auth/signout'
+  },
+  session: { strategy: 'jwt', maxAge: 30 * 24 * 60 * 60 },
+  events: {
+    signIn: async ({ user }) => {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { lastLogin: new Date() }
+      });
+    }
+  }
+};
+
+// middleware.ts - Route protection
+import { withAuth } from 'next-auth/middleware';
+import { NextResponse } from 'next/server';
+
+export default withAuth(
+  function middleware(req) {
+    const { pathname } = req.nextUrl;
+    const token = req.nextauth.token;
+
+    // Admin routes
+    if (pathname.startsWith('/admin') && token?.role !== 'ADMIN') {
+      return NextResponse.redirect(new URL('/unauthorized', req.url));
+    }
+
+    // Protected API routes
+    if (pathname.startsWith('/api/protected') && !token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    return NextResponse.next();
+  },
+  {
+    callbacks: {
+      authorized: ({ token, req }) => {
+        const { pathname } = req.nextUrl;
+
+        if (pathname.startsWith('/dashboard')) return !!token;
+        if (pathname.startsWith('/admin')) return token?.role === 'ADMIN';
+        if (pathname.startsWith('/api/protected')) return !!token;
+
+        return true;
+      },
+    },
+  }
+);
+
+export const config = {
+  matcher: ['/dashboard/:path*', '/admin/:path*', '/api/protected/:path*']
 };
 
 // api/auth/[...nextauth].ts
 import NextAuth from 'next-auth';
 import { authOptions } from '@/lib/auth';
-export default NextAuth(authOptions);`;
+export default NextAuth(authOptions);
+
+// prisma/schema.prisma - Database schema
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  role          Role      @default(USER)
+  lastLogin     DateTime?
+  accounts      Account[]
+  sessions      Session[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  @@unique([identifier, token])
+}
+
+enum Role {
+  USER
+  ADMIN
+}`;
 
   const codeAfter = `// keyloom.config.ts - Complete auth setup
+import { defineConfig, github, google } from '@keyloom/core';
+
 export default defineConfig({
   providers: [github()],
-  session: { strategy: 'database' }
-});`;
+  session: { strategy: 'database' },
+  roles: ['USER', 'ADMIN'],
+  middleware: {
+    routes: {
+      '/dashboard/*': 'authenticated',
+      '/admin/*': 'role:ADMIN',
+      '/api/protected/*': 'authenticated'
+    }
+  }
+});
+
+// That's it! Keyloom handles:
+// ✅ OAuth provider setup & callbacks
+// ✅ Database schema & migrations
+// ✅ Session management & JWT
+// ✅ Route protection middleware
+// ✅ Role-based access control
+// ✅ Error handling & redirects
+// ✅ TypeScript types & validation`;
 
   const logos = [
     {
       node: (
         <img
-          className="h-7 w-auto object-contain opacity-60 hover:opacity-80 transition-opacity filter grayscale"
+          className="h-7 w-auto object-contain opacity-60 hover:opacity-80 transition-opacity filter grayscale dark:invert"
           src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nextjs/nextjs-original.svg"
           alt="Next.js"
           title="Next.js"
@@ -115,7 +273,7 @@ export default defineConfig({
     {
       node: (
         <img
-          className="h-7 w-auto object-contain opacity-60 hover:opacity-80 transition-opacity filter grayscale"
+          className="h-7 w-auto object-contain opacity-60 hover:opacity-80 transition-opacity filter grayscale dark:invert"
           src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg"
           alt="React"
           title="React"
@@ -127,7 +285,7 @@ export default defineConfig({
     {
       node: (
         <img
-          className="h-7 w-auto object-contain opacity-60 hover:opacity-80 transition-opacity filter grayscale"
+          className="h-7 w-auto object-contain opacity-60 hover:opacity-80 transition-opacity filter grayscale dark:invert"
           src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg"
           alt="Node.js"
           title="Node.js"
@@ -139,7 +297,7 @@ export default defineConfig({
     {
       node: (
         <img
-          className="h-7 w-auto object-contain opacity-60 hover:opacity-80 transition-opacity filter grayscale"
+          className="h-7 w-auto object-contain opacity-60 hover:opacity-80 transition-opacity filter grayscale dark:invert"
           src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/prisma/prisma-original.svg"
           alt="Prisma"
           title="Prisma"
@@ -151,7 +309,7 @@ export default defineConfig({
     {
       node: (
         <img
-          className="h-7 w-auto object-contain opacity-60 hover:opacity-80 transition-opacity filter grayscale"
+          className="h-7 w-auto object-contain opacity-60 hover:opacity-80 transition-opacity filter grayscale dark:invert"
           src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg"
           alt="PostgreSQL"
           title="PostgreSQL"
@@ -163,7 +321,7 @@ export default defineConfig({
     {
       node: (
         <img
-          className="h-7 w-auto object-contain opacity-60 hover:opacity-80 transition-opacity filter grayscale"
+          className="h-7 w-auto object-contain opacity-60 hover:opacity-80 transition-opacity filter grayscale dark:invert"
           src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tailwindcss/tailwindcss-original.svg"
           alt="Tailwind CSS"
           title="Tailwind CSS"
@@ -175,7 +333,7 @@ export default defineConfig({
     {
       node: (
         <img
-          className="h-7 w-auto object-contain opacity-60 hover:opacity-80 transition-opacity filter grayscale"
+          className="h-7 w-auto object-contain opacity-60 hover:opacity-80 transition-opacity filter grayscale dark:invert"
           src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vercel/vercel-original.svg"
           alt="Vercel"
           title="Vercel"
@@ -187,7 +345,7 @@ export default defineConfig({
     {
       node: (
         <img
-          className="h-7 w-auto object-contain opacity-60 hover:opacity-80 transition-opacity filter grayscale"
+          className="h-7 w-auto object-contain opacity-60 hover:opacity-80 transition-opacity filter grayscale dark:invert"
           src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg"
           alt="GitHub"
           title="GitHub"
@@ -467,7 +625,7 @@ export default defineConfig({
                   beforeCode={codeBefore}
                   afterCode={codeAfter}
                   language="ts"
-                  filename="auth-setup.ts"
+                  filename="complete-auth-setup"
                   lightTheme="github-light"
                   darkTheme="github-dark"
                 />
