@@ -4,7 +4,7 @@ description: Configure X (formerly Twitter) OAuth with Keyloom for social authen
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
-import { Steps } from "fumadocs-ui/components/steps";
+import { Steps, Step } from "fumadocs-ui/components/steps";
 import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 
 # X (Twitter) Provider
@@ -20,7 +20,8 @@ The X provider enables OAuth authentication using X (formerly Twitter) accounts.
 - **Rate Limiting**: Built-in rate limit handling
 
 <Callout type="info">
-X has transitioned from OAuth 1.0a to OAuth 2.0 with PKCE. This provider uses the modern OAuth 2.0 implementation.
+  X has transitioned from OAuth 1.0a to OAuth 2.0 with PKCE. This provider uses
+  the modern OAuth 2.0 implementation.
 </Callout>
 
 ## Setup
@@ -126,12 +127,12 @@ The X provider returns the following user information:
 
 ```typescript
 interface XProfile {
-  id: string;           // X user ID
+  id: string; // X user ID
   email: string | null; // User's email (if granted)
-  name: string | null;  // User's display name
+  name: string | null; // User's display name
   image: string | null; // Profile picture URL
-  username?: string;    // X username (handle)
-  verified?: boolean;   // Verification status
+  username?: string; // X username (handle)
+  verified?: boolean; // Verification status
 }
 ```
 
@@ -140,12 +141,14 @@ interface XProfile {
 X OAuth 2.0 scopes for API access:
 
 ### Basic Scopes
+
 - `tweet.read` - Read tweets
 - `users.read` - Read user profile information
 - `follows.read` - Read following/followers information
 - `offline.access` - Refresh token access
 
 ### Advanced Scopes
+
 - `tweet.write` - Post tweets
 - `tweet.moderate.write` - Moderate tweets (hide replies, etc.)
 - `follows.write` - Follow/unfollow users
@@ -178,11 +181,11 @@ After authentication, use the access token for X API v2 calls:
 async function getUserProfile(accessToken: string, userId: string) {
   const response = await fetch(`https://api.twitter.com/2/users/${userId}`, {
     headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
     },
   });
-  
+
   return response.json();
 }
 
@@ -192,39 +195,46 @@ async function getUserTweets(accessToken: string, userId: string) {
     `https://api.twitter.com/2/users/${userId}/tweets?max_results=10`,
     {
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     }
   );
-  
+
   return response.json();
 }
 
 // Example: Post a tweet
 async function postTweet(accessToken: string, text: string) {
-  const response = await fetch('https://api.twitter.com/2/tweets', {
-    method: 'POST',
+  const response = await fetch("https://api.twitter.com/2/tweets", {
+    method: "POST",
     headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({ text }),
   });
-  
+
   return response.json();
 }
 
 // Example: Follow a user
-async function followUser(accessToken: string, userId: string, targetUserId: string) {
-  const response = await fetch(`https://api.twitter.com/2/users/${userId}/following`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ target_user_id: targetUserId }),
-  });
-  
+async function followUser(
+  accessToken: string,
+  userId: string,
+  targetUserId: string
+) {
+  const response = await fetch(
+    `https://api.twitter.com/2/users/${userId}/following`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ target_user_id: targetUserId }),
+    }
+  );
+
   return response.json();
 }
 ```
@@ -239,22 +249,22 @@ X API has rate limits. Handle them properly:
 async function makeXAPICall(accessToken: string, url: string) {
   const response = await fetch(url, {
     headers: {
-      'Authorization': `Bearer ${accessToken}`,
+      Authorization: `Bearer ${accessToken}`,
     },
   });
-  
+
   if (response.status === 429) {
     // Rate limited
-    const resetTime = response.headers.get('x-rate-limit-reset');
+    const resetTime = response.headers.get("x-rate-limit-reset");
     const waitTime = parseInt(resetTime!) * 1000 - Date.now();
-    
+
     // Wait until rate limit resets
-    await new Promise(resolve => setTimeout(resolve, waitTime));
-    
+    await new Promise((resolve) => setTimeout(resolve, waitTime));
+
     // Retry the request
     return makeXAPICall(accessToken, url);
   }
-  
+
   return response.json();
 }
 ```
@@ -266,28 +276,28 @@ Set up webhooks for real-time events:
 ```typescript
 // Example webhook handler for X events
 export async function POST(request: Request) {
-  const signature = request.headers.get('x-twitter-webhooks-signature');
+  const signature = request.headers.get("x-twitter-webhooks-signature");
   const body = await request.text();
-  
+
   // Verify webhook signature
   if (!verifyWebhookSignature(body, signature)) {
-    return new Response('Unauthorized', { status: 401 });
+    return new Response("Unauthorized", { status: 401 });
   }
-  
+
   const event = JSON.parse(body);
-  
+
   // Handle different event types
   switch (event.event_type) {
-    case 'tweet_create':
+    case "tweet_create":
       await handleTweetCreate(event);
       break;
-    case 'follow':
+    case "follow":
       await handleFollow(event);
       break;
     // ... other events
   }
-  
-  return new Response('OK');
+
+  return new Response("OK");
 }
 ```
 
@@ -298,27 +308,27 @@ Request additional user fields:
 ```typescript
 async function getUserWithFields(accessToken: string, userId: string) {
   const fields = [
-    'created_at',
-    'description',
-    'location',
-    'pinned_tweet_id',
-    'profile_image_url',
-    'protected',
-    'public_metrics',
-    'url',
-    'verified',
-    'verified_type'
-  ].join(',');
-  
+    "created_at",
+    "description",
+    "location",
+    "pinned_tweet_id",
+    "profile_image_url",
+    "protected",
+    "public_metrics",
+    "url",
+    "verified",
+    "verified_type",
+  ].join(",");
+
   const response = await fetch(
     `https://api.twitter.com/2/users/${userId}?user.fields=${fields}`,
     {
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     }
   );
-  
+
   return response.json();
 }
 ```
@@ -328,18 +338,22 @@ async function getUserWithFields(accessToken: string, userId: string) {
 Key differences when migrating from v1.1:
 
 ### Authentication
+
 - **v1.1**: OAuth 1.0a with signature-based authentication
 - **v2**: OAuth 2.0 with Bearer tokens (simpler)
 
 ### Endpoints
+
 - **v1.1**: `/1.1/users/show.json`
 - **v2**: `/2/users/:id` or `/2/users/by/username/:username`
 
 ### Response Format
+
 - **v1.1**: Flat JSON structure
 - **v2**: Structured with `data` and `includes` objects
 
 ### Rate Limits
+
 - **v1.1**: Per-endpoint rate limits
 - **v2**: More granular rate limiting with different windows
 
@@ -348,21 +362,25 @@ Key differences when migrating from v1.1:
 ### Common Issues
 
 **Invalid Callback URL**
+
 - Ensure callback URL exactly matches X app configuration
 - Check for trailing slashes and correct protocol
 - Verify the format: `/api/auth/callback/x`
 
 **Scope Permission Errors**
+
 - Verify requested scopes are enabled in your X app
 - Some scopes require app approval from X
 - Check if your app has the necessary access level
 
 **Rate Limit Exceeded**
+
 - Implement proper rate limit handling
 - Use exponential backoff for retries
 - Monitor your API usage in the developer portal
 
 **App Suspended**
+
 - Check X Developer Portal for suspension notices
 - Review X Developer Policy compliance
 - Contact X Developer Support if needed
@@ -377,7 +395,8 @@ Test your X integration:
 4. **Production**: Verify with production domain
 
 <Callout>
-X requires HTTPS for production callback URLs. Ensure your production environment has valid SSL certificates.
+  X requires HTTPS for production callback URLs. Ensure your production
+  environment has valid SSL certificates.
 </Callout>
 
 ## X Developer Policies

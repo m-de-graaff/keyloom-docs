@@ -4,7 +4,7 @@ description: Configure Auth0 OAuth with Keyloom for enterprise authentication an
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
-import { Steps } from "fumadocs-ui/components/steps";
+import { Steps, Step } from "fumadocs-ui/components/steps";
 
 # Auth0 Provider
 
@@ -39,16 +39,19 @@ The Auth0 provider enables OAuth authentication using Auth0's identity platform.
 In your Auth0 application settings, add your callback URLs:
 
 **Allowed Callback URLs:**
+
 ```
 https://yourdomain.com/api/auth/callback/auth0
 ```
 
 **Allowed Logout URLs:**
+
 ```
 https://yourdomain.com/
 ```
 
 For local development:
+
 ```
 http://localhost:3000/api/auth/callback/auth0
 http://localhost:3000/
@@ -114,9 +117,9 @@ The Auth0 provider returns user information from the ID token:
 
 ```typescript
 interface Auth0Profile {
-  id: string;           // Auth0 user ID (sub claim)
+  id: string; // Auth0 user ID (sub claim)
   email: string | null; // User's email
-  name: string | null;  // User's full name
+  name: string | null; // User's full name
   image: string | null; // Profile picture URL
   emailVerified?: boolean; // Email verification status
 }
@@ -226,9 +229,10 @@ Enhance authentication with Auth0 Rules or Actions:
 ```javascript
 // Auth0 Rule
 function addCustomClaims(user, context, callback) {
-  const namespace = 'https://yourdomain.com/';
-  context.idToken[namespace + 'roles'] = user.app_metadata.roles || [];
-  context.idToken[namespace + 'permissions'] = user.app_metadata.permissions || [];
+  const namespace = "https://yourdomain.com/";
+  context.idToken[namespace + "roles"] = user.app_metadata.roles || [];
+  context.idToken[namespace + "permissions"] =
+    user.app_metadata.permissions || [];
   callback(null, user, context);
 }
 ```
@@ -239,10 +243,16 @@ function addCustomClaims(user, context, callback) {
 // Auth0 Action
 exports.onExecutePostLogin = async (event, api) => {
   const { user } = event;
-  
+
   // Add custom claims to tokens
-  api.idToken.setCustomClaim('https://yourdomain.com/roles', user.app_metadata.roles);
-  api.accessToken.setCustomClaim('https://yourdomain.com/permissions', user.app_metadata.permissions);
+  api.idToken.setCustomClaim(
+    "https://yourdomain.com/roles",
+    user.app_metadata.roles
+  );
+  api.accessToken.setCustomClaim(
+    "https://yourdomain.com/permissions",
+    user.app_metadata.permissions
+  );
 };
 ```
 
@@ -251,21 +261,25 @@ exports.onExecutePostLogin = async (event, api) => {
 ### Common Issues
 
 **Invalid Callback URL**
+
 - Ensure callback URLs match exactly in Auth0 dashboard
 - Check for trailing slashes and correct protocol
 - Verify the format: `/api/auth/callback/auth0`
 
 **Domain Configuration**
+
 - Use the correct Auth0 domain format: `tenant.auth0.com`
 - For custom domains, ensure SSL certificates are properly configured
 - Check DNS settings for custom domains
 
 **Token Issues**
+
 - Verify client secret is correct and not expired
 - Check that the application type is "Regular Web Application"
 - Ensure proper scopes are requested
 
 **Connection Errors**
+
 - Verify social connections are enabled and configured
 - Check enterprise connection settings
 - Test connections individually in Auth0 dashboard
@@ -279,7 +293,8 @@ Test your Auth0 integration:
 3. **Production**: Ensure HTTPS and proper domain configuration
 
 <Callout>
-Auth0 requires HTTPS for production applications. Ensure your production environment has valid SSL certificates.
+  Auth0 requires HTTPS for production applications. Ensure your production
+  environment has valid SSL certificates.
 </Callout>
 
 ## Migration from Auth0
@@ -293,7 +308,8 @@ If you're migrating from Auth0 to Keyloom:
 5. **Test Thoroughly**: Verify all authentication flows work correctly
 
 <Callout type="warning">
-Password migration requires users to reset passwords or use a gradual migration strategy.
+  Password migration requires users to reset passwords or use a gradual
+  migration strategy.
 </Callout>
 
 ## Security Best Practices

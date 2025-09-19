@@ -4,7 +4,7 @@ description: Configure GitLab OAuth with Keyloom for GitLab.com and self-hosted 
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
-import { Steps } from "fumadocs-ui/components/steps";
+import { Steps, Step } from "fumadocs-ui/components/steps";
 import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 
 # GitLab Provider
@@ -59,6 +59,7 @@ The GitLab provider enables OAuth authentication using GitLab accounts. Works wi
 ### Copy Credentials
 
 After creating the application:
+
 1. Copy the **Application ID** (Client ID)
 2. Copy the **Secret** (Client Secret)
 3. Note your GitLab instance URL (for self-hosted)
@@ -161,11 +162,11 @@ The GitLab provider returns the following user information:
 
 ```typescript
 interface GitLabProfile {
-  id: string;           // GitLab user ID
+  id: string; // GitLab user ID
   email: string | null; // User's email address
-  name: string | null;  // User's display name
+  name: string | null; // User's display name
   image: string | null; // Avatar URL
-  username?: string;    // GitLab username
+  username?: string; // GitLab username
 }
 ```
 
@@ -174,12 +175,14 @@ interface GitLabProfile {
 Common GitLab OAuth scopes:
 
 ### Basic Scopes
+
 - `read_user` - Read user profile information (default)
 - `read_repository` - Read repository information
 - `write_repository` - Write to repositories
 - `read_registry` - Read container registry
 
 ### Advanced Scopes
+
 - `api` - Full API access
 - `read_api` - Read-only API access
 - `openid` - OpenID Connect support
@@ -202,39 +205,49 @@ After authentication, use the access token for GitLab API calls:
 
 ```typescript
 // Example: Get user's projects
-async function getUserProjects(accessToken: string, baseUrl = 'https://gitlab.com') {
+async function getUserProjects(
+  accessToken: string,
+  baseUrl = "https://gitlab.com"
+) {
   const response = await fetch(`${baseUrl}/api/v4/projects?membership=true`, {
     headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
     },
   });
-  
+
   return response.json();
 }
 
 // Example: Get user profile
-async function getUserProfile(accessToken: string, baseUrl = 'https://gitlab.com') {
+async function getUserProfile(
+  accessToken: string,
+  baseUrl = "https://gitlab.com"
+) {
   const response = await fetch(`${baseUrl}/api/v4/user`, {
     headers: {
-      'Authorization': `Bearer ${accessToken}`,
+      Authorization: `Bearer ${accessToken}`,
     },
   });
-  
+
   return response.json();
 }
 
 // Example: Create a new project
-async function createProject(accessToken: string, projectData: any, baseUrl = 'https://gitlab.com') {
+async function createProject(
+  accessToken: string,
+  projectData: any,
+  baseUrl = "https://gitlab.com"
+) {
   const response = await fetch(`${baseUrl}/api/v4/projects`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(projectData),
   });
-  
+
   return response.json();
 }
 ```
@@ -259,7 +272,7 @@ For self-hosted instances with custom SSL:
 
 ```typescript
 // If using self-signed certificates in development
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'; // Only for development!
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"; // Only for development!
 
 gitlab({
   clientId: process.env.GITLAB_CLIENT_ID!,
@@ -271,6 +284,7 @@ gitlab({
 ### Enterprise Features
 
 GitLab Enterprise Edition features:
+
 - **SAML SSO**: Integrate with enterprise identity providers
 - **LDAP Integration**: Connect with LDAP directories
 - **Advanced Security**: Security scanning and compliance features
@@ -319,7 +333,7 @@ const customGitlab = createOAuthProvider({
     name: profile.name || profile.username,
     image: profile.avatar_url,
     username: profile.username, // Additional field
-    location: profile.location,  // Additional field
+    location: profile.location, // Additional field
   }),
 });
 ```
@@ -329,21 +343,25 @@ const customGitlab = createOAuthProvider({
 ### Common Issues
 
 **Invalid Redirect URI**
+
 - Ensure redirect URI exactly matches GitLab application configuration
 - Check for trailing slashes and correct protocol
 - Verify the format: `/api/auth/callback/gitlab`
 
 **SSL Certificate Issues (Self-Hosted)**
+
 - Verify SSL certificates are properly configured
 - Check certificate chain and intermediate certificates
 - For development, consider using valid certificates or proper SSL setup
 
 **Scope Permission Errors**
+
 - Verify requested scopes are enabled in GitLab application
 - Check user permissions for requested resources
 - Some scopes require admin approval in enterprise instances
 
 **API Rate Limiting**
+
 - GitLab has rate limits on API endpoints
 - Implement proper error handling for 429 responses
 - Consider caching frequently accessed data
@@ -358,7 +376,8 @@ Test your GitLab integration:
 4. **Self-Hosted**: Test connectivity to self-hosted instances
 
 <Callout>
-For self-hosted GitLab instances, ensure your application can reach the GitLab server and that SSL certificates are properly configured.
+  For self-hosted GitLab instances, ensure your application can reach the GitLab
+  server and that SSL certificates are properly configured.
 </Callout>
 
 ## Security Best Practices

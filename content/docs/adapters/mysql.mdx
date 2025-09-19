@@ -4,7 +4,7 @@ description: Use MySQL with the mysql2 driver to persist Keyloom users, sessions
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
-import { Steps } from "fumadocs-ui/components/steps";
+import { Steps, Step } from "fumadocs-ui/components/steps";
 import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 
 # MySQL Adapter
@@ -21,7 +21,8 @@ The MySQL adapter provides database persistence using the high-performance [mysq
 - **Audit Logging**: Comprehensive event tracking
 
 <Callout type="info">
-This adapter is currently in development. Core authentication features are available, with RBAC and advanced features planned for future releases.
+  This adapter is currently in development. Core authentication features are
+  available, with RBAC and advanced features planned for future releases.
 </Callout>
 
 ## Installation
@@ -50,30 +51,34 @@ export const pool = mysql.createPool({
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  
+
   // Connection pool settings
   connectionLimit: 10,
   queueLimit: 0,
   acquireTimeout: 60000,
   timeout: 60000,
-  
+
   // Character set and timezone
   charset: "utf8mb4",
   timezone: "+00:00",
-  
+
   // SSL settings for production
-  ssl: process.env.NODE_ENV === "production" ? {
-    rejectUnauthorized: false
-  } : false,
+  ssl:
+    process.env.NODE_ENV === "production"
+      ? {
+          rejectUnauthorized: false,
+        }
+      : false,
 });
 
 // Test connection
-pool.getConnection()
-  .then(connection => {
+pool
+  .getConnection()
+  .then((connection) => {
     console.log("MySQL connected successfully");
     connection.release();
   })
-  .catch(err => {
+  .catch((err) => {
     console.error("MySQL connection failed:", err);
   });
 ```
@@ -237,25 +242,25 @@ import path from "path";
 
 async function runMigrations() {
   const connection = await pool.getConnection();
-  
+
   try {
     // Read and execute migration files
     const migrationDir = path.join(__dirname, "migrations");
     const files = fs.readdirSync(migrationDir).sort();
-    
+
     for (const file of files) {
       if (file.endsWith(".sql")) {
         console.log(`Running migration: ${file}`);
         const sql = fs.readFileSync(path.join(migrationDir, file), "utf8");
-        
+
         // Split by semicolon and execute each statement
-        const statements = sql.split(";").filter(stmt => stmt.trim());
+        const statements = sql.split(";").filter((stmt) => stmt.trim());
         for (const statement of statements) {
           await connection.execute(statement);
         }
       }
     }
-    
+
     console.log("Migrations completed successfully");
   } finally {
     connection.release();
@@ -279,27 +284,30 @@ export const pool = mysql.createPool({
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  
+
   // Pool configuration
-  connectionLimit: 20,        // Maximum connections
-  queueLimit: 0,             // No limit on queued requests
-  acquireTimeout: 60000,     // 60s timeout for getting connection
-  timeout: 60000,            // 60s query timeout
-  
+  connectionLimit: 20, // Maximum connections
+  queueLimit: 0, // No limit on queued requests
+  acquireTimeout: 60000, // 60s timeout for getting connection
+  timeout: 60000, // 60s query timeout
+
   // Performance settings
   charset: "utf8mb4",
   timezone: "+00:00",
   supportBigNumbers: true,
   bigNumberStrings: true,
-  
+
   // Reconnection
   reconnect: true,
-  
+
   // SSL for production
-  ssl: process.env.NODE_ENV === "production" ? {
-    ca: fs.readFileSync(process.env.SSL_CA_PATH),
-    rejectUnauthorized: true
-  } : false,
+  ssl:
+    process.env.NODE_ENV === "production"
+      ? {
+          ca: fs.readFileSync(process.env.SSL_CA_PATH),
+          rejectUnauthorized: true,
+        }
+      : false,
 });
 ```
 
@@ -352,7 +360,7 @@ const adapter = mysql2Adapter({
 EXPLAIN SELECT * FROM keyloom_users WHERE email = 'user@example.com';
 
 -- Monitor slow queries
-SELECT 
+SELECT
   query_time,
   lock_time,
   rows_sent,
@@ -367,7 +375,7 @@ ORDER BY query_time DESC;
 
 ```sql
 -- Check index usage
-SELECT 
+SELECT
   TABLE_NAME,
   INDEX_NAME,
   CARDINALITY,
@@ -387,6 +395,7 @@ ANALYZE TABLE keyloom_users, keyloom_accounts, keyloom_sessions;
 ### Common Issues
 
 **Connection Pool Exhaustion**
+
 ```sql
 -- Check current connections
 SHOW PROCESSLIST;
@@ -395,12 +404,14 @@ SHOW VARIABLES LIKE 'max_connections';
 ```
 
 **Character Set Issues**
+
 ```sql
 -- Fix character set for existing tables
 ALTER TABLE keyloom_users CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 **Slow Query Performance**
+
 ```sql
 -- Enable slow query log
 SET GLOBAL slow_query_log = 'ON';
@@ -409,6 +420,7 @@ SET GLOBAL log_queries_not_using_indexes = 'ON';
 ```
 
 **JSON Column Issues**
+
 ```sql
 -- Verify JSON column support (MySQL 5.7+)
 SELECT VERSION();
@@ -419,20 +431,21 @@ SELECT JSON_VALID('{"test": true}');
 
 ```typescript
 // Add connection event handlers
-pool.on('connection', (connection) => {
-  console.log('New MySQL connection established');
+pool.on("connection", (connection) => {
+  console.log("New MySQL connection established");
 });
 
-pool.on('error', (err) => {
-  console.error('MySQL pool error:', err);
-  if (err.code === 'PROTOCOL_CONNECTION_LOST') {
+pool.on("error", (err) => {
+  console.error("MySQL pool error:", err);
+  if (err.code === "PROTOCOL_CONNECTION_LOST") {
     // Handle connection lost
   }
 });
 ```
 
 <Callout>
-For production deployments with high traffic, consider using MySQL connection poolers like ProxySQL for better resource management and load balancing.
+  For production deployments with high traffic, consider using MySQL connection
+  poolers like ProxySQL for better resource management and load balancing.
 </Callout>
 
 ## Migration from Other Databases
@@ -446,5 +459,5 @@ When migrating from other database systems:
 5. **Testing**: Thoroughly test all authentication flows
 
 <Callout type="warning">
-Always backup your data before migrating between different database systems.
+  Always backup your data before migrating between different database systems.
 </Callout>

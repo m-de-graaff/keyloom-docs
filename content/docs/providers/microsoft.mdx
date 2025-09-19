@@ -4,7 +4,7 @@ description: Configure Microsoft OAuth with Keyloom for Azure AD, Office 365, an
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
-import { Steps } from "fumadocs-ui/components/steps";
+import { Steps, Step } from "fumadocs-ui/components/steps";
 import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 
 # Microsoft Provider
@@ -136,7 +136,7 @@ Allows users from any Azure AD tenant and personal Microsoft accounts.
 microsoft({
   clientId: process.env.MICROSOFT_CLIENT_ID!,
   clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
-  tenant: 'organizations',
+  tenant: "organizations",
 });
 ```
 
@@ -150,7 +150,7 @@ Allows users from any Azure AD tenant (no personal accounts).
 microsoft({
   clientId: process.env.MICROSOFT_CLIENT_ID!,
   clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
-  tenant: 'consumers',
+  tenant: "consumers",
 });
 ```
 
@@ -164,7 +164,7 @@ Allows only personal Microsoft accounts.
 microsoft({
   clientId: process.env.MICROSOFT_CLIENT_ID!,
   clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
-  tenant: 'your-tenant-id-or-domain.com',
+  tenant: "your-tenant-id-or-domain.com",
 });
 ```
 
@@ -179,9 +179,9 @@ The Microsoft provider returns user information from the ID token:
 
 ```typescript
 interface MicrosoftProfile {
-  id: string;           // Microsoft user ID (sub claim)
+  id: string; // Microsoft user ID (sub claim)
   email: string | null; // User's email or preferred_username
-  name: string | null;  // User's display name
+  name: string | null; // User's display name
   image: string | null; // Profile picture (null by default)
   emailVerified?: boolean; // Email verification status
 }
@@ -209,6 +209,7 @@ microsoft({
 ```
 
 Common Microsoft Graph scopes:
+
 - `User.Read` - Read user profile
 - `Mail.Read` - Read user's mail
 - `Calendars.Read` - Read user's calendars
@@ -223,7 +224,8 @@ Common Microsoft Graph scopes:
 microsoft({
   clientId: process.env.MICROSOFT_CLIENT_ID!,
   clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
-  scope: "openid profile email offline_access https://graph.microsoft.com/User.Read https://graph.microsoft.com/Mail.Read",
+  scope:
+    "openid profile email offline_access https://graph.microsoft.com/User.Read https://graph.microsoft.com/Mail.Read",
 });
 ```
 
@@ -259,24 +261,24 @@ After authentication, use the access token for Microsoft Graph:
 ```typescript
 // Example: Get user profile from Microsoft Graph
 async function getUserProfile(accessToken: string) {
-  const response = await fetch('https://graph.microsoft.com/v1.0/me', {
+  const response = await fetch("https://graph.microsoft.com/v1.0/me", {
     headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
     },
   });
-  
+
   return response.json();
 }
 
 // Example: Get user's emails
 async function getUserEmails(accessToken: string) {
-  const response = await fetch('https://graph.microsoft.com/v1.0/me/messages', {
+  const response = await fetch("https://graph.microsoft.com/v1.0/me/messages", {
     headers: {
-      'Authorization': `Bearer ${accessToken}`,
+      Authorization: `Bearer ${accessToken}`,
     },
   });
-  
+
   return response.json();
 }
 ```
@@ -306,21 +308,25 @@ For enterprise SSO scenarios:
 ### Common Issues
 
 **AADSTS50011: Redirect URI Mismatch**
+
 - Ensure redirect URI exactly matches Azure AD configuration
 - Check for trailing slashes and correct protocol
 - Verify the format: `/api/auth/callback/microsoft`
 
 **AADSTS65001: User Consent Required**
+
 - User needs to consent to requested permissions
 - Consider pre-consenting for your organization
 - Check if admin consent is required for requested scopes
 
 **AADSTS50020: User Account Not Found**
+
 - User doesn't exist in the specified tenant
 - Check tenant configuration (common vs specific tenant)
 - Verify user has access to the application
 
 **Token Validation Errors**
+
 - Verify client secret is correct and not expired
 - Check that application type is configured correctly
 - Ensure proper audience and issuer validation
@@ -335,7 +341,8 @@ Test your Microsoft integration:
 4. **Production**: Verify enterprise policies work correctly
 
 <Callout>
-Microsoft requires HTTPS for production applications. Ensure your production environment has valid SSL certificates.
+  Microsoft requires HTTPS for production applications. Ensure your production
+  environment has valid SSL certificates.
 </Callout>
 
 ## Security Best Practices

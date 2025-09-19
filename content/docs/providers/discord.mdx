@@ -4,7 +4,7 @@ description: Configure Discord OAuth with Keyloom for seamless authentication.
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
-import { Steps } from "fumadocs-ui/components/steps";
+import { Steps, Step } from "fumadocs-ui/components/steps";
 
 # Discord Provider
 
@@ -42,6 +42,7 @@ https://yourdomain.com/api/auth/callback/discord
 ```
 
 For local development:
+
 ```
 http://localhost:3000/api/auth/callback/discord
 ```
@@ -100,9 +101,9 @@ The Discord provider returns the following user information:
 
 ```typescript
 interface DiscordProfile {
-  id: string;           // Discord user ID
+  id: string; // Discord user ID
   email: string | null; // User's email (if granted)
-  name: string | null;  // Display name or username
+  name: string | null; // Display name or username
   image: string | null; // Avatar URL
 }
 ```
@@ -117,16 +118,19 @@ The Discord provider requests these scopes by default:
 ## Discord API Details
 
 ### Authorization URL
+
 ```
 https://discord.com/api/oauth2/authorize
 ```
 
 ### Token URL
+
 ```
 https://discord.com/api/oauth2/token
 ```
 
 ### User Info URL
+
 ```
 https://discord.com/api/users/@me
 ```
@@ -151,7 +155,7 @@ const customDiscord = createOAuthProvider({
     id: raw.id,
     email: raw.email ?? null,
     name: raw.global_name ?? raw.username ?? null,
-    image: raw.avatar 
+    image: raw.avatar
       ? `https://cdn.discordapp.com/avatars/${raw.id}/${raw.avatar}.png`
       : null,
   }),
@@ -176,21 +180,25 @@ const discordWithGuilds = customDiscord({
 ### Common Issues
 
 **Invalid Redirect URI**
+
 - Ensure your redirect URI exactly matches what's configured in Discord
 - Check for trailing slashes and protocol (http vs https)
 - Verify the callback URL format: `/api/auth/callback/discord`
 
 **Missing Email**
+
 - Email is only provided if the user grants the `email` scope
 - Some Discord users may not have verified email addresses
 - Handle null email values in your application
 
 **Avatar Issues**
+
 - Discord avatars are served from Discord's CDN
 - URLs may change if users update their avatars
 - Consider caching or re-fetching avatar URLs periodically
 
 **Rate Limiting**
+
 - Discord has rate limits on their OAuth endpoints
 - Implement proper error handling for 429 responses
 - Consider implementing exponential backoff for retries
@@ -204,7 +212,8 @@ Test your Discord integration:
 3. **User Flow**: Test the complete OAuth flow with a Discord account
 
 <Callout>
-Discord requires HTTPS for production callback URLs. Make sure your production environment uses SSL certificates.
+  Discord requires HTTPS for production callback URLs. Make sure your production
+  environment uses SSL certificates.
 </Callout>
 
 ## Discord Bot Integration
@@ -216,7 +225,8 @@ If you're building a Discord bot alongside your web app, you can use the same Di
 3. The OAuth credentials remain separate from the bot token
 
 <Callout type="info">
-OAuth tokens and bot tokens serve different purposes. OAuth tokens authenticate users, while bot tokens authenticate your application as a bot.
+  OAuth tokens and bot tokens serve different purposes. OAuth tokens
+  authenticate users, while bot tokens authenticate your application as a bot.
 </Callout>
 
 ## Security Considerations

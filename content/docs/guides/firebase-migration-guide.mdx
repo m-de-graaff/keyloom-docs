@@ -3,7 +3,7 @@ title: Migrate from Firebase Auth
 description: Complete guide to migrate from Firebase Authentication to Keyloom with user data preservation.
 ---
 
-import { Steps } from "fumadocs-ui/components/steps";
+import { Steps, Step } from "fumadocs-ui/components/steps";
 import { Callout } from "fumadocs-ui/components/callout";
 import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 
@@ -12,7 +12,8 @@ import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 This guide walks you through migrating from Firebase Authentication to Keyloom while preserving your user data and maintaining authentication functionality.
 
 <Callout type="info">
-Firebase Auth migration is typically straightforward since both systems support similar OAuth providers and user data structures.
+  Firebase Auth migration is typically straightforward since both systems
+  support similar OAuth providers and user data structures.
 </Callout>
 
 ## Pre-Migration Checklist
@@ -108,11 +109,11 @@ export default defineKeyloom({
 <Tab value="admin-sdk" label="Firebase Admin SDK">
 
 ```javascript title="scripts/export-firebase-users.js"
-const admin = require('firebase-admin');
-const fs = require('fs');
+const admin = require("firebase-admin");
+const fs = require("fs");
 
 // Initialize Firebase Admin SDK
-const serviceAccount = require('./path/to/serviceAccountKey.json');
+const serviceAccount = require("./path/to/serviceAccountKey.json");
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
@@ -120,21 +121,21 @@ admin.initializeApp({
 async function exportUsers() {
   const users = [];
   let nextPageToken;
-  
+
   do {
     const listUsersResult = await admin.auth().listUsers(1000, nextPageToken);
-    
-    listUsersResult.users.forEach(userRecord => {
+
+    listUsersResult.users.forEach((userRecord) => {
       users.push(transformFirebaseUser(userRecord));
     });
-    
+
     nextPageToken = listUsersResult.pageToken;
   } while (nextPageToken);
-  
+
   console.log(`Exported ${users.length} users`);
-  
+
   fs.writeFileSync(
-    'firebase-users-export.json',
+    "firebase-users-export.json",
     JSON.stringify(users, null, 2)
   );
 }
@@ -150,13 +151,15 @@ function transformFirebaseUser(firebaseUser) {
     updatedAt: new Date(firebaseUser.metadata.lastSignInTime),
     disabled: firebaseUser.disabled,
     // Map Firebase providers to Keyloom accounts
-    accounts: firebaseUser.providerData.map(provider => ({
+    accounts: firebaseUser.providerData.map((provider) => ({
       provider: mapFirebaseProvider(provider.providerId),
       providerAccountId: provider.uid,
-      type: 'oauth',
+      type: "oauth",
     })),
     // Handle password users
-    hasPassword: firebaseUser.providerData.some(p => p.providerId === 'password'),
+    hasPassword: firebaseUser.providerData.some(
+      (p) => p.providerId === "password"
+    ),
     // Custom claims
     customClaims: firebaseUser.customClaims || {},
   };
@@ -164,13 +167,13 @@ function transformFirebaseUser(firebaseUser) {
 
 function mapFirebaseProvider(firebaseProvider) {
   const providerMap = {
-    'google.com': 'google',
-    'github.com': 'github',
-    'apple.com': 'apple',
-    'microsoft.com': 'microsoft',
-    'twitter.com': 'x',
-    'facebook.com': 'facebook',
-    'password': 'credentials',
+    "google.com": "google",
+    "github.com": "github",
+    "apple.com": "apple",
+    "microsoft.com": "microsoft",
+    "twitter.com": "x",
+    "facebook.com": "facebook",
+    password: "credentials",
   };
   return providerMap[firebaseProvider] || firebaseProvider;
 }
@@ -205,17 +208,19 @@ firebase auth:export users.json --project your-project-id
 Create a script to import the transformed user data:
 
 ```javascript title="scripts/import-firebase-users.js"
-const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcryptjs');
-const fs = require('fs');
+const { PrismaClient } = require("@prisma/client");
+const bcrypt = require("bcryptjs");
+const fs = require("fs");
 
 const prisma = new PrismaClient();
 
 async function importUsers() {
-  const users = JSON.parse(fs.readFileSync('firebase-users-export.json', 'utf8'));
-  
+  const users = JSON.parse(
+    fs.readFileSync("firebase-users-export.json", "utf8")
+  );
+
   console.log(`Importing ${users.length} users...`);
-  
+
   for (const user of users) {
     try {
       // Skip disabled users or handle them separately
@@ -223,7 +228,7 @@ async function importUsers() {
         console.log(`Skipping disabled user: ${user.email}`);
         continue;
       }
-      
+
       // Create user
       const createdUser = await prisma.user.create({
         data: {
@@ -236,10 +241,10 @@ async function importUsers() {
           updatedAt: user.updatedAt,
         },
       });
-      
+
       // Create OAuth accounts
       for (const account of user.accounts) {
-        if (account.provider !== 'credentials') {
+        if (account.provider !== "credentials") {
           await prisma.account.create({
             data: {
               userId: createdUser.id,
@@ -250,7 +255,7 @@ async function importUsers() {
           });
         }
       }
-      
+
       // Handle password users
       if (user.hasPassword) {
         // Firebase password hashes cannot be imported
@@ -258,12 +263,15 @@ async function importUsers() {
         await prisma.credential.create({
           data: {
             userId: createdUser.id,
-            hashedPassword: await bcrypt.hash('TEMP_PASSWORD_RESET_REQUIRED', 12),
+            hashedPassword: await bcrypt.hash(
+              "TEMP_PASSWORD_RESET_REQUIRED",
+              12
+            ),
             requiresReset: true,
           },
         });
       }
-      
+
       // Import custom claims as user metadata
       if (user.customClaims && Object.keys(user.customClaims).length > 0) {
         await prisma.userMetadata.create({
@@ -273,14 +281,14 @@ async function importUsers() {
           },
         });
       }
-      
+
       console.log(`Imported user: ${user.email}`);
     } catch (error) {
       console.error(`Failed to import user ${user.email}:`, error.message);
     }
   }
-  
-  console.log('User import completed');
+
+  console.log("User import completed");
 }
 
 importUsers()
@@ -300,8 +308,8 @@ Firebase password hashes cannot be directly imported. Choose a migration strateg
 <Tab value="reset" label="Password Reset (Recommended)">
 
 ```javascript title="scripts/send-password-reset-emails.js"
-const { PrismaClient } = require('@prisma/client');
-const nodemailer = require('nodemailer');
+const { PrismaClient } = require("@prisma/client");
+const nodemailer = require("nodemailer");
 
 const prisma = new PrismaClient();
 
@@ -313,27 +321,29 @@ async function sendPasswordResetEmails() {
       },
     },
   });
-  
+
   const transporter = nodemailer.createTransporter({
     // Your email configuration
   });
-  
+
   for (const user of users) {
     if (user.email) {
       await transporter.sendMail({
-        from: 'noreply@yourapp.com',
+        from: "noreply@yourapp.com",
         to: user.email,
-        subject: 'Password Reset Required - Migration to New System',
+        subject: "Password Reset Required - Migration to New System",
         html: `
           <h2>Password Reset Required</h2>
           <p>We've migrated to a new authentication system.</p>
           <p>Please reset your password to continue accessing your account:</p>
-          <a href="${process.env.APP_URL}/reset-password?token=${generateResetToken(user.id)}">
+          <a href="${
+            process.env.APP_URL
+          }/reset-password?token=${generateResetToken(user.id)}">
             Reset Password
           </a>
         `,
       });
-      
+
       console.log(`Sent password reset to: ${user.email}`);
     }
   }
@@ -347,7 +357,7 @@ sendPasswordResetEmails().catch(console.error);
 <Tab value="gradual" label="Gradual Migration">
 
 ```javascript title="middleware/firebase-fallback.js"
-const admin = require('firebase-admin');
+const admin = require("firebase-admin");
 
 // Initialize Firebase Admin SDK for fallback
 admin.initializeApp({
@@ -360,27 +370,27 @@ export async function authenticateWithFallback(email, password) {
     const user = await authenticateWithKeyloom(email, password);
     if (user) return user;
   } catch (error) {
-    console.log('Keyloom auth failed, trying Firebase fallback');
+    console.log("Keyloom auth failed, trying Firebase fallback");
   }
-  
+
   // Fallback to Firebase
   try {
     // Use Firebase Admin SDK to verify the user
     const firebaseUser = await admin.auth().getUserByEmail(email);
-    
+
     // Verify password using Firebase Auth REST API
     const isValidPassword = await verifyFirebasePassword(email, password);
-    
+
     if (isValidPassword) {
       // Migrate user on successful Firebase login
       await migrateUserFromFirebase(firebaseUser, password);
       return await authenticateWithKeyloom(email, password);
     }
   } catch (error) {
-    console.error('Firebase fallback failed:', error);
+    console.error("Firebase fallback failed:", error);
   }
-  
-  throw new Error('Authentication failed');
+
+  throw new Error("Authentication failed");
 }
 ```
 
@@ -399,14 +409,14 @@ Replace Firebase Auth SDK calls with Keyloom:
 <Tab value="web" label="Web SDK">
 
 ```typescript title="Before (Firebase)"
-import { initializeApp } from 'firebase/app';
-import { 
-  getAuth, 
+import { initializeApp } from "firebase/app";
+import {
+  getAuth,
   signInWithEmailAndPassword,
   signInWithPopup,
   GoogleAuthProvider,
-  onAuthStateChanged 
-} from 'firebase/auth';
+  onAuthStateChanged,
+} from "firebase/auth";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -427,9 +437,9 @@ const signInWithGoogle = async () => {
 // Listen to auth state
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    console.log('User signed in:', user);
+    console.log("User signed in:", user);
   } else {
-    console.log('User signed out');
+    console.log("User signed out");
   }
 });
 ```
@@ -439,13 +449,13 @@ import { signIn, signOut, getSession } from "@keyloom/nextjs/client";
 
 // Sign in with email/password
 const handleSignIn = async (email, password) => {
-  const result = await signIn('credentials', { email, password });
+  const result = await signIn("credentials", { email, password });
   return result;
 };
 
 // Sign in with Google
 const signInWithGoogle = async () => {
-  const result = await signIn('google');
+  const result = await signIn("google");
   return result;
 };
 
@@ -466,15 +476,15 @@ const handleSignOut = async () => {
 <Tab value="react" label="React Components">
 
 ```typescript title="Before (Firebase)"
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from './firebase-config';
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "./firebase-config";
 
 function Profile() {
   const [user, loading, error] = useAuthState(auth);
-  
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
-  
+
   return user ? (
     <div>
       <h1>Welcome, {user.displayName}</h1>
@@ -493,9 +503,9 @@ import { signOut } from "@keyloom/nextjs/client";
 
 function Profile() {
   const { data: session, status } = useSession();
-  
-  if (status === 'loading') return <div>Loading...</div>;
-  
+
+  if (status === "loading") return <div>Loading...</div>;
+
   return session?.user ? (
     <div>
       <h1>Welcome, {session.user.name}</h1>
@@ -513,7 +523,7 @@ function Profile() {
 <Tab value="server" label="Server-Side">
 
 ```typescript title="Before (Firebase Admin)"
-import admin from 'firebase-admin';
+import admin from "firebase-admin";
 
 // Verify ID token
 export async function verifyToken(idToken) {
@@ -521,7 +531,7 @@ export async function verifyToken(idToken) {
     const decodedToken = await admin.auth().verifyIdToken(idToken);
     return decodedToken;
   } catch (error) {
-    throw new Error('Invalid token');
+    throw new Error("Invalid token");
   }
 }
 
@@ -568,16 +578,16 @@ export default defineKeyloom({
       // Migrate custom claims from Firebase
       if (user.metadata?.customClaims) {
         const claims = user.metadata.customClaims;
-        
+
         // Convert to Keyloom RBAC if needed
         if (claims.role) {
           await assignUserRole(user.id, claims.role);
         }
-        
+
         if (claims.permissions) {
           await assignUserPermissions(user.id, claims.permissions);
         }
-        
+
         // Store other custom data
         await updateUserMetadata(user.id, {
           department: claims.department,
@@ -599,39 +609,39 @@ export default defineKeyloom({
 Create comprehensive tests for your migration:
 
 ```typescript title="tests/firebase-migration.test.ts"
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test.describe('Firebase to Keyloom Migration', () => {
-  test('OAuth users can sign in', async ({ page }) => {
-    await page.goto('/login');
-    
+test.describe("Firebase to Keyloom Migration", () => {
+  test("OAuth users can sign in", async ({ page }) => {
+    await page.goto("/login");
+
     // Test Google sign in
     await page.click('[data-testid="google-signin"]');
     // ... test OAuth flow
-    
+
     await expect(page.locator('[data-testid="user-profile"]')).toBeVisible();
   });
-  
-  test('password reset flow works', async ({ page }) => {
-    await page.goto('/reset-password');
-    
-    await page.fill('[name="email"]', 'migrated-user@example.com');
+
+  test("password reset flow works", async ({ page }) => {
+    await page.goto("/reset-password");
+
+    await page.fill('[name="email"]', "migrated-user@example.com");
     await page.click('[type="submit"]');
-    
-    await expect(page.locator('.success-message')).toContainText(
-      'Password reset email sent'
+
+    await expect(page.locator(".success-message")).toContainText(
+      "Password reset email sent"
     );
   });
-  
-  test('custom claims are preserved', async ({ page }) => {
-    await signInAsUser(page, 'admin@example.com');
-    
+
+  test("custom claims are preserved", async ({ page }) => {
+    await signInAsUser(page, "admin@example.com");
+
     const userData = await page.evaluate(() => {
-      return fetch('/api/user/profile').then(r => r.json());
+      return fetch("/api/user/profile").then((r) => r.json());
     });
-    
-    expect(userData.role).toBe('admin');
-    expect(userData.permissions).toContain('manage_users');
+
+    expect(userData.role).toBe("admin");
+    expect(userData.permissions).toContain("manage_users");
   });
 });
 ```
@@ -654,7 +664,7 @@ Deploy your Keyloom integration:
 // Monitor authentication success rates
 export async function trackAuthMetrics() {
   const metrics = await prisma.auditLog.groupBy({
-    by: ['type'],
+    by: ["type"],
     where: {
       timestamp: {
         gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Last 24 hours
@@ -662,15 +672,20 @@ export async function trackAuthMetrics() {
     },
     _count: true,
   });
-  
-  const signInAttempts = metrics.find(m => m.type === 'sign_in_attempt')?._count || 0;
-  const signInSuccesses = metrics.find(m => m.type === 'sign_in_success')?._count || 0;
-  
-  const successRate = signInAttempts > 0 ? (signInSuccesses / signInAttempts) * 100 : 0;
-  
+
+  const signInAttempts =
+    metrics.find((m) => m.type === "sign_in_attempt")?._count || 0;
+  const signInSuccesses =
+    metrics.find((m) => m.type === "sign_in_success")?._count || 0;
+
+  const successRate =
+    signInAttempts > 0 ? (signInSuccesses / signInAttempts) * 100 : 0;
+
   if (successRate < 95) {
     // Alert on low success rate
-    await sendAlert(`Authentication success rate is ${successRate.toFixed(2)}%`);
+    await sendAlert(
+      `Authentication success rate is ${successRate.toFixed(2)}%`
+    );
   }
 }
 ```
@@ -700,17 +715,17 @@ export async function trackAuthMetrics() {
 // After (Keyloom middleware)
 export async function authorizationMiddleware(req, res, next) {
   const session = await getSession(config, { req });
-  
+
   if (!session) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ error: "Unauthorized" });
   }
-  
+
   // Check if user can access the resource
   const resourceUserId = req.params.userId;
   if (session.user.id !== resourceUserId && !session.user.isAdmin) {
-    return res.status(403).json({ error: 'Forbidden' });
+    return res.status(403).json({ error: "Forbidden" });
   }
-  
+
   next();
 }
 ```
@@ -726,28 +741,28 @@ export async function authorizationMiddleware(req, res, next) {
 export function useAuthState() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
     // Check initial auth state
-    getSession().then(session => {
+    getSession().then((session) => {
       setUser(session?.user || null);
       setLoading(false);
     });
-    
+
     // Listen for auth state changes
     const handleStorageChange = (e) => {
-      if (e.key === 'keyloom.session') {
+      if (e.key === "keyloom.session") {
         // Session changed, refresh user state
-        getSession().then(session => {
+        getSession().then((session) => {
           setUser(session?.user || null);
         });
       }
     };
-    
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
-  
+
   return { user, loading };
 }
 ```
@@ -778,5 +793,6 @@ Example for 100K monthly verifications:
 ```
 
 <Callout type="success">
-Most applications see 80-95% cost reduction when migrating from Firebase Auth to Keyloom.
+  Most applications see 80-95% cost reduction when migrating from Firebase Auth
+  to Keyloom.
 </Callout>
