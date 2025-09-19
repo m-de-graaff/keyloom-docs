@@ -8,38 +8,6 @@ import { CodeComparison } from "@/components/code-comparison";
 
 import LogoLoop from "@/components/loop";
 
-// Theme-aware CodeBlock component
-function ThemedCodeBlock({
-  language,
-  text,
-}: {
-  language: string;
-  text: string;
-}) {
-  return (
-    <>
-      {/* Light mode code block */}
-      <div className="block dark:hidden">
-        <CodeBlock
-          language={language}
-          text={text}
-          theme={github}
-          showLineNumbers={false}
-        />
-      </div>
-      {/* Dark mode code block */}
-      <div className="hidden dark:block">
-        <CodeBlock
-          language={language}
-          text={text}
-          theme={irBlack}
-          showLineNumbers={false}
-        />
-      </div>
-    </>
-  );
-}
-
 export default function HomePage() {
   const quickSetupSteps = [
     {
