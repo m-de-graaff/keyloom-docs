@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { ArrowRight, Shield, Zap, Code, Database, Users, GitBranch } from 'lucide-react';
 import { JetBrains_Mono } from 'next/font/google';
 import  PixelBlast  from '@/components/PixelBlast';
-import {CodeBlock} from "react-code-blocks"
+import { CodeBlock } from 'react-code-blocks';
 const mono = JetBrains_Mono({ subsets: ['latin'] });
 
 
@@ -25,10 +25,10 @@ export default function HomePage() {
         <div className="relative mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8 w-full">
           <div className="mx-auto max-w-4xl text-center">
             {/* Subtle background for better text visibility */}
-            <div className="absolute inset-0 bg-fd-background/30 rounded-3xl shadow-2xl"></div>
+            <div className="absolute inset-0 bg-fd-background/30 rounded-3xl"></div>
             <div className="relative z-10 px-8 py-16 sm:px-12 sm:py-20">
               <div className="mb-8 flex justify-center">
-                <div className="relative rounded-full border bg-fd-secondary/90 px-4 py-2 text-sm leading-6 text-fd-muted-foreground transition-colors hover:bg-fd-secondary shadow-lg">
+                <div className="relative rounded-full border bg-fd-secondary/90 px-4 py-2 text-sm leading-6 text-fd-muted-foreground transition-colors hover:bg-fd-secondary">
                   Open source authentication framework.{' '}
                   <Link href="/docs" className="font-medium text-fd-foreground hover:opacity-80">
                     <span className="absolute inset-0" aria-hidden="true" />
@@ -36,29 +36,19 @@ export default function HomePage() {
                   </Link>
                 </div>
               </div>
-              <h1 className="text-4xl font-bold tracking-tight text-fd-foreground sm:text-6xl lg:text-7xl shadow-lg dark:shadow-white/20">
+              <h1 className="text-4xl font-bold tracking-tight text-fd-foreground sm:text-6xl lg:text-7xl">
                 The most comprehensive{' '}
                 <span className="text-fd-foreground">
                   authentication framework
                 </span>{' '}
                 for TypeScript
               </h1>
-              <p className="mt-8 text-xl leading-8 text-fd-muted-foreground max-w-3xl mx-auto shadow-md dark:shadow-white/15">
-                Build secure, scalable authentication with zero vendor lock-in.
-                Full control over your data, complete customization, and enterprise-ready features.
-              </p>
               <div className="mt-12 flex items-center justify-center gap-x-6">
                 <Link
                   href="/docs/get-started"
-                  className="rounded-md bg-fd-primary px-6 py-3 text-base font-semibold text-fd-primary-foreground shadow-lg transition-all hover:bg-fd-primary/90 hover:shadow-xl"
+                  className="rounded-md bg-fd-primary px-6 py-3 text-base font-semibold text-fd-primary-foreground transition-all hover:bg-fd-primary/90"
                 >
                   Get started
-                </Link>
-                <Link
-                  href="/docs"
-                  className="text-base font-semibold leading-6 text-fd-foreground transition-colors hover:opacity-80 shadow-sm dark:shadow-white/15"
-                >
-                  View documentation <span aria-hidden="true">→</span>
                 </Link>
               </div>
             </div>
