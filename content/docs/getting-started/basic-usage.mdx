@@ -1,0 +1,82 @@
+---
+title: Basic usage
+---
+
+Fundamental Keyloom usage patterns: sessions, route protection, and common flows.
+
+## Sessions
+
+<Tabs>
+<Tabs.Tab title="App Router">
+
+```ts
+// Example: get session in a Server Component
+import { getSession } from '@keyloom/nextjs'
+export default async function Page() {
+  const { user, session } = await getSession()
+  return <pre>{JSON.stringify({ user, session }, null, 2)}</pre>
+}
+```
+
+</Tabs.Tab>
+<Tabs.Tab title="Pages Router">
+
+```ts
+// Example: server-side session fetch
+import { getSession } from '@keyloom/nextjs'
+export async function getServerSideProps() {
+  const { user } = await getSession()
+  if (!user) return { redirect: { destination: '/sign-in', permanent: false } }
+  return { props: {} }
+}
+```
+
+</Tabs.Tab>
+</Tabs>
+
+## Route protection
+
+<Tabs>
+<Tabs.Tab title="App Router (guard)">
+
+```ts
+import { guard } from '@keyloom/nextjs'
+export default async function Dashboard() {
+  const { user } = await guard({ visibility: 'private', redirectTo: '/sign-in' })
+  return <div>Hello {user?.name}</div>
+}
+```
+
+</Tabs.Tab>
+<Tabs.Tab title="Middleware">
+
+```ts
+// middleware.ts (basic)
+export { default } from '@keyloom/nextjs/middleware'
+```
+
+```ts
+// or use createAuthMiddleware for custom logic
+import { createAuthMiddleware } from '@keyloom/nextjs/middleware'
+export default createAuthMiddleware({ /* options */ })
+```
+
+</Tabs.Tab>
+</Tabs>
+
+## Common flows
+
+- Sign-in & Providers: use `<Providers />` and `<SignInForm />` from `@keyloom/ui/auth`
+- Sign-up: `<SignUpForm />`
+- Forgot/Reset password: `<ForgotPasswordForm />`, `<ResetPasswordForm />`
+- Email verification: `<EmailVerificationForm />`
+- 2FA (TOTP): `<TwoFactorSetup />`, `<TwoFactorVerify />`
+
+See the Tutorials section for end-to-end pages and troubleshooting.
+
+## Troubleshooting
+
+- CSRF errors on POST: ensure API handler is wired; do not bypass auth endpoints in middleware.
+- Cookie issues: set `NEXT_PUBLIC_APP_URL` to https in production; prefer SameSite=lax.
+- Database connectivity: run `keyloom doctor`.
+

@@ -1,0 +1,47 @@
+---
+title: Comparison
+---
+
+A pragmatic overview of how Keyloom compares to other popular auth solutions.
+
+<Callout>
+Pricing and feature sets evolve. Use the links provided to verify current details for your use case.
+</Callout>
+
+## Overview
+
+| Solution | Model & Pricing | Hosting | Features (highlights) | Developer Experience | Typical Use Cases |
+| --- | --- | --- | --- | --- | --- |
+| Keyloom | Open-source library; self-hosted. No per-MAU fees. | Your infra (Next.js, Node) | Sessions (DB/JWT), CSRF, RBAC, OAuth, email flows, 2FA; Prisma-first | TypeScript-first; CLI, UI components; flexible | Startups/teams needing full control and no per-MAU SaaS costs |
+| NextAuth.js | Open-source library; self-hosted. No per-MAU fees. | Your infra | OAuth providers, sessions, adapters | Familiar in Next.js ecosystem; community-driven | Next.js apps that prefer OSS + DIY control |
+| Auth0 | SaaS (per MAU tiers, free dev plan available) | Auth0 cloud | Enterprise SSO, MFA, actions/hooks, orgs, B2B/B2C | Hosted UI + APIs; rich admin console | Enterprise needs, compliance, low-ops SaaS |
+| Clerk | SaaS (free MAU tier; pay-as-you-grow) | Clerk cloud | Prebuilt UIs, MFA, passkeys, orgs, webhooks | Very strong DX; polished hosted widgets | Move fast with managed auth + modern UX |
+| Supabase Auth | Included with Supabase; free tier + usage-based | Supabase cloud (or self-host) | Auth (email/OAuth), DB, storage, functions | Tight Postgres integration; good DX | Full-stack on Supabase, quick prototypes |
+| Firebase Auth | Google Cloud; free tier + usage-based | Google cloud | Email/password, phone, OAuth; SDKs | Mobile-first tooling; hosted flows | Mobile and Firebase-centric stacks |
+
+## Notes
+
+- SaaS (Auth0, Clerk) typically charge by Monthly Active Users (MAU) with free tiers and pay-as-you-grow; verify current pricing:
+  - Auth0: https://auth0.com/pricing
+  - Clerk: https://clerk.com/pricing
+- OSS libraries (Keyloom, NextAuth.js) have no per-MAU fees but require you to run the infra and own security posture.
+- Supabase and Firebase bundle auth with their platforms; costs depend on overall usage and plan.
+
+## Security & compliance
+
+- All solutions support modern security features; SaaS providers often add turnkey enterprise features (e.g., SAML, advanced audits) at higher tiers.
+- With self-hosted OSS, you maintain control and can design for your compliance requirements; you must also operate it securely.
+
+## Developer experience
+
+- Keyloom & NextAuth: code-first, flexible, framework-native.
+- Clerk: fast to integrate with polished hosted components.
+- Auth0: comprehensive admin console and extensibility via actions; more initial setup.
+- Supabase/Firebase: tight platform integration and tooling.
+
+## Choosing
+
+- Prefer self-hosted OSS without MAU fees and strong TypeScript DX: Keyloom or NextAuth.
+- Prefer fully managed auth with hosted UIs and enterprise features: Auth0 or Clerk.
+- Building within a broader platform: Supabase or Firebase may be most convenient.
+

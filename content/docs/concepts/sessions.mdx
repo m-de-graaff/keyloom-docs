@@ -1,0 +1,27 @@
+---
+title: Sessions
+---
+
+Keyloom supports database and JWT session strategies with a unified API.
+
+## Strategies
+
+- Database: stores opaque session id + metadata in the DB. Cookie contains only the id.
+- JWT: stores a signed, tamper-evident payload in the cookie. No DB lookups for reads.
+
+Choose DB for centralized revocation and longer sessions; choose JWT for edge performance and stateless scale.
+
+## Issuance & rotation
+
+Sessions are issued after successful auth (password or OAuth). Rotation occurs on sensitive events. Both strategies respect cookie best practices.
+
+## Accessing the session
+
+- Server: read via the Keyloom server helpers in your route/middleware
+- Client: fetch minimal session info from an endpoint you control
+
+## Invalidating sessions
+
+- Database: delete the row(s) by user or session id
+- JWT: rotate secrets or maintain a denylist at edge for targeted revocation
+

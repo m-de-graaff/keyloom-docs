@@ -1,0 +1,88 @@
+---
+title: Installation
+---
+
+Install Keyloom packages, set environment variables, and add the API handler.
+
+## Install packages
+
+Use your preferred package manager.
+
+```bash
+# Core + Next.js integration + Prisma adapter + optional UI
+npm install @keyloom/core @keyloom/nextjs @keyloom/adapters @keyloom/ui
+# If you use OAuth providers, also install providers
+npm install @keyloom/providers
+# Prisma (if not already present in your project)
+npm install @prisma/client
+```
+
+```bash
+# yarn
+yarn add @keyloom/core @keyloom/nextjs @keyloom/adapters @keyloom/ui @keyloom/providers @prisma/client
+```
+
+```bash
+# pnpm
+pnpm add @keyloom/core @keyloom/nextjs @keyloom/adapters @keyloom/ui @keyloom/providers @prisma/client
+```
+
+## Environment
+
+Set these in `.env.local` (preferred) or `.env`.
+
+```env
+NEXT_PUBLIC_APP_URL=https://your-app.example.com
+AUTH_SECRET=base64url-32-bytes-min
+DATABASE_URL=postgres://...
+```
+
+<Callout>
+AUTH_SECRET must be base64url (A–Z a–z 0–9 - _) and decode to at least 32 bytes. Run `keyloom doctor --fix` to auto-generate a valid secret.
+</Callout>
+
+## Configuration
+
+```ts
+// keyloom.config.ts
+import { PrismaAdapter } from '@keyloom/adapters'
+import { PrismaClient } from '@prisma/client'
+
+const db = new PrismaClient()
+export default {
+  adapter: PrismaAdapter(db),
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
+}
+```
+
+## API handler
+
+<Tabs>
+<Tabs.Tab title="App Router">
+
+```ts
+// app/api/auth/[[...keyloom]]/route.ts
+import { createNextHandler } from '@keyloom/nextjs'
+import config from '@/keyloom.config'
+export const { GET, POST } = createNextHandler(config)
+```
+
+</Tabs.Tab>
+<Tabs.Tab title="Pages Router">
+
+```ts
+// pages/api/auth/[...keyloom].ts
+import { createPagesApiHandler } from '@keyloom/nextjs'
+import config from '@/keyloom.config'
+export default createPagesApiHandler(config)
+```
+
+</Tabs.Tab>
+</Tabs>
+
+## Next steps
+
+- Add middleware with `createAuthMiddleware` to protect routes
+- Scaffold pages with `keyloom scaffold`
+- Validate setup with `keyloom doctor` (or `--fix`)
+

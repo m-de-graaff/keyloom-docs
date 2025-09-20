@@ -1,0 +1,27 @@
+---
+title: OAuth
+---
+
+Keyloom integrates OAuth providers while keeping your app in control.
+
+## Providers
+
+Configure providers in `keyloom.config.ts` with client id/secret environment variables. Each provider contributes its authorization URL, scopes, and profile mapping.
+
+## Flow
+
+- User is redirected to provider's authorization page
+- Provider redirects back to your app's callback (handled by the Keyloom API route)
+- Keyloom verifies state/nonce, exchanges code for tokens, and links/creates an Account for the User
+- A session is issued
+
+## Accounts
+
+The `Account` table links external provider identities to your local `User`. Multiple accounts can point to a single user (account linking).
+
+## Security
+
+- Always use HTTPS in production
+- Rotate client secrets and restrict redirect URLs
+- Use least-privilege scopes; store only necessary profile data
+

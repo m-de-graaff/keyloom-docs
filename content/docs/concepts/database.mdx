@@ -1,0 +1,28 @@
+---
+title: Database
+---
+
+Keyloom supports a Prisma-based adapter out of the box.
+
+## Prisma Adapter
+
+Use a live PrismaClient instance, not a URL factory:
+
+```ts
+import { PrismaAdapter } from '@keyloom/adapters';
+import { PrismaClient } from '@prisma/client';
+
+const db = new PrismaClient();
+export default {
+  adapter: PrismaAdapter(db),
+};
+```
+
+## Models
+
+The adapter expects common tables: `User`, `Account` (for OAuth), `Session`, `VerificationToken`, and optional `TwoFactor`/`RecoveryCode`. Use the provided schema in the Keyloom docs/examples or map to your existing tables via adapter options.
+
+## Transactions & consistency
+
+Keyloom performs critical writes in transactions where relevant (e.g., issuing sessions). Ensure your database supports the required isolation and indices (unique user emails, session ids).
+

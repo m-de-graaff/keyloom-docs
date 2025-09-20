@@ -1,0 +1,27 @@
+---
+title: Plugins
+---
+
+Plugins package reusable logic: providers, custom policies, audit logging, rate limits, or enterprise integrations.
+
+## Structure
+
+A plugin typically exports:
+
+- setup(config) to register hooks and options
+- optional client helpers/components
+
+## Usage
+
+```ts
+import { myPlugin } from 'my-keyloom-plugin';
+import base from '@/keyloom.config';
+
+export default {
+  ...base,
+  plugins: [myPlugin({ /* options */ })],
+};
+```
+
+Keep plugin boundaries clear: avoid mutating global state, prefer explicit configuration, and provide thorough TypeScript types.
+

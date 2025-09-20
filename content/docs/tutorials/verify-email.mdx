@@ -1,0 +1,74 @@
+---
+title: Verify email
+---
+
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+
+
+Guide users to verify their email and optionally resend the verification link.
+
+## Steps
+
+<Steps>
+
+### 1) Ensure API handler is set up
+
+```ts
+// See Quick Start; Keyloom provides verification endpoints via the handler
+```
+
+### 2) Add the Verify Email page
+
+<Tabs>
+<Tabs.Tab title="App Router">
+
+```tsx
+// app/(auth)/verify-email/page.tsx
+import { EmailVerificationForm } from '@keyloom/ui/auth'
+export const metadata = { title: 'Verify email' }
+export default function Page({ searchParams }: { searchParams?: { email?: string } }) {
+  const email = searchParams?.email
+  return (
+    <div className="min-h-dvh grid place-items-center p-6">
+      <div className="w-full max-w-md p-6 border rounded">
+        <EmailVerificationForm email={email} />
+      </div>
+    </div>
+  )
+}
+```
+
+</Tabs.Tab>
+<Tabs.Tab title="Pages Router">
+
+```tsx
+// pages/verify-email.tsx
+import dynamic from 'next/dynamic'
+const EmailVerificationForm = dynamic(() => import('@keyloom/ui/auth').then(m => m.EmailVerificationForm), { ssr: false })
+export default function Page() {
+  return (
+    <div className="min-h-screen grid place-items-center p-6">
+      <div className="w-full max-w-md p-6 border rounded">
+        <EmailVerificationForm />
+      </div>
+    </div>
+  )
+}
+```
+
+</Tabs.Tab>
+</Tabs>
+
+### 3) What the form does
+
+- Displays helpful instructions and email address (if provided)
+- Resends verification email via POST /api/auth/verification/resend
+
+</Steps>
+
+## Troubleshooting
+
+- Link expired: resend from the form and ensure the correct baseUrl is configured.
+- 404 on resend endpoint: verify your API handler wiring.
+- Emails not delivered: check provider credentials and logs.
+
