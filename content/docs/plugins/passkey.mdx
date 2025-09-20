@@ -1,0 +1,177 @@
+---
+title: Passkey (WebAuthn)
+---
+
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+Passkeys use the WebAuthn/FIDO2 standard to authenticate users with device-bound credentials (Touch ID, Windows Hello, security keys). This guide shows how to enable passkeys in Keyloom using a plugin and how to implement registration and authentication flows.
+
+## Overview
+
+- Privacy-preserving public-key authentication
+- Phishing-resistant and user friendly
+- Works alongside email/password and OAuth providers
+
+## Requirements
+
+- HTTPS in all environments (WebAuthn requires secure context)
+- A passkey plugin registered in your Keyloom config
+- Correct base URL and cookie settings
+
+## Configure the plugin
+
+<Steps>
+
+### 1) Install and register
+
+Install the passkey plugin package (name varies per distribution), then add it to the `plugins` array.
+
+```ts
+// keyloom.config.ts
+import { PrismaAdapter } from '@keyloom/adapters'
+import { PrismaClient } from '@prisma/client'
+import { passkeyPlugin } from 'keyloom-plugin-passkey'
+
+const db = new PrismaClient()
+export default {
+  adapter: PrismaAdapter(db),
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
+  plugins: [
+    passkeyPlugin({
+      rpName: 'Your App',
+      // optional: rpId, userVerification: 'preferred' | 'required', timeout
+    }),
+  ],
+}
+```
+
+### 2) Environment
+
+```bash
+NEXT_PUBLIC_APP_URL=https://your-app.example.com
+AUTH_SECRET=base64url-32-bytes-min
+DATABASE_URL=postgres://...
+```
+
+</Steps>
+
+## Registration flow
+
+The registration flow creates a credential on the user’s device.
+
+<Tabs>
+<Tab value="app-router" title="App Router">
+
+```tsx
+// app/(auth)/passkey/register/page.tsx
+"use client"
+import { useState } from 'react'
+
+export default function RegisterPasskey() {
+  const [ok, setOk] = useState(false)
+  async function onRegister() {
+    // 1) Get options
+    const optionsRes = await fetch('/api/auth/passkey/register/options')
+    const options = await optionsRes.json()
+
+    // 2) Create credential
+    const cred = await navigator.credentials.create({ publicKey: options })
+
+    // 3) Send to server for verification
+    const verifyRes = await fetch('/api/auth/passkey/register/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cred),
+    })
+    setOk(verifyRes.ok)
+  }
+  return <button onClick={onRegister}>Register passkey</button>
+}
+```
+
+</Tab>
+<Tab value="pages-router" title="Pages Router">
+
+```tsx
+// pages/passkey-register.tsx
+import { useState } from 'react'
+
+export default function RegisterPasskey() {
+  const [ok, setOk] = useState(false)
+  async function onRegister() {
+    const options = await fetch('/api/auth/passkey/register/options').then(r => r.json())
+    const cred = await navigator.credentials.create({ publicKey: options })
+    const verify = await fetch('/api/auth/passkey/register/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cred) })
+    setOk(verify.ok)
+  }
+  return <button onClick={onRegister}>Register passkey</button>
+}
+```
+
+</Tab>
+</Tabs>
+
+## Authentication flow
+
+Authenticate a returning user with `navigator.credentials.get`.
+
+<Tabs>
+<Tab value="app-router-auth" title="App Router">
+
+```tsx
+// app/(auth)/passkey/sign-in/page.tsx
+"use client"
+export default function SignInWithPasskey() {
+  async function onSignIn() {
+    // 1) Request assertion options
+    const options = await fetch('/api/auth/passkey/authenticate/options').then(r => r.json())
+    // 2) Get assertion from authenticator
+    const assertion = await navigator.credentials.get({ publicKey: options })
+    // 3) Verify on server -> creates session on success
+    await fetch('/api/auth/passkey/authenticate/verify', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(assertion)
+    })
+  }
+  return <button onClick={onSignIn}>Sign in with passkey</button>
+}
+```
+
+</Tab>
+<Tab value="pages-router-auth" title="Pages Router">
+
+```tsx
+// pages/passkey-sign-in.tsx
+export default function SignInWithPasskey() {
+  async function onSignIn() {
+    const options = await fetch('/api/auth/passkey/authenticate/options').then(r => r.json())
+    const assertion = await navigator.credentials.get({ publicKey: options })
+    await fetch('/api/auth/passkey/authenticate/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(assertion) })
+  }
+  return <button onClick={onSignIn}>Sign in with passkey</button>
+}
+```
+
+</Tab>
+</Tabs>
+
+## Browser compatibility
+
+- Desktop browsers: latest Chrome, Edge, Safari, Firefox (platform authenticators vary)
+- Mobile: iOS/iPadOS Safari, Android Chrome with device biometrics
+- Cross-device sign-in may rely on platform-specific features (e.g., iCloud Keychain)
+
+## Security best practices
+
+- Always use HTTPS; never serve WebAuthn over plain HTTP
+- Enforce strict origin checks (rpId and relying party configuration)
+- Pin reasonable timeouts and verification modes; require user verification where appropriate
+- Use a second factor or re-auth for sensitive operations
+
+## Troubleshooting
+
+- `NotAllowedError`: user cancelled or authenticator not available; prompt to enable device biometrics
+- `InvalidStateError`: credential already registered; handle duplicate registrations gracefully
+- 401 after verify: ensure session cookies are set (domain/secure flags) and base URL matches the current origin
+- CSRF errors on POST: make sure the shared API handler is mounted and your requests include the CSRF token when required
+
