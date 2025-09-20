@@ -169,14 +169,16 @@ export default NextAuth(authOptions);`,
       filename: "keyloom.config.ts",
       language: "typescript",
       code: `import { defineKeyloom } from '@keyloom/core';
-import adapter from '@keyloom/adapters/prisma';
+import { PrismaAdapter } from '@keyloom/adapters';
+import { PrismaClient } from '@prisma/client';
+const db = new PrismaClient();
 import github from '@keyloom/providers/github';
 import google from '@keyloom/providers/google';
 
 export default defineKeyloom({
   baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
   session: { strategy: 'database', ttlMinutes: 60, rolling: true },
-  adapter: adapter({ url: process.env.DATABASE_URL! }),
+  adapter: PrismaAdapter(db),
   providers: [
     github({
       clientId: process.env.GITHUB_CLIENT_ID!,
@@ -197,7 +199,7 @@ export default defineKeyloom({
 import config from '@/keyloom.config';
 
 export default createAuthMiddleware(config, {
-  publicRoutes: ['/', '/sign-in', '/api/auth/csrf'],
+  publicRoutes: ['/', '/sign-in'],
 });
 
 export const config = {

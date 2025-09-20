@@ -1,0 +1,122 @@
+---
+title: Create a Login Page
+---
+
+<Steps>
+
+### 1) Set up the Keyloom API route
+
+<Tabs>
+<Tabs.Tab title="App Router">
+
+Create app/api/auth/[[...keyloom]]/route.ts:
+
+```ts
+import { createNextHandler } from '@keyloom/nextjs'
+import { PrismaAdapter } from '@keyloom/adapters'
+import { PrismaClient } from '@prisma/client'
+
+const db = new PrismaClient()
+export const { GET, POST } = createNextHandler({
+  adapter: PrismaAdapter(db),
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
+})
+```
+
+</Tabs.Tab>
+<Tabs.Tab title="Pages Router">
+
+Create pages/api/auth/[...keyloom].ts:
+
+```ts
+import { createPagesApiHandler } from '@keyloom/nextjs'
+import { PrismaAdapter } from '@keyloom/adapters'
+import { PrismaClient } from '@prisma/client'
+
+const db = new PrismaClient()
+export default createPagesApiHandler({
+  adapter: PrismaAdapter(db),
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
+})
+```
+
+</Tabs.Tab>
+</Tabs>
+
+<Callout>
+Ensure AUTH_SECRET is a base64url string decoding to at least 32 bytes.
+</Callout>
+
+---
+
+### 2) Build the login page
+
+<Tabs>
+<Tabs.Tab title="App Router">
+
+```tsx
+"use client"
+import { Card } from '@keyloom/ui/components/card'
+import { Providers, SignInForm } from '@keyloom/ui/auth'
+
+export const metadata = { title: 'Sign in' }
+export default function Page() {
+  return (
+    <div className="min-h-dvh grid place-items-center p-6">
+      <Card className="w-full max-w-md p-6 space-y-6">
+        <h1 className="text-2xl font-semibold">Welcome back</h1>
+        <Providers callbackUrl="/dashboard" />
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">or</span>
+          </div>
+        </div>
+        <SignInForm redirectTo="/dashboard" />
+      </Card>
+    </div>
+  )
+}
+```
+
+</Tabs.Tab>
+<Tabs.Tab title="Pages Router">
+
+```tsx
+import dynamic from 'next/dynamic'
+const SignInForm = dynamic(() => import('@keyloom/ui/auth').then(m => m.SignInForm), { ssr: false })
+const Providers = dynamic(() => import('@keyloom/ui/auth').then(m => m.Providers), { ssr: false })
+export default function Page() {
+  return (
+    <div className="min-h-screen grid place-items-center p-6">
+      <div className="w-full max-w-md space-y-6">
+        <h1 className="text-2xl font-semibold">Welcome back</h1>
+        <Providers callbackUrl="/dashboard" />
+        <SignInForm redirectTo="/dashboard" />
+      </div>
+    </div>
+  )
+}
+```
+
+</Tabs.Tab>
+</Tabs>
+
+---
+
+### 3) CSRF handling
+
+Keyloom exposes GET /api/auth/csrf that sets a CSRF cookie and returns a token. The UI forms include CSRF automatically. If you build a custom form, fetch the token first and include it in a hidden input named `csrf`.
+
+---
+
+### 4) Troubleshooting
+
+- 403 on POST: Ensure you sent the CSRF token and cookies are not blocked by the browser/proxy.
+- 401 redirects to sign-in: Your session may be missing or expired; confirm cookies and baseUrl.
+- OAuth provider not shown: Define providers in env and UI via a providers.config.ts or pass props to `<Providers />`.
+
+</Steps>
+

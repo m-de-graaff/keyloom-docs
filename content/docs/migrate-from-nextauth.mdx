@@ -1,0 +1,150 @@
+---
+title: Migrate from NextAuth
+---
+
+This guide walks you through migrating from NextAuth to Keyloom. It highlights key differences, offers step-by-step changes, and provides working code samples.
+
+## Overview
+
+- NextAuth relies on its own route handler and adapter contracts; Keyloom provides similar capabilities but with a modernized API, explicit CSRF, built-in RBAC, and a strong DX.
+- Both support Prisma and JWT strategies. Keyloom defaults to database sessions and exposes a first-class routes manifest + middleware helpers.
+
+## Step-by-step migration
+
+<Steps>
+
+### 1) Replace NextAuth API routes with Keyloom handler
+
+<Tabs>
+<Tabs.Tab title="NextAuth (Before)">
+
+```ts
+// app/api/auth/[...nextauth]/route.ts
+import NextAuth from "next-auth";
+import { authOptions } from "@/lib/auth";
+export const { GET, POST } = NextAuth(authOptions);
+```
+
+</Tabs.Tab>
+<Tabs.Tab title="Keyloom (After)">
+
+```ts
+// app/api/auth/[[...keyloom]]/route.ts
+import { createNextHandler } from '@keyloom/nextjs'
+import { PrismaAdapter } from '@keyloom/adapters'
+import { PrismaClient } from '@prisma/client'
+
+const db = new PrismaClient()
+export const { GET, POST } = createNextHandler({
+  adapter: PrismaAdapter(db),
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
+})
+```
+
+</Tabs.Tab>
+</Tabs>
+
+### 2) Replace NextAuth adapter with Keyloom PrismaAdapter
+
+<Tabs>
+<Tabs.Tab title="NextAuth (Before)">
+
+```ts
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import { PrismaClient } from "@prisma/client";
+const db = new PrismaClient();
+
+export const authOptions = {
+  adapter: PrismaAdapter(db),
+  // ...
+}
+```
+
+</Tabs.Tab>
+<Tabs.Tab title="Keyloom (After)">
+
+```ts
+import { PrismaAdapter } from '@keyloom/adapters'
+import { PrismaClient } from '@prisma/client'
+const db = new PrismaClient()
+
+export default {
+  adapter: PrismaAdapter(db),
+  // sessionStrategy: 'database' | 'jwt'
+}
+```
+
+</Tabs.Tab>
+</Tabs>
+
+### 3) Update environment variables
+
+- AUTH_SECRET must be base64url and decode to at least 32 bytes.
+- Keep your DATABASE_URL; Keyloom will use Prisma accordingly.
+
+### 4) Replace client UI and providers
+
+- Swap NextAuth UI/components with Keyloom UI components from `@keyloom/ui/auth`.
+- Providers (GitHub/Google/etc.) are configured via Keyloom’s provider system and environment variables.
+
+### 5) Middleware / route protection
+
+<Tabs>
+<Tabs.Tab title="NextAuth (Before)">
+
+Typically handled ad-hoc or via getServerSession on each route.
+
+</Tabs.Tab>
+<Tabs.Tab title="Keyloom (After)">
+
+```ts
+// middleware.ts
+import { createAuthMiddleware } from '@keyloom/nextjs/middleware'
+
+export default createAuthMiddleware({
+  // Prefer routes manifest for precise protection
+})
+```
+
+And on the server for App Router:
+
+```ts
+import { guard } from '@keyloom/nextjs'
+export default async function Page() {
+  await guard({ visibility: 'private', redirectTo: '/sign-in' })
+  // ...
+}
+```
+
+</Tabs.Tab>
+</Tabs>
+
+### 6) Sessions and JWT
+
+- If you used NextAuth JWT sessions, set `sessionStrategy: 'jwt'` and ensure `NEXT_PUBLIC_APP_URL` (or baseUrl) is correct so JWKS/issuer are inferred. Otherwise, use the database session strategy (default).
+
+### 7) CSRF protection
+
+- Keyloom exposes `GET /api/auth/csrf` and enforces CSRF on POST endpoints out of the box; no need to whitelist `/api/auth/csrf` in middleware.
+
+</Steps>
+
+## Common migration scenarios
+
+- Sign-in and sign-up pages: replace with `Providers`, `SignInForm`, and `SignUpForm` from `@keyloom/ui/auth`.
+- Password reset flow: `ForgotPasswordForm` + `ResetPasswordForm`.
+- Email verification: `EmailVerificationForm`.
+- 2FA (TOTP): `TwoFactorSetup` + `TwoFactorVerify`.
+
+## Breaking changes to note
+
+- AUTH_SECRET format: must be base64url (A–Z, a–z, 0–9, -, _), decoding to 4256 bytes.
+- CSRF handling is explicit and enforced.
+- Route protection should rely on Keyloom’s guard or middleware rather than custom per-page logic.
+
+## Verification checklist
+
+- `keyloom doctor` passes all checks (env, DB connectivity, cookies policy, middleware wiring).
+- API handler responds to `GET /api/auth/csrf` and `GET /api/auth/session` as expected.
+- Sign-in/up flows, OAuth callbacks, password reset, and verification flows operate end-to-end.
+

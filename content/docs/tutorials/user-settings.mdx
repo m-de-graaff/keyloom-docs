@@ -1,0 +1,63 @@
+---
+title: Create a User Settings Page
+---
+
+<Steps>
+
+### 1) Require authentication
+
+<Tabs>
+<Tabs.Tab title="App Router">
+
+```tsx
+import { guard } from '@keyloom/nextjs'
+export const metadata = { title: 'Settings' }
+export default async function Page() {
+  const { user } = await guard({ visibility: 'private', redirectTo: '/sign-in' })
+  return (
+    <div className="max-w-2xl p-6 space-y-6">
+      <h1 className="text-2xl font-semibold">Account Settings</h1>
+      {/* Profile form, password change, preferences */}
+    </div>
+  )
+}
+```
+
+</Tabs.Tab>
+<Tabs.Tab title="Pages Router">
+
+```tsx
+import { getSession } from '@keyloom/nextjs'
+export default async function Page() {
+  const { user } = await getSession()
+  if (!user) return <div>Unauthorized</div>
+  return (
+    <div className="max-w-2xl p-6 space-y-6">
+      <h1 className="text-2xl font-semibold">Account Settings</h1>
+    </div>
+  )
+}
+```
+
+</Tabs.Tab>
+</Tabs>
+
+---
+
+### 2) Features
+
+- Profile management: name, email, avatar.
+- Password change: old/new/confirm with strength indicator.
+- Preferences: notifications, theme, locale.
+- 2FA setup: use `TwoFactorSetup` and `TwoFactorVerify` from `@keyloom/ui/auth`.
+- Account deletion/deactivation: guarded with re-auth + CSRF.
+
+---
+
+### 3) Troubleshooting
+
+- 403 on POST: include CSRF token and keep cookies.
+- 401 after changing password: session may be invalidated; re-authentication required.
+
+</Steps>
+
