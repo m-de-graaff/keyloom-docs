@@ -1,0 +1,88 @@
+---
+title: Google OAuth
+---
+
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+
+Configure Google as an OAuth provider and sign users in with their Google account.
+
+<Steps>
+
+### 1) Create OAuth credentials in Google Cloud Console
+
+- App type: Web application
+- Authorized redirect URI: `https://YOUR_DOMAIN/api/auth/callback/google`
+- Save `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`
+
+```bash
+# .env.local
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+```
+
+### 2) Add the provider to Keyloom config
+
+```ts
+// keyloom.config.ts
+import { PrismaAdapter } from '@keyloom/adapters'
+import { PrismaClient } from '@prisma/client'
+import { Google } from '@keyloom/providers'
+
+const db = new PrismaClient()
+export default {
+  adapter: PrismaAdapter(db),
+  providers: [
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      // scope, prompt, etc. can be customized here if needed
+    }),
+  ],
+}
+```
+
+### 3) Render a sign-in UI
+
+<Tabs>
+<Tabs.Tab title="App Router">
+
+```tsx
+// app/(auth)/sign-in/page.tsx
+import { Providers, SignInForm } from '@keyloom/ui/auth'
+export default function Page() {
+  return (
+    <div>
+      <Providers providers={["google"]} />
+      <SignInForm />
+    </div>
+  )
+}
+```
+
+</Tabs.Tab>
+<Tabs.Tab title="Pages Router">
+
+```tsx
+// pages/sign-in.tsx
+import { Providers, SignInForm } from '@keyloom/ui/auth'
+export default function Page() {
+  return (
+    <div>
+      <Providers providers={["google"]} />
+      <SignInForm />
+    </div>
+  )
+}
+```
+
+</Tabs.Tab>
+</Tabs>
+
+</Steps>
+
+## Troubleshooting
+
+- Redirect URI mismatch: ensure console URI exactly matches `/api/auth/callback/google`
+- Invalid client: verify env vars are present at runtime and not stripped during build
+- Missing email scope: ensure default scopes include `email` (and `profile`) if your app requires them
+

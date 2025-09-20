@@ -1,0 +1,74 @@
+---
+title: GitHub OAuth
+---
+
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+
+Authenticate with GitHub accounts.
+
+<Steps>
+
+### 1) Create an OAuth App in GitHub
+
+- Homepage URL: your site URL
+- Authorization callback URL: `https://YOUR_DOMAIN/api/auth/callback/github`
+- Copy `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`
+
+```bash
+# .env.local
+GITHUB_CLIENT_ID=...
+GITHUB_CLIENT_SECRET=...
+```
+
+### 2) Configure provider
+
+```ts
+// keyloom.config.ts
+import { PrismaAdapter } from '@keyloom/adapters'
+import { PrismaClient } from '@prisma/client'
+import { GitHub } from '@keyloom/providers'
+
+const db = new PrismaClient()
+export default {
+  adapter: PrismaAdapter(db),
+  providers: [
+    GitHub({
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+    }),
+  ],
+}
+```
+
+### 3) UI
+
+<Tabs>
+<Tabs.Tab title="App Router">
+
+```tsx
+import { Providers } from '@keyloom/ui/auth'
+export default function Page() {
+  return <Providers providers={["github"]} />
+}
+```
+
+</Tabs.Tab>
+<Tabs.Tab title="Pages Router">
+
+```tsx
+import { Providers } from '@keyloom/ui/auth'
+export default function Page() {
+  return <Providers providers={["github"]} />
+}
+```
+
+</Tabs.Tab>
+</Tabs>
+
+</Steps>
+
+## Troubleshooting
+
+- Callback URL mismatch: ensure it includes `/api/auth/callback/github`
+- Organization SSO: ensure users can grant access if org SSO is enforced
+

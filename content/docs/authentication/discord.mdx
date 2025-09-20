@@ -1,0 +1,74 @@
+---
+title: Discord OAuth
+---
+
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+
+Authenticate with Discord.
+
+<Steps>
+
+### 1) Create an application in Discord Developer Portal
+
+- OAuth2 -> Redirects: add `https://YOUR_DOMAIN/api/auth/callback/discord`
+- Copy `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET`
+
+```bash
+# .env.local
+DISCORD_CLIENT_ID=...
+DISCORD_CLIENT_SECRET=...
+```
+
+### 2) Configure provider
+
+```ts
+// keyloom.config.ts
+import { PrismaAdapter } from '@keyloom/adapters'
+import { PrismaClient } from '@prisma/client'
+import { Discord } from '@keyloom/providers'
+
+const db = new PrismaClient()
+export default {
+  adapter: PrismaAdapter(db),
+  providers: [
+    Discord({
+      clientId: process.env.DISCORD_CLIENT_ID!,
+      clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+      // scope: 'identify email'
+    }),
+  ],
+}
+```
+
+### 3) UI
+
+<Tabs>
+<Tabs.Tab title="App Router">
+
+```tsx
+import { Providers } from '@keyloom/ui/auth'
+export default function Page() {
+  return <Providers providers={["discord"]} />
+}
+```
+
+</Tabs.Tab>
+<Tabs.Tab title="Pages Router">
+
+```tsx
+import { Providers } from '@keyloom/ui/auth'
+export default function Page() {
+  return <Providers providers={["discord"]} />
+}
+```
+
+</Tabs.Tab>
+</Tabs>
+
+</Steps>
+
+## Troubleshooting
+
+- Invalid redirect URI: ensure exact match including protocol/host
+- Missing email: add `email` scope if your app requires verified emails
+

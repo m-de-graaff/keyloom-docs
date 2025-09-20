@@ -1,0 +1,76 @@
+---
+title: Microsoft (Entra ID)
+---
+
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+
+Sign users in with Microsoft Entra ID (Azure AD).
+
+<Steps>
+
+### 1) Register an app in Azure Portal
+
+- Redirect URI (web): `https://YOUR_DOMAIN/api/auth/callback/microsoft`
+- Copy `MICROSOFT_CLIENT_ID` and `MICROSOFT_CLIENT_SECRET`
+- Consider enabling the `email` scope if needed
+
+```bash
+# .env.local
+MICROSOFT_CLIENT_ID=...
+MICROSOFT_CLIENT_SECRET=...
+```
+
+### 2) Add the provider
+
+```ts
+// keyloom.config.ts
+import { PrismaAdapter } from '@keyloom/adapters'
+import { PrismaClient } from '@prisma/client'
+import { Microsoft } from '@keyloom/providers'
+
+const db = new PrismaClient()
+export default {
+  adapter: PrismaAdapter(db),
+  providers: [
+    Microsoft({
+      clientId: process.env.MICROSOFT_CLIENT_ID!,
+      clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
+      // tenant: 'common' | 'organizations' | 'consumers' | tenant id
+    }),
+  ],
+}
+```
+
+### 3) UI
+
+<Tabs>
+<Tabs.Tab title="App Router">
+
+```tsx
+import { Providers } from '@keyloom/ui/auth'
+export default function Page() {
+  return <Providers providers={["microsoft"]} />
+}
+```
+
+</Tabs.Tab>
+<Tabs.Tab title="Pages Router">
+
+```tsx
+import { Providers } from '@keyloom/ui/auth'
+export default function Page() {
+  return <Providers providers={["microsoft"]} />
+}
+```
+
+</Tabs.Tab>
+</Tabs>
+
+</Steps>
+
+## Troubleshooting
+
+- AADSTS50011: check the exact Redirect URI in Azure and your app
+- Multi-tenant vs single-tenant: configure `tenant` accordingly
+- Missing consent: users may need admin consent depending on scopes
+
