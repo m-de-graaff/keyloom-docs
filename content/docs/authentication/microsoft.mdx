@@ -4,7 +4,7 @@ title: Microsoft (Entra ID)
 
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 
-import { Tabs } from 'fumadocs-ui/components/tabs';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 Sign users in with Microsoft Entra ID (Azure AD).
 
@@ -46,7 +46,7 @@ export default {
 ### 3) UI
 
 <Tabs>
-<Tabs.Tab title="App Router">
+<Tab value="app-router" title="App Router">
 
 ```tsx
 import { Providers } from '@keyloom/ui/auth'
@@ -55,8 +55,8 @@ export default function Page() {
 }
 ```
 
-</Tabs.Tab>
-<Tabs.Tab title="Pages Router">
+</Tab>
+<Tab value="pages-router" title="Pages Router">
 
 ```tsx
 import { Providers } from '@keyloom/ui/auth'
@@ -65,7 +65,7 @@ export default function Page() {
 }
 ```
 
-</Tabs.Tab>
+</Tab>
 </Tabs>
 
 </Steps>

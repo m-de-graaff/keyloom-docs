@@ -2,14 +2,14 @@
 title: Basic usage
 ---
 
-import { Tabs } from 'fumadocs-ui/components/tabs';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 Fundamental Keyloom usage patterns: sessions, route protection, and common flows.
 
 ## Sessions
 
 <Tabs>
-<Tabs.Tab title="App Router">
+<Tab value="app-router" title="App Router">
 
 ```ts
 // Example: get session in a Server Component
@@ -20,8 +20,8 @@ export default async function Page() {
 }
 ```
 
-</Tabs.Tab>
-<Tabs.Tab title="Pages Router">
+</Tab>
+<Tab value="pages-router" title="Pages Router">
 
 ```ts
 // Example: server-side session fetch
@@ -33,13 +33,13 @@ export async function getServerSideProps() {
 }
 ```
 
-</Tabs.Tab>
+</Tab>
 </Tabs>
 
 ## Route protection
 
 <Tabs>
-<Tabs.Tab title="App Router (guard)">
+<Tab value="app-router-guard" title="App Router (guard)">
 
 ```ts
 import { guard } from '@keyloom/nextjs'
@@ -49,8 +49,8 @@ export default async function Dashboard() {
 }
 ```
 
-</Tabs.Tab>
-<Tabs.Tab title="Middleware">
+</Tab>
+<Tab value="middleware" title="Middleware">
 
 ```ts
 // middleware.ts (basic)
@@ -63,7 +63,7 @@ import { createAuthMiddleware } from '@keyloom/nextjs/middleware'
 export default createAuthMiddleware({ /* options */ })
 ```
 
-</Tabs.Tab>
+</Tab>
 </Tabs>
 
 ## Common flows

@@ -4,7 +4,7 @@ title: Set up 2FA (TOTP)
 
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 
-import { Tabs } from 'fumadocs-ui/components/tabs';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 
 Enable time-based one-time passwords (TOTP) for stronger account security.
@@ -26,7 +26,7 @@ Two-factor setup should be available to authenticated users only. Use `guard({ v
 ### 2) Add the 2FA setup page
 
 <Tabs>
-<Tabs.Tab title="App Router">
+<Tab value="app-router" title="App Router">
 
 ```tsx
 // app/(auth)/setup-2fa/page.tsx
@@ -45,8 +45,8 @@ export default async function Page() {
 }
 ```
 
-</Tabs.Tab>
-<Tabs.Tab title="Pages Router">
+</Tab>
+<Tab value="pages-router" title="Pages Router">
 
 ```tsx
 // pages/setup-2fa.tsx
@@ -63,7 +63,7 @@ export default function Page() {
 }
 ```
 
-</Tabs.Tab>
+</Tab>
 </Tabs>
 
 ### 3) What the component does

@@ -4,7 +4,7 @@ title: Verify email
 
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 
-import { Tabs } from 'fumadocs-ui/components/tabs';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 
 Guide users to verify their email and optionally resend the verification link.
@@ -22,7 +22,7 @@ Guide users to verify their email and optionally resend the verification link.
 ### 2) Add the Verify Email page
 
 <Tabs>
-<Tabs.Tab title="App Router">
+<Tab value="app-router" title="App Router">
 
 ```tsx
 // app/(auth)/verify-email/page.tsx
@@ -40,8 +40,8 @@ export default function Page({ searchParams }: { searchParams?: { email?: string
 }
 ```
 
-</Tabs.Tab>
-<Tabs.Tab title="Pages Router">
+</Tab>
+<Tab value="pages-router" title="Pages Router">
 
 ```tsx
 // pages/verify-email.tsx
@@ -58,7 +58,7 @@ export default function Page() {
 }
 ```
 
-</Tabs.Tab>
+</Tab>
 </Tabs>
 
 ### 3) What the form does

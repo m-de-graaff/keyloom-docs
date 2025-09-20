@@ -4,7 +4,7 @@ title: Create a Login Page
 
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 
-import { Tabs } from 'fumadocs-ui/components/tabs';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 
 <Steps>
@@ -12,7 +12,7 @@ import { Tabs } from 'fumadocs-ui/components/tabs';
 ### 1) Set up the Keyloom API route
 
 <Tabs>
-<Tabs.Tab title="App Router">
+<Tab value="app-router" title="App Router">
 
 Create app/api/auth/[[...keyloom]]/route.ts:
 
@@ -28,8 +28,8 @@ export const { GET, POST } = createNextHandler({
 })
 ```
 
-</Tabs.Tab>
-<Tabs.Tab title="Pages Router">
+</Tab>
+<Tab value="pages-router" title="Pages Router">
 
 Create pages/api/auth/[...keyloom].ts:
 
@@ -45,7 +45,7 @@ export default createPagesApiHandler({
 })
 ```
 
-</Tabs.Tab>
+</Tab>
 </Tabs>
 
 <Callout>
@@ -57,7 +57,7 @@ Ensure AUTH_SECRET is a base64url string decoding to at least 32 bytes.
 ### 2) Build the login page
 
 <Tabs>
-<Tabs.Tab title="App Router">
+<Tab value="app-router" title="App Router">
 
 ```tsx
 "use client"
@@ -86,8 +86,8 @@ export default function Page() {
 }
 ```
 
-</Tabs.Tab>
-<Tabs.Tab title="Pages Router">
+</Tab>
+<Tab value="pages-router" title="Pages Router">
 
 ```tsx
 import dynamic from 'next/dynamic'
@@ -106,7 +106,7 @@ export default function Page() {
 }
 ```
 
-</Tabs.Tab>
+</Tab>
 </Tabs>
 
 ---

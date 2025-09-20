@@ -4,7 +4,7 @@ title: Verify 2FA (TOTP challenge)
 
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 
-import { Tabs } from 'fumadocs-ui/components/tabs';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
 
 Prompt users for their 2FA code during sensitive actions or sign-in challenges.
@@ -22,7 +22,7 @@ Prompt users for their 2FA code during sensitive actions or sign-in challenges.
 ### 2) Add the 2FA verification page
 
 <Tabs>
-<Tabs.Tab title="App Router">
+<Tab value="app-router" title="App Router">
 
 ```tsx
 // app/(auth)/verify-2fa/page.tsx
@@ -40,8 +40,8 @@ export default function Page() {
 }
 ```
 
-</Tabs.Tab>
-<Tabs.Tab title="Pages Router">
+</Tab>
+<Tab value="pages-router" title="Pages Router">
 
 ```tsx
 // pages/verify-2fa.tsx
@@ -58,7 +58,7 @@ export default function Page() {
 }
 ```
 
-</Tabs.Tab>
+</Tab>
 </Tabs>
 
 ### 3) When to use

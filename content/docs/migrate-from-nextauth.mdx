@@ -4,6 +4,8 @@ title: Migrate from NextAuth
 
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
 
 This guide walks you through migrating from NextAuth to Keyloom. It highlights key differences, offers step-by-step changes, and provides working code samples.
 
@@ -19,7 +21,7 @@ This guide walks you through migrating from NextAuth to Keyloom. It highlights k
 ### 1) Replace NextAuth API routes with Keyloom handler
 
 <Tabs>
-<Tabs.Tab title="NextAuth (Before)">
+<Tab value="nextauth-before" title="NextAuth (Before)">
 
 ```ts
 // app/api/auth/[...nextauth]/route.ts
@@ -28,8 +30,8 @@ import { authOptions } from "@/lib/auth";
 export const { GET, POST } = NextAuth(authOptions);
 ```
 
-</Tabs.Tab>
-<Tabs.Tab title="Keyloom (After)">
+</Tab>
+<Tab value="keyloom-after" title="Keyloom (After)">
 
 ```ts
 // app/api/auth/[[...keyloom]]/route.ts
@@ -44,13 +46,13 @@ export const { GET, POST } = createNextHandler({
 })
 ```
 
-</Tabs.Tab>
+</Tab>
 </Tabs>
 
 ### 2) Replace NextAuth adapter with Keyloom PrismaAdapter
 
 <Tabs>
-<Tabs.Tab title="NextAuth (Before)">
+<Tab value="nextauth-before" title="NextAuth (Before)">
 
 ```ts
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
@@ -63,8 +65,8 @@ export const authOptions = {
 }
 ```
 
-</Tabs.Tab>
-<Tabs.Tab title="Keyloom (After)">
+</Tab>
+<Tab value="keyloom-after" title="Keyloom (After)">
 
 ```ts
 import { PrismaAdapter } from '@keyloom/adapters'
@@ -77,7 +79,7 @@ export default {
 }
 ```
 
-</Tabs.Tab>
+</Tab>
 </Tabs>
 
 ### 3) Update environment variables
@@ -93,12 +95,12 @@ export default {
 ### 5) Middleware / route protection
 
 <Tabs>
-<Tabs.Tab title="NextAuth (Before)">
+<Tab value="nextauth-before" title="NextAuth (Before)">
 
 Typically handled ad-hoc or via getServerSession on each route.
 
-</Tabs.Tab>
-<Tabs.Tab title="Keyloom (After)">
+</Tab>
+<Tab value="keyloom-after" title="Keyloom (After)">
 
 ```ts
 // middleware.ts
@@ -119,7 +121,7 @@ export default async function Page() {
 }
 ```
 
-</Tabs.Tab>
+</Tab>
 </Tabs>
 
 ### 6) Sessions and JWT
