@@ -3,127 +3,180 @@ title: Installation
 description: Install Keyloom via CLI or manually. Configure secrets, base URL, adapters, providers, and Next.js middleware.
 ---
 
+import { Tabs, TabsList, TabsTrigger, TabsContent } from 'fumadocs-ui/components/ui/tabs';
+
+
 # Installation
 
 You can get started with Keyloom using the CLI (recommended) or manual setup.
 
-<Tabs items={["CLI", "Manual"]} defaultIndex={0}>
-<Tab value="CLI">
+<Tabs defaultValue="CLI">
+  <TabsList>
+    <TabsTrigger value="CLI">CLI</TabsTrigger>
+    <TabsTrigger value="Manual">Manual</TabsTrigger>
+  </TabsList>
 
-## CLI (Recommended)
+  <TabsContent value="CLI">
 
-Use the interactive CLI to scaffold config, middleware, and templates:
+  ## CLI (Recommended)
 
-<Tabs items={["npm", "pnpm", "yarn", "bun"]} defaultIndex={0}>
-  <Tab value="npm">
+  Use the interactive CLI to scaffold config, middleware, and templates:
+
+  <Tabs defaultValue="npm">
+    <TabsList>
+      <TabsTrigger value="npm">
+      <NpmIcon />
+      npm
+      </TabsTrigger>
+      <TabsTrigger value="pnpm">
+      <PnpmIcon />
+      pnpm
+      </TabsTrigger>
+      <TabsTrigger value="yarn">
+      <YarnIcon />
+      yarn
+      </TabsTrigger>
+      <TabsTrigger value="bun">
+      <BunIcon />
+      bun
+      </TabsTrigger>
+    </TabsList>
+
+    <TabsContent value="npm">
 
 ```bash title="npm"
 npx keyloom init
 ```
 
-  </Tab>
-  <Tab value="pnpm">
+    </TabsContent>
+    <TabsContent value="pnpm">
 
 ```bash title="pnpm"
 pnpm dlx keyloom init
 ```
 
-  </Tab>
-  <Tab value="yarn">
+    </TabsContent>
+    <TabsContent value="yarn">
 
 ```bash title="yarn"
 yarn dlx keyloom init
 ```
 
-  </Tab>
-  <Tab value="bun">
+    </TabsContent>
+    <TabsContent value="bun">
 
 ```bash title="bun"
 bunx keyloom init
 ```
 
-  </Tab>
-</Tabs>
+    </TabsContent>
+  </Tabs>
 
-The CLI will:
+  The CLI will:
 
-- Detect your package manager and framework
-- Create `keyloom.config.ts` with sensible defaults
-- Optionally add Next.js middleware and provider/adapter templates
+  - Detect your package manager and framework
+  - Create `keyloom.config.ts` with sensible defaults
+  - Optionally add Next.js middleware and provider/adapter templates
 
-</Tab>
+  </TabsContent>
 
-<Tab value="Manual">
+  <TabsContent value="Manual">
 
-## Install the Package(s)
+  ## Install the Package(s)
 
-Choose your package manager and install the core and (optionally) the Next.js integration:
+  Choose your package manager and install the core and (optionally) the Next.js integration:
 
-<Tabs items={["npm", "pnpm", "yarn", "bun"]} defaultIndex={0}>
-  <Tab value="npm">
+  <Tabs defaultValue="npm">
+    <TabsList>
+      <TabsTrigger value="npm">
+      <NpmIcon />
+      npm
+      </TabsTrigger>
+      <TabsTrigger value="pnpm">
+      <PnpmIcon />
+      pnpm
+      </TabsTrigger>
+      <TabsTrigger value="yarn">
+      <YarnIcon />
+      yarn
+      </TabsTrigger>
+      <TabsTrigger value="bun">
+      <BunIcon />
+      bun
+      </TabsTrigger>
+    </TabsList>
+
+    <TabsContent value="npm">
 
 ```bash title="npm"
 npm install @keyloom/core @keyloom/nextjs
 ```
 
-  </Tab>
-  <Tab value="pnpm">
+    </TabsContent>
+    <TabsContent value="pnpm">
 
 ```bash title="pnpm"
 pnpm add @keyloom/core @keyloom/nextjs
 ```
 
-  </Tab>
-  <Tab value="yarn">
+    </TabsContent>
+    <TabsContent value="yarn">
 
 ```bash title="yarn"
 yarn add @keyloom/core @keyloom/nextjs
 ```
 
-  </Tab>
-  <Tab value="bun">
+    </TabsContent>
+    <TabsContent value="bun">
 
 ```bash title="bun"
 bun add @keyloom/core @keyloom/nextjs
 ```
 
-  </Tab>
-</Tabs>
+    </TabsContent>
+  </Tabs>
 
-If you plan to use a database or OAuth, also install an adapter/provider package. For example, with Prisma and GitHub:
+  If you plan to use a database or OAuth, also install an adapter/provider package. For example, with Prisma and GitHub:
 
-<Tabs items={["npm", "pnpm", "yarn", "bun"]} defaultIndex={0}>
-  <Tab value="npm">
+  <Tabs defaultValue="npm">
+    <TabsList>
+      <TabsTrigger value="npm">npm</TabsTrigger>
+      <TabsTrigger value="pnpm">pnpm</TabsTrigger>
+      <TabsTrigger value="yarn">yarn</TabsTrigger>
+      <TabsTrigger value="bun">bun</TabsTrigger>
+    </TabsList>
+
+    <TabsContent value="npm">
 
 ```bash title="Adapters & Providers (example)"
 npm install @keyloom/adapter-prisma @keyloom/providers
 ```
 
-  </Tab>
-  <Tab value="pnpm">
+    </TabsContent>
+    <TabsContent value="pnpm">
 
 ```bash title="Adapters & Providers (example)"
 pnpm add @keyloom/adapter-prisma @keyloom/providers
 ```
 
-  </Tab>
-  <Tab value="yarn">
+    </TabsContent>
+    <TabsContent value="yarn">
 
 ```bash title="Adapters & Providers (example)"
 yarn add @keyloom/adapter-prisma @keyloom/providers
 ```
 
-  </Tab>
-  <Tab value="bun">
+    </TabsContent>
+    <TabsContent value="bun">
 
 ```bash title="Adapters & Providers (example)"
 bun add @keyloom/adapter-prisma @keyloom/providers
 ```
 
-  </Tab>
-</Tabs>
+    </TabsContent>
+  </Tabs>
 
-</Tab>
+  </TabsContent>
 </Tabs>
 
 ## Manual Setup
