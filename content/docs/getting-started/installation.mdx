@@ -7,6 +7,8 @@ description: Install Keyloom via CLI or manually. Configure secrets, base URL, a
 
 You can get started with Keyloom using the CLI (recommended) or manual setup.
 
+<Tabs items={["CLI", "Manual"]} defaultIndex={0}>
+<Tab value="Manual">
 ## Install the Package(s)
 
 Choose your package manager and install the core and (optionally) the Next.js integration:
@@ -33,6 +35,9 @@ If you plan to use a database or OAuth, also install an adapter/provider package
 pnpm add @keyloom/adapter-prisma @keyloom/providers
 ```
 
+</Tab>
+
+<Tab value="CLI">
 ## CLI (Recommended)
 
 Use the interactive CLI to scaffold config, middleware, and templates:
@@ -54,9 +59,12 @@ bunx keyloom init
 ```
 
 The CLI will:
+
 - Detect your package manager and framework
 - Create `keyloom.config.ts` with sensible defaults
 - Optionally add Next.js middleware and provider/adapter templates
+  </Tab>
+</Tabs>
 
 ## Manual Setup
 
@@ -154,4 +162,3 @@ export const config = {
 ```
 
 Thats it  your app now has session management and route protection via middleware. Continue to Basic Usage for role gating, sessions, and patterns.
-
