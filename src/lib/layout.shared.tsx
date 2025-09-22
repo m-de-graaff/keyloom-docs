@@ -10,6 +10,7 @@ import Image from "next/image";
  */
 export function baseOptions(): BaseLayoutProps {
   return {
+    githubUrl: "https://github.com/m-de-graaff/keyloom",
     nav: {
       title: (
         <>
