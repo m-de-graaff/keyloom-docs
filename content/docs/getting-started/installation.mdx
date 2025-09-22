@@ -1,0 +1,157 @@
+---
+title: Installation
+description: Install Keyloom via CLI or manually. Configure secrets, base URL, adapters, providers, and Next.js middleware.
+---
+
+# Installation
+
+You can get started with Keyloom using the CLI (recommended) or manual setup.
+
+## Install the Package(s)
+
+Choose your package manager and install the core and (optionally) the Next.js integration:
+
+```bash title="npm"
+npm install @keyloom/core @keyloom/nextjs
+```
+
+```bash title="pnpm"
+pnpm add @keyloom/core @keyloom/nextjs
+```
+
+```bash title="yarn"
+yarn add @keyloom/core @keyloom/nextjs
+```
+
+```bash title="bun"
+bun add @keyloom/core @keyloom/nextjs
+```
+
+If you plan to use a database or OAuth, also install an adapter/provider package. For example, with Prisma and GitHub:
+
+```bash title="Adapters & Providers (example)"
+pnpm add @keyloom/adapter-prisma @keyloom/providers
+```
+
+## CLI (Recommended)
+
+Use the interactive CLI to scaffold config, middleware, and templates:
+
+```bash title="npm"
+npx keyloom init
+```
+
+```bash title="pnpm"
+pnpm dlx keyloom init
+```
+
+```bash title="yarn"
+yarn dlx keyloom init
+```
+
+```bash title="bun"
+bunx keyloom init
+```
+
+The CLI will:
+- Detect your package manager and framework
+- Create `keyloom.config.ts` with sensible defaults
+- Optionally add Next.js middleware and provider/adapter templates
+
+## Manual Setup
+
+### 1) Set Environment Variables
+
+Create a `.env` file in your project root:
+
+```ini title=".env"
+AUTH_SECRET= # random 32+ char secret used for encryption/signing
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+You can generate a secret with `openssl rand -base64 32` or your preferred tool.
+
+### 2) Create a Keyloom Config
+
+Add a `keyloom.config.ts` file (project root or under `src/`):
+
+```ts title="keyloom.config.ts"
+import { defineKeyloom, memoryAdapter } from "@keyloom/core";
+
+export default defineKeyloom({
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+  session: { strategy: "database", ttlMinutes: 60, rolling: true },
+  adapter: memoryAdapter(), // In production, use a real DB adapter
+  providers: [],
+  rbac: { enabled: false },
+  cookie: { sameSite: "lax" },
+  secrets: { authSecret: process.env.AUTH_SECRET ?? "dev-secret" },
+});
+```
+
+### 3) Configure a Database Adapter (optional)
+
+Example: Prisma adapter
+
+```ts title="keyloom.config.ts (Prisma)"
+import { defineKeyloom } from "@keyloom/core";
+import { prismaAdapter } from "@keyloom/adapter-prisma";
+import { prisma } from "@/lib/prisma"; // your Prisma instance
+
+export default defineKeyloom({
+  // ...
+  adapter: prismaAdapter(prisma),
+});
+```
+
+Example: Drizzle adapter
+
+```ts title="keyloom.config.ts (Drizzle)"
+import { defineKeyloom } from "@keyloom/core";
+import { drizzleAdapter } from "@keyloom/adapter-drizzle";
+import { db } from "@/db"; // your Drizzle instance
+
+export default defineKeyloom({
+  // ...
+  adapter: drizzleAdapter(db, { provider: "pg" }),
+});
+```
+
+### 4) Configure OAuth Providers (optional)
+
+Example: GitHub provider
+
+```ts title="keyloom.config.ts (Provider)"
+import { defineKeyloom } from "@keyloom/core";
+import { github } from "@keyloom/providers/github";
+
+export default defineKeyloom({
+  // ...
+  providers: [
+    github({
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+    }),
+  ],
+});
+```
+
+### 5) Add Next.js Middleware (App Router)
+
+```ts title="middleware.ts"
+import { createAuthMiddleware } from "@keyloom/nextjs/middleware";
+import config from "@/keyloom.config";
+
+export default createAuthMiddleware(config, {
+  publicRoutes: ["/", "/sign-in"],
+  // verifyAtEdge: false,
+  // routes: compiledManifest, // for declarative route visibility
+});
+
+export const config = {
+  matcher: ["/((?!_next|.*\\.(?:ico|png|jpg|svg|css|js|map)).*)"],
+};
+```
+
+Thats it  your app now has session management and route protection via middleware. Continue to Basic Usage for role gating, sessions, and patterns.
+

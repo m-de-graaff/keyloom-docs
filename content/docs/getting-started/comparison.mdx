@@ -1,0 +1,49 @@
+---
+title: Comparison
+description: High-level reasons teams choose Keyloom over other auth libraries and services.
+---
+
+# Comparison
+
+> “Comparison is the thief of joy.” — but picking the right tool still matters.
+
+Here are non‑detailed reasons why you may want to use Keyloom over other auth libraries and services.
+
+## vs Other Auth Libraries
+
+- Framework‑agnostic core
+  - Works with any TypeScript runtime; add first‑class Next.js integration only when you need it.
+- Advanced features built‑in
+  - Sessions (database or JWT), RBAC, route‑level visibility, CSRF safeguards, secure cookie defaults.
+- Pluggable architecture
+  - Adapters for your database layer (Prisma, Drizzle, SQL/NoSQL) and extensible OAuth providers.
+- Full control
+  - No hidden magic. Configure flows in `keyloom.config.ts`; test with small, composable modules.
+
+## vs Self‑Hosted Auth Servers
+
+- No separate infrastructure
+  - Runs in your app—no dedicated auth service to deploy or scale.
+- Zero server maintenance
+  - Avoid provisioning, patching, and monitoring additional services.
+- Complete feature set
+  - Everything you need for modern auth without the operational overhead.
+
+## vs Managed Auth Services
+
+- Keep your data
+  - Users remain in your database and under your compliance boundary.
+- Predictable costs
+  - No per‑user pricing; scale with your existing stack.
+- Single source of truth
+  - User and session data stay next to your application data.
+
+## vs Rolling Your Own
+
+- Security handled
+  - Sensible defaults and battle‑tested flows so you don’t reinvent risky parts.
+- Focus on your product
+  - Ship features faster; avoid yak‑shaving auth edge cases.
+- Extensible by design
+  - Add custom behavior via adapters/providers instead of forking or deep patches.
+

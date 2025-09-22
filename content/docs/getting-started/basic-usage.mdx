@@ -1,0 +1,149 @@
+---
+title: Basic Usage
+description: Configure sessions and route visibility, enable providers, and work with roles in your Keyloom app.
+---
+
+# Basic Usage
+
+Keyloom provides built-in support for:
+
+- Email/password and OAuth providers (via provider plugins)
+- Session management (database or JWT)
+- Route-level visibility and RBAC for protected areas
+
+Below are practical patterns to get productive fast.
+
+## Enable Providers
+
+Configure the authentication methods you want to use in `keyloom.config.ts`.
+
+```ts title="keyloom.config.ts (Email + GitHub)"
+import { defineKeyloom } from "@keyloom/core";
+import { emailPassword } from "@keyloom/providers/email-password"; // if using email/password
+import { github } from "@keyloom/providers/github";
+
+export default defineKeyloom({
+  // ...other options
+  providers: [
+    emailPassword({
+      // password policy, email delivery, etc.
+    }),
+    github({
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+    }),
+  ],
+});
+```
+
+> Tip: Only add the providers you actually need. Each provider is a small, testable module.
+
+## Sessions
+
+Choose a session strategy and its parameters in `keyloom.config.ts`.
+
+```ts title="keyloom.config.ts (Session strategy)"
+export default defineKeyloom({
+  // ...
+  session: {
+    strategy: "database", // or "jwt"
+    ttlMinutes: 60,
+    rolling: true, // extend on activity
+  },
+});
+```
+
+## Route Protection (Next.js)
+
+Use the Next.js middleware to enforce public/private and role-gated routes.
+
+```ts title="middleware.ts"
+import { createAuthMiddleware } from "@keyloom/nextjs/middleware";
+import config from "@/keyloom.config";
+
+export default createAuthMiddleware(config, {
+  publicRoutes: ["/", "/sign-in"],
+  // routes: compiledManifest, // when using declarative route visibility
+});
+
+export const config = {
+  matcher: ["/((?!_next|.*\\.(?:ico|png|jpg|svg|css|js|map)).*)"],
+};
+```
+
+### Role-gated Sections
+
+Use RBAC to protect admin areas. In `keyloom.config.ts`:
+
+```ts title="keyloom.config.ts (RBAC)"
+export default defineKeyloom({
+  // ...
+  rbac: { enabled: true },
+});
+```
+
+Then in a server component/route, check the current user role and redirect when needed:
+
+```ts title="app/admin/page.tsx"
+import { redirect } from "next/navigation";
+import { getSession } from "@keyloom/nextjs/server"; // server helper
+
+export default async function AdminPage() {
+  const session = await getSession();
+  if (!session || session.user.role !== "admin") redirect("/sign-in");
+  return <main>Admin</main>;
+}
+```
+
+> Note: The exact shape of the session object depends on your adapter and provider claims. Extend it to carry roles/permissions as needed.
+
+## Server-side Authentication
+
+When you need to authenticate inside Server Actions or route handlers, read the session and act accordingly.
+
+```ts title="app/api/private/route.ts"
+import { NextResponse } from "next/server";
+import { getSession } from "@keyloom/nextjs/server";
+
+export async function GET() {
+  const session = await getSession();
+  if (!session) return new NextResponse("Unauthorized", { status: 401 });
+  return NextResponse.json({ userId: session.user.id });
+}
+```
+
+## Client-side Session (optional)
+
+If you need client reactivity, you can expose a minimal hook in your app that fetches session state (implementation depends on your data layer).
+
+```ts title="lib/use-session.ts"
+import { useEffect, useState } from "react";
+
+export function useSession() {
+  const [data, setData] = useState<null | { user: { id: string; role?: string } }>(null);
+  const [isPending, setIsPending] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    fetch("/api/session")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => mounted && setData(d))
+      .finally(() => mounted && setIsPending(false));
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  return { data, isPending };
+}
+```
+
+> For a fully typed client helper, integrate it with your chosen data-fetching library (e.g., TanStack Query) and share the session schema.
+
+## Next Steps
+
+- Add a real database adapter (Prisma/Drizzle) and run your migrations
+- Configure one or more OAuth providers
+- Define your role model and route visibility rules
+- Build sign-in/sign-out UI that calls your provider flows
+
