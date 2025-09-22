@@ -9,12 +9,12 @@ export default function Layout({ children }: LayoutProps<'/docs'>) {
       <Banner
         variant="rainbow"
         rainbowColors={[
-          'rgba(255,100,0, 0.5)',
-          'rgba(255,100,0, 0.5)',
+          'rgba(255, 255, 255, 0.5)',
+          'rgba(255, 255, 255, 0.5)',
           'transparent',
-          'rgba(255,100,0, 0.5)',
+          'rgba(255, 255, 255, 0.5)',
           'transparent',
-          'rgba(255,100,0, 0.5)',
+          'rgba(255, 255, 255, 0.5)',
           'transparent',
         ]}
       >
