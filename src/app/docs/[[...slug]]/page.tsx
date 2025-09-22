@@ -11,7 +11,6 @@ import { createRelativeLink } from "fumadocs-ui/mdx";
 import { getMDXComponents } from "@/mdx-components";
 import { Feedback } from "@/components/feedback";
 import { onRateAction } from "@/lib/github";
-import { Banner } from "@/components/banner";
 
 export default async function Page(props: PageProps<"/docs/[[...slug]]">) {
   const params = await props.params;
@@ -22,20 +21,6 @@ export default async function Page(props: PageProps<"/docs/[[...slug]]">) {
 
   return (
     <DocsPage toc={page.data.toc} full={page.data.full}>
-      <Banner
-        variant="rainbow"
-        rainbowColors={[
-          'rgba(0, 255, 221, 0.5)',
-          'rgba(0, 255, 221, 0.5)',
-          'transparent',
-          'rgba(0, 255, 221, 0.5)',
-          'transparent',
-          'rgba(0, 255, 221, 0.5)',
-          'transparent',
-        ]}
-      >
-        Keyloom Auth is currently in beta. Feedback and contributions are welcome!
-      </Banner>
       <DocsTitle>{page.data.title}</DocsTitle>
       <DocsDescription>{page.data.description}</DocsDescription>
       <div className="flex flex-row gap-2 items-center border-b pt-2 pb-6">
