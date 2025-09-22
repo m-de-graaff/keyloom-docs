@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import PixelBlast from "@/components/PixelBlast";
+
 import { AnimatedSpan, Terminal, TypingAnimation } from "@/components/terminal";
 import { CodeBlock, github, atomOneDark, irBlack } from "react-code-blocks";
 import { CodeComparison } from "@/components/code-comparison";
@@ -317,73 +317,50 @@ export const { GET, POST } = createNextHandler(config);`,
 
   return (
     <main className="flex flex-1 flex-col">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden min-h-[100dvh] sm:min-h-screen flex items-center">
-        <div className="absolute inset-0 w-full h-full">
-          {/* Light mode dots */}
-          <div className="block dark:hidden w-full h-full">
-            <PixelBlast
-              color="#dadada"
-              pixelSize={4}
-              patternScale={1.5}
-              patternDensity={1.2}
-              pixelSizeJitter={0.45}
-              speed={0.5}
-              edgeFade={0.03}
-              enableRipples
-              className="w-full h-full"
-            />
-          </div>
-          {/* Dark mode dots */}
-          <div className="hidden dark:block w-full h-full">
-            <PixelBlast
-              color="#666666"
-              pixelSize={4}
-              patternScale={1.5}
-              patternDensity={1.2}
-              pixelSizeJitter={0.45}
-              speed={0.5}
-              edgeFade={0.03}
-              enableRipples
-              className="w-full h-full"
-            />
-          </div>
-        </div>
-        <div className="relative mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8 w-full">
-          <div className="mx-auto max-w-6xl text-center">
-            {/* Subtle background for better text visibility */}
-            <div className="absolute inset-0 rounded-3xl"></div>
-            {/* Make text non-interactive so PixelBlast can be interacted with */}
-            <div className="relative px-8 py-16 sm:px-12 sm:py-20 pointer-events-none">
-              <div className="mb-8 flex justify-center">
-                {/* Make the badge interactive */}
-                <div className="relative rounded-full border bg-fd-secondary/90 px-4 py-2 text-sm leading-6 text-fd-muted-foreground transition-colors hover:bg-fd-secondary pointer-events-auto">
-                  Open source authentication framework.{" "}
-                  <Link
-                    href="/docs"
-                    className="font-medium text-fd-foreground hover:opacity-80"
-                  >
-                    <span className="absolute inset-0" aria-hidden="true" />
-                    Read the docs <span aria-hidden="true">&rarr;</span>
-                  </Link>
-                </div>
-              </div>
-              <h1 className="text-4xl font-bold tracking-tight text-fd-foreground sm:text-6xl lg:text-7xl">
-                The most comprehensive{" "}
-                <span className="text-fd-foreground">
-                  authentication framework
-                </span>{" "}
-                for TypeScript
+      {/* Hero + Cards */}
+      <section className="py-10 md:py-14">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="grid gap-6 md:grid-cols-3">
+            <Link
+              href="/docs/getting-started"
+              className="group relative col-span-2 rounded-2xl border bg-fd-card/80 p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow"
+            >
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-fd-background/40 via-transparent to-fd-primary/5 pointer-events-none" />
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-fd-foreground">
+                Build Your Docs.
               </h1>
-              <div className="mt-12 flex items-center justify-center gap-x-6">
-                {/* Make the button interactive */}
-                <Link
-                  href="/docs/get-started"
-                  className="rounded-md bg-fd-primary px-6 py-3 min-h-[44px] flex items-center justify-center text-base font-semibold text-fd-primary-foreground transition-all hover:bg-fd-primary/90 pointer-events-auto"
-                >
-                  Get started
-                </Link>
-              </div>
+              <p className="mt-6 text-sm sm:text-base text-fd-muted-foreground">
+                Getting Started
+              </p>
+              <p className="text-xs sm:text-sm text-fd-muted-foreground/90">
+                Learn to use Fumadocs on your docs site.
+              </p>
+            </Link>
+
+            <div className="grid gap-6">
+              <Link
+                href="/docs/components"
+                className="rounded-2xl border bg-fd-card/80 p-6 shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="text-sm font-semibold text-fd-foreground">
+                  Components
+                </div>
+                <p className="mt-2 text-sm text-fd-muted-foreground">
+                  Add interactive experience to your docs.
+                </p>
+              </Link>
+
+              <Link
+                href="/docs/openapi"
+                className="rounded-2xl border bg-fd-card/80 p-6 shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="text-sm font-semibold text-fd-foreground">
+                  OpenAPI
+                </div>
+                <p className="mt-2 text-sm text-fd-muted-foreground">
+                  Generate interactive playgrounds and docs for your API.
+                </p>
+              </Link>
             </div>
           </div>
         </div>
@@ -546,7 +523,7 @@ export const { GET, POST } = createNextHandler(config);`,
                     provider setup, and deployment in real time.
                   </p>
                   <Link
-                    href="/docs/get-started"
+                    href="/docs/getting-started"
                     className="mt-4 inline-flex items-center gap-2 rounded-md bg-fd-primary/10 px-4 py-3 min-h-[44px] text-xs sm:text-sm font-semibold text-fd-primary transition-colors hover:bg-fd-primary/20"
                   >
                     Open the guided tutorial <ArrowRight className="h-4 w-4" />
