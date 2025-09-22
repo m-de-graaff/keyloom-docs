@@ -2,10 +2,18 @@ import { DocsLayout } from 'fumadocs-ui/layouts/docs';
 import { baseOptions } from '@/lib/layout.shared';
 import { source } from '@/lib/source';
 import { Banner } from '@/components/banner';
+import { GithubInfo } from '@/components/github-info';
 
 export default function Layout({ children }: LayoutProps<'/docs'>) {
   return (
-    <DocsLayout tree={source.pageTree} {...baseOptions()}>
+    <DocsLayout tree={source.pageTree} {...baseOptions()} links={[
+      {
+        type: 'custom',
+        children: (
+          <GithubInfo owner="m-de-graaff" repo="keyloom" className='lg:-mx-2' />
+        )
+      }
+    ]}>
           <Banner
             variant="rainbow"
             rainbowColors={[
