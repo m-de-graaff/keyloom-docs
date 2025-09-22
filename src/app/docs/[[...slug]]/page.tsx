@@ -25,12 +25,12 @@ export default async function Page(props: PageProps<"/docs/[[...slug]]">) {
       <Banner
         variant="rainbow"
         rainbowColors={[
-          'rgba(255, 255, 255, 0.5)',
-          'rgba(255, 255, 255, 0.5)',
+          'rgba(0, 255, 221, 0.5)',
+          'rgba(0, 255, 221, 0.5)',
           'transparent',
-          'rgba(255, 255, 255, 0.5)',
+          'rgba(0, 255, 221, 0.5)',
           'transparent',
-          'rgba(255, 255, 255, 0.5)',
+          'rgba(0, 255, 221, 0.5)',
           'transparent',
         ]}
       >
