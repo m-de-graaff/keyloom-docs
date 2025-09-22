@@ -15,21 +15,34 @@ You can get started with Keyloom using the CLI (recommended) or manual setup.
 Use the interactive CLI to scaffold config, middleware, and templates:
 
 <Tabs items={["npm", "pnpm", "yarn", "bun"]} defaultIndex={0}>
-<Tab value="npm">
+  <Tab value="npm">
+
 ```bash title="npm"
 npx keyloom init
 ```
-</Tab>
 
-<Tab value="pnpm">```bash title="pnpm" pnpm dlx keyloom init ```</Tab>
+  </Tab>
+  <Tab value="pnpm">
 
-<Tab value="yarn">```bash title="yarn" yarn dlx keyloom init ```</Tab>
+```bash title="pnpm"
+pnpm dlx keyloom init
+```
 
-<Tab value="bun">
+  </Tab>
+  <Tab value="yarn">
+
+```bash title="yarn"
+yarn dlx keyloom init
+```
+
+  </Tab>
+  <Tab value="bun">
+
 ```bash title="bun"
 bunx keyloom init
 ```
-</Tab>
+
+  </Tab>
 </Tabs>
 
 The CLI will:
@@ -37,7 +50,8 @@ The CLI will:
 - Detect your package manager and framework
 - Create `keyloom.config.ts` with sensible defaults
 - Optionally add Next.js middleware and provider/adapter templates
-  </Tab>
+
+</Tab>
 
 <Tab value="Manual">
 
@@ -46,52 +60,67 @@ The CLI will:
 Choose your package manager and install the core and (optionally) the Next.js integration:
 
 <Tabs items={["npm", "pnpm", "yarn", "bun"]} defaultIndex={0}>
-<Tab value="npm">
+  <Tab value="npm">
+
 ```bash title="npm"
 npm install @keyloom/core @keyloom/nextjs
 ```
 
-</Tab>
+  </Tab>
+  <Tab value="pnpm">
 
-<Tab value="pnpm">
-  ```bash title="pnpm" pnpm add @keyloom/core @keyloom/nextjs ```
-</Tab>
+```bash title="pnpm"
+pnpm add @keyloom/core @keyloom/nextjs
+```
 
-<Tab value="yarn">
-  ```bash title="yarn" yarn add @keyloom/core @keyloom/nextjs ```
-</Tab>
+  </Tab>
+  <Tab value="yarn">
 
-<Tab value="bun">
+```bash title="yarn"
+yarn add @keyloom/core @keyloom/nextjs
+```
+
+  </Tab>
+  <Tab value="bun">
+
 ```bash title="bun"
 bun add @keyloom/core @keyloom/nextjs
 ```
-</Tab>
+
+  </Tab>
 </Tabs>
 
 If you plan to use a database or OAuth, also install an adapter/provider package. For example, with Prisma and GitHub:
 
 <Tabs items={["npm", "pnpm", "yarn", "bun"]} defaultIndex={0}>
-<Tab value="npm">
+  <Tab value="npm">
+
+```bash title="Adapters & Providers (example)"
+npm install @keyloom/adapter-prisma @keyloom/providers
+```
+
+  </Tab>
+  <Tab value="pnpm">
+
 ```bash title="Adapters & Providers (example)"
 pnpm add @keyloom/adapter-prisma @keyloom/providers
 ```
-</Tab>
 
-<Tab value="pnpm">
-  ```bash title="Adapters & Providers (example)" pnpm add
-  @keyloom/adapter-prisma @keyloom/providers ```
-</Tab>
+  </Tab>
+  <Tab value="yarn">
 
-<Tab value="yarn">
-  ```bash title="Adapters & Providers (example)" yarn add
-  @keyloom/adapter-prisma @keyloom/providers ```
-</Tab>
+```bash title="Adapters & Providers (example)"
+yarn add @keyloom/adapter-prisma @keyloom/providers
+```
 
-<Tab value="bun">
+  </Tab>
+  <Tab value="bun">
+
 ```bash title="Adapters & Providers (example)"
 bun add @keyloom/adapter-prisma @keyloom/providers
 ```
-</Tab>
+
+  </Tab>
 </Tabs>
 
 </Tab>
