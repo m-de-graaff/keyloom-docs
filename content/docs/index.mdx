@@ -1,56 +1,68 @@
 ---
 title: Keyloom
-description: Modern, security-first authentication for JavaScript applications with enterprise-grade features and exceptional developer experience
+description: Modern, security-first authentication for Next.js and Node — with sessions (DB or JWT), OAuth providers, RBAC, CSRF, and a great DX.
 ---
 
-import { Step, Steps } from 'fumadocs-ui/components/steps';
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Tabs, Tab } from "fumadocs-ui/components/tabs";
+import { Callout } from "fumadocs-ui/components/callout";
 
-import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+Welcome to Keyloom — a TypeScript‑first authentication framework for production apps. It provides robust primitives (sessions, JWT, RBAC, CSRF), first‑class Next.js support, and a batteries‑included CLI and UI components.
 
-import { Callout } from 'fumadocs-ui/components/callout';
-
-
-Welcome to Keyloom — a TypeScript-first authentication framework for Next.js and Node, designed for production from day one. It provides robust primitives (sessions, JWT, RBAC, CSRF) and an exceptional developer experience with a batteries-included CLI and UI components.
 <Callout>
-Prerequisites:
-- Use PrismaAdapter with a live PrismaClient
-- Set AUTH_SECRET as base64url (decodes to at least 32 bytes). Run `keyloom doctor --fix` to generate
-- Set NEXT_PUBLIC_APP_URL and DATABASE_URL for your environment
+  Prerequisites - Set NEXT_PUBLIC_APP_URL to your app’s public URL (used for
+  redirects and JWKS when using JWT sessions) - Set AUTH_SECRET as base64url
+  that decodes to at least 32 bytes (run: `keyloom doctor --fix`) - Choose an
+  adapter (PrismaAdapter for production; memoryAdapter for demos/tests)
 </Callout>
-
-
 
 ## Quick start
 
 <Steps>
 
-### 1) Install and configure
+### 1) Install
+
+```bash
+pnpm add @keyloom/core @keyloom/nextjs @keyloom/adapters @keyloom/providers
+# Optional UI components
+pnpm add @keyloom/ui
+```
+
+### 2) Configure Keyloom
 
 ```ts
 // keyloom.config.ts
-import { PrismaAdapter } from '@keyloom/adapters'
-import { PrismaClient } from '@prisma/client'
+import { PrismaAdapter } from "@keyloom/adapters";
+import { PrismaClient } from "@prisma/client";
+import { github } from "@keyloom/providers";
 
-const db = new PrismaClient()
+const db = new PrismaClient();
 export default {
-  adapter: PrismaAdapter(db),
   baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
-  // sessionStrategy: 'database' | 'jwt' (default is 'database')
-}
+  adapter: PrismaAdapter(db),
+  // Use database sessions by default; switch to 'jwt' if you prefer stateless
+  // sessionStrategy: 'database' | 'jwt',
+  providers: [
+    github({
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+    }),
+  ],
+  cookie: { sameSite: "lax" },
+  secrets: { authSecret: process.env.AUTH_SECRET! },
+};
 ```
 
-Set AUTH_SECRET (base64url, decodes to at least 32 bytes) and DATABASE_URL in your env.
-
-### 2) Add the API route
+### 3) Add the API route
 
 <Tabs>
 <Tab value="app-router" title="App Router">
 
 ```ts
 // app/api/auth/[[...keyloom]]/route.ts
-import { createNextHandler } from '@keyloom/nextjs'
-import config from '@/keyloom.config'
-export const { GET, POST } = createNextHandler(config)
+import { createNextHandler } from "@keyloom/nextjs";
+import config from "@/keyloom.config";
+export const { GET, POST } = createNextHandler(config);
 ```
 
 </Tab>
@@ -58,41 +70,65 @@ export const { GET, POST } = createNextHandler(config)
 
 ```ts
 // pages/api/auth/[...keyloom].ts
-import { createPagesApiHandler } from '@keyloom/nextjs'
-import config from '@/keyloom.config'
-export default createPagesApiHandler(config)
+import { createPagesApiHandler } from "@keyloom/nextjs";
+import config from "@/keyloom.config";
+export default createPagesApiHandler(config);
 ```
 
 </Tab>
 </Tabs>
 
-### 3) Protect routes
+### 4) Protect routes
 
-Add Next.js middleware with `createAuthMiddleware` or use the routes manifest for granular control.
+- Middleware (recommended):
 
-### 4) Validate your setup
+```ts
+// middleware.ts
+import { createAuthMiddleware } from "@keyloom/nextjs/middleware";
+import config from "@/keyloom.config";
+export default createAuthMiddleware(config);
+```
 
-Run `keyloom doctor` to check environment, DB connectivity, cookies, and wiring.
+- Server guard (App Router):
+
+```ts
+import { guard } from "@keyloom/nextjs";
+export default async function Page() {
+  await guard({ visibility: "private", redirectTo: "/sign-in" });
+  return <div>Private</div>;
+}
+```
+
+### 5) Validate your setup
+
+- Run `keyloom doctor` (checks env, cookies, and wiring)
+- Test `GET /api/auth/session` and `GET /api/auth/csrf`
 
 </Steps>
 
-## Tutorials
+## Core API endpoints
 
-- Create a Login Page: /docs/tutorials/login
-- Create a Registration Page: /docs/tutorials/register
-- Create an Admin Panel: /docs/tutorials/admin-panel
-- Create a User Settings Page: /docs/tutorials/user-settings
-- Custom Roles & Permissions: /docs/tutorials/custom-roles-permissions
+- GET /api/auth/session — current user/session
+- GET /api/auth/csrf — CSRF token (double‑submit cookie)
+- POST /api/auth/register — email+password register
+- POST /api/auth/login — email+password login
+- POST /api/auth/logout — end session
+- POST /api/auth/password/request — begin password reset
+- POST /api/auth/password/reset — complete password reset
+- POST /api/auth/email/verify — verify email
+- GET/POST /api/auth/oauth/:provider/callback — OAuth callback
+- GET /api/auth/oauth/:provider/start — OAuth start
 
-## Key sections
+## Learn more
 
 - Getting started: /docs/getting-started
 - Next.js integration: /docs/integrations/nextjs
 - Authentication providers: /docs/authentication
-- Tutorials: /docs/tutorials
+- Concepts (sessions, JWT, RBAC): /docs/concepts
 - API reference: /docs/reference
+- Tutorials: /docs/tutorials
 - Troubleshooting: /docs/troubleshooting
 
 ## Migration
 
-- Migrate from NextAuth: /docs/migrate-from-nextauth
+- Migrate from other auth solutions: /docs/migrate-from-nextauth

@@ -2,7 +2,7 @@
 title: Basic usage
 ---
 
-import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 
 Fundamental Keyloom usage patterns: sessions, route protection, and common flows.
 
@@ -13,10 +13,10 @@ Fundamental Keyloom usage patterns: sessions, route protection, and common flows
 
 ```ts
 // Example: get session in a Server Component
-import { getSession } from '@keyloom/nextjs'
+import { getSession } from "@keyloom/nextjs";
 export default async function Page() {
-  const { user, session } = await getSession()
-  return <pre>{JSON.stringify({ user, session }, null, 2)}</pre>
+  const { user, session } = await getSession();
+  return <pre>{JSON.stringify({ user, session }, null, 2)}</pre>;
 }
 ```
 
@@ -25,11 +25,11 @@ export default async function Page() {
 
 ```ts
 // Example: server-side session fetch
-import { getSession } from '@keyloom/nextjs'
+import { getSession } from "@keyloom/nextjs";
 export async function getServerSideProps() {
-  const { user } = await getSession()
-  if (!user) return { redirect: { destination: '/sign-in', permanent: false } }
-  return { props: {} }
+  const { user } = await getSession();
+  if (!user) return { redirect: { destination: "/sign-in", permanent: false } };
+  return { props: {} };
 }
 ```
 
@@ -42,10 +42,13 @@ export async function getServerSideProps() {
 <Tab value="app-router-guard" title="App Router (guard)">
 
 ```ts
-import { guard } from '@keyloom/nextjs'
+import { guard } from "@keyloom/nextjs";
 export default async function Dashboard() {
-  const { user } = await guard({ visibility: 'private', redirectTo: '/sign-in' })
-  return <div>Hello {user?.name}</div>
+  const { user } = await guard({
+    visibility: "private",
+    redirectTo: "/sign-in",
+  });
+  return <div>Hello {user?.name}</div>;
 }
 ```
 
@@ -54,13 +57,18 @@ export default async function Dashboard() {
 
 ```ts
 // middleware.ts (basic)
-export { default } from '@keyloom/nextjs/middleware'
+import { createAuthMiddleware } from "@keyloom/nextjs/middleware";
+import config from "@/keyloom.config";
+export default createAuthMiddleware(config);
 ```
 
 ```ts
-// or use createAuthMiddleware for custom logic
-import { createAuthMiddleware } from '@keyloom/nextjs/middleware'
-export default createAuthMiddleware({ /* options */ })
+// or use createAuthMiddleware with options
+import { createAuthMiddleware } from "@keyloom/nextjs/middleware";
+import config from "@/keyloom.config";
+export default createAuthMiddleware(config, {
+  /* routes, customValidate, ... */
+});
 ```
 
 </Tab>
@@ -78,7 +86,6 @@ See the Tutorials section for end-to-end pages and troubleshooting.
 
 ## Troubleshooting
 
-- CSRF errors on POST: ensure API handler is wired; do not bypass auth endpoints in middleware.
+- CSRF errors on POST: ensure API handler is wired; include the token from `GET /api/auth/csrf` in the `x-keyloom-csrf` header.
 - Cookie issues: set `NEXT_PUBLIC_APP_URL` to https in production; prefer SameSite=lax.
 - Database connectivity: run `keyloom doctor`.
-

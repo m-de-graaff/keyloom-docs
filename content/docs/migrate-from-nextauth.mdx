@@ -1,155 +1,141 @@
 ---
-title: Migrate from NextAuth
+title: Migrate from other authentication solutions
 ---
 
-import { Step, Steps } from 'fumadocs-ui/components/steps';
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Tabs, Tab } from "fumadocs-ui/components/tabs";
+import { Callout } from "fumadocs-ui/components/callout";
 
-import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
-
-
-This guide walks you through migrating from NextAuth to Keyloom. It highlights key differences, offers step-by-step changes, and provides working code samples.
+This guide helps you migrate to Keyloom from NextAuth/Auth.js, custom JWT/cookie auth, or managed providers. It highlights key differences and provides working code examples.
 
 ## Overview
 
-- NextAuth relies on its own route handler and adapter contracts; Keyloom provides similar capabilities but with a modernized API, explicit CSRF, built-in RBAC, and a strong DX.
-- Both support Prisma and JWT strategies. Keyloom defaults to database sessions and exposes a first-class routes manifest + middleware helpers.
+- Unified API handler: one Next.js route handles sessions, credentials, OAuth, CSRF
+- Database or JWT sessions: database by default; opt into stateless JWT
+- Explicit CSRF: double‑submit cookie with header verification
+- Route protection: middleware + `guard()` server helper
+- RBAC and orgs: pluggable via adapter helpers (optional)
 
-## Step-by-step migration
+## Step‑by‑step migration
 
 <Steps>
 
-### 1) Replace NextAuth API routes with Keyloom handler
+### 1) Replace your auth API with Keyloom
 
 <Tabs>
-<Tab value="nextauth-before" title="NextAuth (Before)">
-
-```ts
-// app/api/auth/[...nextauth]/route.ts
-import NextAuth from "next-auth";
-import { authOptions } from "@/lib/auth";
-export const { GET, POST } = NextAuth(authOptions);
-```
-
-</Tab>
-<Tab value="keyloom-after" title="Keyloom (After)">
+<Tab value="app-router" title="App Router">
 
 ```ts
 // app/api/auth/[[...keyloom]]/route.ts
-import { createNextHandler } from '@keyloom/nextjs'
-import { PrismaAdapter } from '@keyloom/adapters'
-import { PrismaClient } from '@prisma/client'
+import { createNextHandler } from "@keyloom/nextjs";
+import config from "@/keyloom.config";
+export const { GET, POST } = createNextHandler(config);
+```
 
-const db = new PrismaClient()
-export const { GET, POST } = createNextHandler({
-  adapter: PrismaAdapter(db),
-  baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
-})
+</Tab>
+<Tab value="pages-router" title="Pages Router">
+
+```ts
+// pages/api/auth/[...keyloom].ts
+import { createPagesApiHandler } from "@keyloom/nextjs";
+import config from "@/keyloom.config";
+export default createPagesApiHandler(config);
 ```
 
 </Tab>
 </Tabs>
 
-### 2) Replace NextAuth adapter with Keyloom PrismaAdapter
-
-<Tabs>
-<Tab value="nextauth-before" title="NextAuth (Before)">
+### 2) Configure adapter, baseUrl, and secrets
 
 ```ts
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
+// keyloom.config.ts
+import { PrismaAdapter } from "@keyloom/adapters";
 import { PrismaClient } from "@prisma/client";
 const db = new PrismaClient();
-
-export const authOptions = {
+export default {
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
   adapter: PrismaAdapter(db),
-  // ...
-}
+  // sessionStrategy: 'database' | 'jwt',
+  secrets: { authSecret: process.env.AUTH_SECRET! },
+};
 ```
 
-</Tab>
-<Tab value="keyloom-after" title="Keyloom (After)">
+<Callout>
+  AUTH_SECRET must be base64url and decode to at least 32 bytes. Run `keyloom
+  doctor --fix` to generate a valid secret.
+</Callout>
+
+### 3) Providers (OAuth)
 
 ```ts
-import { PrismaAdapter } from '@keyloom/adapters'
-import { PrismaClient } from '@prisma/client'
-const db = new PrismaClient()
-
+import { github } from "@keyloom/providers";
 export default {
-  adapter: PrismaAdapter(db),
-  // sessionStrategy: 'database' | 'jwt'
-}
+  // ...
+  providers: [
+    github({
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+    }),
+  ],
+};
 ```
 
-</Tab>
-</Tabs>
-
-### 3) Update environment variables
-
-- AUTH_SECRET must be base64url and decode to at least 32 bytes.
-- Keep your DATABASE_URL; Keyloom will use Prisma accordingly.
-
-### 4) Replace client UI and providers
-
-- Swap NextAuth UI/components with Keyloom UI components from `@keyloom/ui/auth`.
-- Providers (GitHub/Google/etc.) are configured via Keyloom’s provider system and environment variables.
-
-### 5) Middleware / route protection
-
-<Tabs>
-<Tab value="nextauth-before" title="NextAuth (Before)">
-
-Typically handled ad-hoc or via getServerSession on each route.
-
-</Tab>
-<Tab value="keyloom-after" title="Keyloom (After)">
+### 4) Middleware and route protection
 
 ```ts
 // middleware.ts
-import { createAuthMiddleware } from '@keyloom/nextjs/middleware'
-
-export default createAuthMiddleware({
-  // Prefer routes manifest for precise protection
-})
+import { createAuthMiddleware } from "@keyloom/nextjs/middleware";
+import config from "@/keyloom.config";
+export default createAuthMiddleware(config);
 ```
 
-And on the server for App Router:
-
 ```ts
-import { guard } from '@keyloom/nextjs'
+// App Router server guard example
+import { guard } from "@keyloom/nextjs";
 export default async function Page() {
-  await guard({ visibility: 'private', redirectTo: '/sign-in' })
+  await guard({ visibility: "private", redirectTo: "/sign-in" });
   // ...
 }
 ```
 
-</Tab>
-</Tabs>
+### 5) Environment and validation
 
-### 6) Sessions and JWT
+- NEXT_PUBLIC_APP_URL, AUTH_SECRET, DATABASE_URL (if using Prisma)
+- Run `keyloom doctor` to verify env, cookies, and wiring
 
-- If you used NextAuth JWT sessions, set `sessionStrategy: 'jwt'` and ensure `NEXT_PUBLIC_APP_URL` (or baseUrl) is correct so JWKS/issuer are inferred. Otherwise, use the database session strategy (default).
+### 6) Sessions & cookies
 
-### 7) CSRF protection
+- Database sessions: signed, HttpOnly cookie holds the session id
+- JWT sessions: set `sessionStrategy: 'jwt'`; `baseUrl` is used to infer JWKS + issuer
+- Endpoints remain the same for both strategies
 
-- Keyloom exposes `GET /api/auth/csrf` and enforces CSRF on POST endpoints out of the box; no need to whitelist `/api/auth/csrf` in middleware.
+### 7) CSRF
+
+- All POST endpoints enforce double‑submit CSRF
+- Fetch `GET /api/auth/csrf` and send the token back in the `x-keyloom-csrf` header
 
 </Steps>
 
-## Common migration scenarios
+## From NextAuth/Auth.js
 
-- Sign-in and sign-up pages: replace with `Providers`, `SignInForm`, and `SignUpForm` from `@keyloom/ui/auth`.
-- Password reset flow: `ForgotPasswordForm` + `ResetPasswordForm`.
-- Email verification: `EmailVerificationForm`.
-- 2FA (TOTP): `TwoFactorSetup` + `TwoFactorVerify`.
+- Replace route handler with `createNextHandler`
+- Switch adapter to `PrismaAdapter` from `@keyloom/adapters`
+- If you previously used JWT, set `sessionStrategy: 'jwt'`
+- Re‑create providers via `@keyloom/providers`
 
-## Breaking changes to note
+```ts
+// Before (NextAuth)
+// export const { GET, POST } = NextAuth(authOptions)
 
-- AUTH_SECRET format: must be base64url (A–Z, a–z, 0–9, -, _), decoding to 4256 bytes.
-- CSRF handling is explicit and enforced.
-- Route protection should rely on Keyloom’s guard or middleware rather than custom per-page logic.
+// After (Keyloom)
+import { createNextHandler } from "@keyloom/nextjs";
+import config from "@/keyloom.config";
+export const { GET, POST } = createNextHandler(config);
+```
 
 ## Verification checklist
 
-- `keyloom doctor` passes all checks (env, DB connectivity, cookies policy, middleware wiring).
-- API handler responds to `GET /api/auth/csrf` and `GET /api/auth/session` as expected.
-- Sign-in/up flows, OAuth callbacks, password reset, and verification flows operate end-to-end.
-
+- `keyloom doctor` passes (env, DB, cookies, middleware)
+- `GET /api/auth/session` returns user/session when logged in
+- OAuth redirects and callbacks complete successfully
+- Password reset and email verification POSTs work with CSRF header
