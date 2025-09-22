@@ -6,14 +6,15 @@ description: Modern, security-first authentication for Next.js and Node — with
 import { Step, Steps } from "fumadocs-ui/components/steps";
 import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 import { Callout } from "fumadocs-ui/components/callout";
+import { Cards, Card } from "fumadocs-ui/components/cards";
 
-Welcome to Keyloom — a TypeScript‑first authentication framework for production apps. It provides robust primitives (sessions, JWT, RBAC, CSRF), first‑class Next.js support, and a batteries‑included CLI and UI components.
+Welcome to Keyloom — a TypeScript-first authentication framework for production apps. It provides robust primitives (sessions, JWT, RBAC, CSRF), first-class Next.js support, and a batteries-included CLI and UI components.
 
-<Callout>
-  Prerequisites - Set NEXT_PUBLIC_APP_URL to your app’s public URL (used for
-  redirects and JWKS when using JWT sessions) - Set AUTH_SECRET as base64url
-  that decodes to at least 32 bytes (run: `keyloom doctor --fix`) - Choose an
-  adapter (PrismaAdapter for production; memoryAdapter for demos/tests)
+<Callout type="info" title="Prerequisites">
+  - Set **NEXT_PUBLIC_APP_URL** to your app’s public URL (used for redirects and
+  JWKS when using JWT sessions) - Set **AUTH_SECRET** as base64url that decodes
+  to at least 32 bytes (run: `keyloom doctor --fix`) - Choose an adapter
+  (PrismaAdapter for production; memoryAdapter for demos/tests)
 </Callout>
 
 ## Quick start
@@ -30,8 +31,7 @@ pnpm add @keyloom/ui
 
 ### 2) Configure Keyloom
 
-```ts
-// keyloom.config.ts
+```ts title="keyloom.config.ts"
 import { PrismaAdapter } from "@keyloom/adapters";
 import { PrismaClient } from "@prisma/client";
 import { github } from "@keyloom/providers";
@@ -58,8 +58,7 @@ export default {
 <Tabs>
 <Tab value="app-router" title="App Router">
 
-```ts
-// app/api/auth/[[...keyloom]]/route.ts
+```ts title="app/api/auth/[[...keyloom]]/route.ts"
 import { createNextHandler } from "@keyloom/nextjs";
 import config from "@/keyloom.config";
 export const { GET, POST } = createNextHandler(config);
@@ -68,8 +67,7 @@ export const { GET, POST } = createNextHandler(config);
 </Tab>
 <Tab value="pages-router" title="Pages Router">
 
-```ts
-// pages/api/auth/[...keyloom].ts
+```ts title="pages/api/auth/[...keyloom].ts"
 import { createPagesApiHandler } from "@keyloom/nextjs";
 import config from "@/keyloom.config";
 export default createPagesApiHandler(config);
@@ -82,8 +80,7 @@ export default createPagesApiHandler(config);
 
 - Middleware (recommended):
 
-```ts
-// middleware.ts
+```ts title="middleware.ts"
 import { createAuthMiddleware } from "@keyloom/nextjs/middleware";
 import config from "@/keyloom.config";
 export default createAuthMiddleware(config);
@@ -108,27 +105,46 @@ export default async function Page() {
 
 ## Core API endpoints
 
-- GET /api/auth/session — current user/session
-- GET /api/auth/csrf — CSRF token (double‑submit cookie)
-- POST /api/auth/register — email+password register
-- POST /api/auth/login — email+password login
-- POST /api/auth/logout — end session
-- POST /api/auth/password/request — begin password reset
-- POST /api/auth/password/reset — complete password reset
-- POST /api/auth/email/verify — verify email
-- GET/POST /api/auth/oauth/:provider/callback — OAuth callback
-- GET /api/auth/oauth/:provider/start — OAuth start
+<Cards>
+  <Card title="Session" href="/docs/reference#session">
+    GET /api/auth/session — current user/session
+  </Card>
+  <Card title="CSRF" href="/docs/reference#csrf">
+    GET /api/auth/csrf — CSRF token (double-submit cookie)
+  </Card>
+  <Card title="Register">
+    POST /api/auth/register — email+password register
+  </Card>
+  <Card title="Login">POST /api/auth/login — email+password login</Card>
+  <Card title="Logout">POST /api/auth/logout — end session</Card>
+  <Card title="Password Reset">
+    POST /api/auth/password/request — begin password reset POST
+    /api/auth/password/reset — complete password reset
+  </Card>
+  <Card title="Email Verification">
+    POST /api/auth/email/verify — verify email
+  </Card>
+  <Card title="OAuth">
+    GET/POST /api/auth/oauth/:provider/callback — OAuth callback GET
+    /api/auth/oauth/:provider/start — OAuth start
+  </Card>
+</Cards>
 
 ## Learn more
 
-- Getting started: /docs/getting-started
-- Next.js integration: /docs/integrations/nextjs
-- Authentication providers: /docs/authentication
-- Concepts (sessions, JWT, RBAC): /docs/concepts
-- API reference: /docs/reference
-- Tutorials: /docs/tutorials
-- Troubleshooting: /docs/troubleshooting
+<Cards>
+  <Card href="/docs/getting-started" title="Getting Started" />
+  <Card href="/docs/integrations/nextjs" title="Next.js Integration" />
+  <Card href="/docs/authentication" title="Authentication Providers" />
+  <Card href="/docs/concepts" title="Concepts (sessions, JWT, RBAC)" />
+  <Card href="/docs/reference" title="API Reference" />
+  <Card href="/docs/tutorials" title="Tutorials" />
+  <Card href="/docs/troubleshooting" title="Troubleshooting" />
+</Cards>
 
 ## Migration
 
-- Migrate from other auth solutions: /docs/migrate-from-nextauth
+<Callout type="warn" title="Migrating from NextAuth">
+  See:{" "}
+  <a href="/docs/migrate-from-nextauth">Migrate from other auth solutions</a>
+</Callout>
