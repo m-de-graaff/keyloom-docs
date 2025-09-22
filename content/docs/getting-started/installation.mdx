@@ -3,14 +3,43 @@ title: Installation
 description: Install Keyloom via CLI or manually. Configure secrets, base URL, adapters, providers, and Next.js middleware.
 ---
 
-import { Tab, Tabs } from "fumadocs-ui/components/tabs";
-
 # Installation
 
 You can get started with Keyloom using the CLI (recommended) or manual setup.
 
 <Tabs items={["CLI", "Manual"]} defaultIndex={0}>
+<Tab value="CLI">
+
+## CLI (Recommended)
+
+Use the interactive CLI to scaffold config, middleware, and templates:
+
+```bash title="npm"
+npx keyloom init
+```
+
+```bash title="pnpm"
+pnpm dlx keyloom init
+```
+
+```bash title="yarn"
+yarn dlx keyloom init
+```
+
+```bash title="bun"
+bunx keyloom init
+```
+
+The CLI will:
+
+- Detect your package manager and framework
+- Create `keyloom.config.ts` with sensible defaults
+- Optionally add Next.js middleware and provider/adapter templates
+
+</Tab>
+
 <Tab value="Manual">
+
 ## Install the Package(s)
 
 Choose your package manager and install the core and (optionally) the Next.js integration:
@@ -38,34 +67,6 @@ pnpm add @keyloom/adapter-prisma @keyloom/providers
 ```
 
 </Tab>
-
-<Tab value="CLI">
-## CLI (Recommended)
-
-Use the interactive CLI to scaffold config, middleware, and templates:
-
-```bash title="npm"
-npx keyloom init
-```
-
-```bash title="pnpm"
-pnpm dlx keyloom init
-```
-
-```bash title="yarn"
-yarn dlx keyloom init
-```
-
-```bash title="bun"
-bunx keyloom init
-```
-
-The CLI will:
-
-- Detect your package manager and framework
-- Create `keyloom.config.ts` with sensible defaults
-- Optionally add Next.js middleware and provider/adapter templates
-    </Tab>
 </Tabs>
 
 ## Manual Setup
@@ -163,4 +164,4 @@ export const config = {
 };
 ```
 
-Thats it  your app now has session management and route protection via middleware. Continue to Basic Usage for role gating, sessions, and patterns.
+That's it — your app now has session management and route protection via middleware. Continue to Basic Usage for role gating, sessions, and patterns.
