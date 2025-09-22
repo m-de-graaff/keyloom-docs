@@ -1,0 +1,33 @@
+---
+title: OAuth Issues
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Steps } from 'fumadocs-ui/components/steps';
+
+Common OAuth problems involve callback URL mismatches and client credentials.
+
+<Steps>
+
+### 1) Verify callback URL in the provider console
+
+Must exactly match: `https://YOUR_DOMAIN/api/auth/callback/<provider>`
+
+### 2) Check client ID/secret env vars
+
+Values must be present at runtime. Re-deploy or restart after changes.
+
+### 3) Confirm time and clock skew
+
+If tokens are "not yet valid", sync server time or increase `jwt.clockSkewSec` (JWT strategy).
+
+### 4) Validate HTTPS and cookie settings
+
+Providers may require HTTPS. Ensure cookie `Secure=true` in production and correct domain/subdomain.
+
+</Steps>
+
+<Callout>
+For GitHub Enterprise/Auth0/custom domains, ensure the authorization and token endpoints match your tenant configuration.
+</Callout>
+

@@ -1,0 +1,33 @@
+---
+title: JWT Strategy
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Steps } from 'fumadocs-ui/components/steps';
+
+If you enable the JWT session strategy, validate these settings.
+
+<Steps>
+
+### 1) Issuer
+
+Set `jwt.issuer` and ensure it matches the audience's expectation.
+
+### 2) AUTH_SECRET
+
+Must be base64url and decode to at least 32 bytes. Use `keyloom doctor --fix` to generate.
+
+### 3) TTLs and skew
+
+Adjust `jwt.accessTTL`, `jwt.refreshTTL`, and `jwt.clockSkewSec` to match your environment.
+
+### 4) Key rotation
+
+Use `jwt.keyRotationDays` and `jwt.keyOverlapDays` to avoid invalidating active sessions when rotating keys.
+
+</Steps>
+
+<Callout>
+Prefer database sessions unless you specifically need JWT sessions across services or non-browser clients.
+</Callout>
+

@@ -1,0 +1,72 @@
+---
+title: @keyloom/react Reference
+---
+
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+React hooks and context for client apps.
+
+## Installation
+
+```bash
+npm install @keyloom/react
+```
+
+## Provider
+
+```tsx
+import { SessionProvider } from '@keyloom/react'
+export default function App({ children }) {
+  return <SessionProvider>{children}</SessionProvider>
+}
+```
+
+## Hooks
+
+- Session: `useSession()`, `useSessionStatus()`, `useUser()`, `useSessionRefresh()`
+- Auth actions: `useLogin()`, `useLogout()`, `useRegister()`, `useOAuth()`
+- Flows: `usePasswordReset()`, `useEmailVerification()`
+- Utilities: `useAuthForm()`, `useAuthRedirect()`, `useAuthError()`, `useAuthGuard()`
+- Profile/permissions: `useProfile()`, `usePermissions()`
+
+<Tabs>
+<Tab value="login" title="Login form">
+
+```tsx
+"use client"
+import { useLogin } from '@keyloom/react'
+export default function SignIn() {
+  const { mutate: login, isPending, error } = useLogin()
+  return (
+    <form action={(formData) => login({
+      email: formData.get('email') as string,
+      password: formData.get('password') as string,
+    })}>
+      <input name="email" />
+      <input name="password" type="password" />
+      <button disabled={isPending}>Sign in</button>
+      {error && <p role="alert">{String(error)}</p>}
+    </form>
+  )
+}
+```
+
+</Tab>
+<Tab value="session" title="Read session">
+
+```tsx
+import { useSession } from '@keyloom/react'
+export function Header() {
+  const { user } = useSession()
+  return <div>{user?.email ?? 'Guest'}</div>
+}
+```
+
+</Tab>
+</Tabs>
+
+<Callout>
+Hooks assume the shared API handler is mounted at `/api/auth`. Use `useAuthBasePath()` to customize if needed.
+</Callout>
+

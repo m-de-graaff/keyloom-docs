@@ -7,8 +7,18 @@ import { Step, Steps } from 'fumadocs-ui/components/steps';
 
 import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 
+import { Callout } from 'fumadocs-ui/components/callout';
+
 
 Welcome to Keyloom — a TypeScript-first authentication framework for Next.js and Node, designed for production from day one. It provides robust primitives (sessions, JWT, RBAC, CSRF) and an exceptional developer experience with a batteries-included CLI and UI components.
+<Callout>
+Prerequisites:
+- Use PrismaAdapter with a live PrismaClient
+- Set AUTH_SECRET as base64url (decodes to at least 32 bytes). Run `keyloom doctor --fix` to generate
+- Set NEXT_PUBLIC_APP_URL and DATABASE_URL for your environment
+</Callout>
+
+
 
 ## Quick start
 
@@ -29,7 +39,7 @@ export default {
 }
 ```
 
-Set AUTH_SECRET (base64url, decodes to ≥32 bytes) and DATABASE_URL in your env.
+Set AUTH_SECRET (base64url, decodes to at least 32 bytes) and DATABASE_URL in your env.
 
 ### 2) Add the API route
 
@@ -39,7 +49,7 @@ Set AUTH_SECRET (base64url, decodes to ≥32 bytes) and DATABASE_URL in your env
 ```ts
 // app/api/auth/[[...keyloom]]/route.ts
 import { createNextHandler } from '@keyloom/nextjs'
-import config from '../../../keyloom.config'
+import config from '@/keyloom.config'
 export const { GET, POST } = createNextHandler(config)
 ```
 
@@ -49,7 +59,7 @@ export const { GET, POST } = createNextHandler(config)
 ```ts
 // pages/api/auth/[...keyloom].ts
 import { createPagesApiHandler } from '@keyloom/nextjs'
-import config from '../../../keyloom.config'
+import config from '@/keyloom.config'
 export default createPagesApiHandler(config)
 ```
 
@@ -73,6 +83,15 @@ Run `keyloom doctor` to check environment, DB connectivity, cookies, and wiring.
 - Create an Admin Panel: /docs/tutorials/admin-panel
 - Create a User Settings Page: /docs/tutorials/user-settings
 - Custom Roles & Permissions: /docs/tutorials/custom-roles-permissions
+
+## Key sections
+
+- Getting started: /docs/getting-started
+- Next.js integration: /docs/integrations/nextjs
+- Authentication providers: /docs/authentication
+- Tutorials: /docs/tutorials
+- API reference: /docs/reference
+- Troubleshooting: /docs/troubleshooting
 
 ## Migration
 

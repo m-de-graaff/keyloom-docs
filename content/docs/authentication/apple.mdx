@@ -1,0 +1,85 @@
+---
+title: Apple Sign in
+---
+
+import { Steps } from 'fumadocs-ui/components/steps';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+Authenticate with Apple using a Service ID and private key.
+
+<Steps>
+
+### 1) Apple configuration
+
+- Create a Service ID (e.g., `com.example.app.web`)
+- Create a Sign in with Apple key and download `AuthKey_<KEY_ID>.p8`
+- Note Team ID and Key ID
+- Add a Return URL: `https://YOUR_DOMAIN/api/auth/callback/apple`
+
+```bash
+# .env.local
+APPLE_CLIENT_ID=com.example.app.web
+APPLE_TEAM_ID=...
+APPLE_KEY_ID=...
+APPLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+```
+
+### 2) Configure provider
+
+```ts
+// keyloom.config.ts
+import { PrismaAdapter } from '@keyloom/adapters'
+import { PrismaClient } from '@prisma/client'
+import { Apple } from '@keyloom/providers'
+
+const db = new PrismaClient()
+export default {
+  adapter: PrismaAdapter(db),
+  providers: [
+    Apple({
+      clientId: process.env.APPLE_CLIENT_ID!,
+      teamId: process.env.APPLE_TEAM_ID!,
+      keyId: process.env.APPLE_KEY_ID!,
+      privateKey: process.env.APPLE_PRIVATE_KEY!,
+    }),
+  ],
+}
+```
+
+<Callout>
+The Apple client secret is computed dynamically using your private key via `makeAppleClientSecret`; you do not store it statically.
+</Callout>
+
+### 3) UI
+
+<Tabs>
+<Tab value="app" title="App Router">
+
+```tsx
+import { Providers } from '@keyloom/ui/auth'
+export default function Page() {
+  return <Providers providers={["apple"]} />
+}
+```
+
+</Tab>
+<Tab value="pages" title="Pages Router">
+
+```tsx
+import { Providers } from '@keyloom/ui/auth'
+export default function Page() {
+  return <Providers providers={["apple"]} />
+}
+```
+
+</Tab>
+</Tabs>
+
+</Steps>
+
+## Troubleshooting
+
+- Private key format: keep newlines escaped if stored in env; consider reading from file in build pipeline
+- Callback URL must include `/api/auth/callback/apple`
+

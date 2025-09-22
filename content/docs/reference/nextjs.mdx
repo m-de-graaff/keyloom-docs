@@ -1,0 +1,53 @@
+---
+title: @keyloom/nextjs Reference
+---
+
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+Next.js integration: handlers, middleware, and server helpers.
+
+## Handlers
+
+<Tabs>
+<Tab value="app" title="App Router">
+
+```ts
+import { createNextHandler } from '@keyloom/nextjs'
+import config from '@/keyloom.config'
+export const { GET, POST } = createNextHandler(config)
+```
+
+</Tab>
+<Tab value="pages" title="Pages Router">
+
+```ts
+import { createPagesApiHandler } from '@keyloom/nextjs'
+import config from '@/keyloom.config'
+export default createPagesApiHandler(config)
+```
+
+</Tab>
+</Tabs>
+
+## Middleware
+
+- Default export: `export { default } from '@keyloom/nextjs/middleware'`
+- Custom: `createAuthMiddleware({ /* options */ })`
+
+## Server helpers
+
+- `getSession()` — fetch current session
+- `getUser()` — fetch current user
+- `guard({ visibility, redirectTo })` — RSC-safe access control
+- RBAC helpers: `withRole`, `getActiveOrgId`, `setActiveOrgCookie`
+
+## JWT utilities
+
+- Middleware helpers: `createJwtMiddleware`, `extractAccessTokenMiddleware`, `extractRefreshTokenMiddleware`
+- Server: `createJwtConfig`, `getJwtSession`, `verifyJwtToken`, `requireJwtAuth`
+
+<Callout>
+Use middleware for coarse-grained protection and `guard()` for fine-grained checks in Server Components.
+</Callout>
+

@@ -18,7 +18,7 @@ export default function HomePage() {
     },
     {
       title: "Install Hooks",
-      description: "let's you access auth state and user info on the client.",
+      description: "Lets you access auth state and user info on the client.",
       action: "pnpm add @keyloom/react",
     },
     {

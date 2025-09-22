@@ -1,0 +1,77 @@
+---
+title: GitLab OAuth
+---
+
+import { Steps } from 'fumadocs-ui/components/steps';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+Authenticate with GitLab.com or self-hosted GitLab instances.
+
+<Steps>
+
+### 1) GitLab application
+
+- Redirect URI: `https://YOUR_DOMAIN/api/auth/callback/gitlab`
+- Copy Client ID and Client Secret
+
+```bash
+# .env.local
+GITLAB_CLIENT_ID=...
+GITLAB_CLIENT_SECRET=...
+# Optional self-hosted base URL
+GITLAB_BASE_URL=https://gitlab.example.com
+```
+
+### 2) Configure provider
+
+```ts
+// keyloom.config.ts
+import { PrismaAdapter } from '@keyloom/adapters'
+import { PrismaClient } from '@prisma/client'
+import { GitLab } from '@keyloom/providers'
+
+const db = new PrismaClient()
+export default {
+  adapter: PrismaAdapter(db),
+  providers: [
+    GitLab({
+      clientId: process.env.GITLAB_CLIENT_ID!,
+      clientSecret: process.env.GITLAB_CLIENT_SECRET!,
+      baseUrl: process.env.GITLAB_BASE_URL, // optional
+    }),
+  ],
+}
+```
+
+### 3) UI
+
+<Tabs>
+<Tab value="app" title="App Router">
+
+```tsx
+import { Providers } from '@keyloom/ui/auth'
+export default function Page() {
+  return <Providers providers={["gitlab"]} />
+}
+```
+
+</Tab>
+<Tab value="pages" title="Pages Router">
+
+```tsx
+import { Providers } from '@keyloom/ui/auth'
+export default function Page() {
+  return <Providers providers={["gitlab"]} />
+}
+```
+
+</Tab>
+</Tabs>
+
+</Steps>
+
+<Callout>
+For self-hosted GitLab, ensure the provider app uses the exact same base URL you pass in `baseUrl`.
+</Callout>
+
