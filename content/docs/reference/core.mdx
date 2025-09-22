@@ -1,9 +1,9 @@
 ---
-title: @keyloom/core Reference
+title: "@keyloom/core Reference"
 ---
 
-import { Callout } from 'fumadocs-ui/components/callout';
-import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Callout } from "fumadocs-ui/components/callout";
+import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 
 Core library: configuration, session strategies, and runtime flows.
 
@@ -25,21 +25,22 @@ Key options from `KeyloomConfig`:
 - baseUrl: string
 
 <Callout>
-AUTH_SECRET must be base64url and decode to at least 32 bytes. Prefer database sessions by default.
+  AUTH_SECRET must be base64url and decode to at least 32 bytes. Prefer database
+  sessions by default.
 </Callout>
 
 ## Example config
 
 ```ts
-import { PrismaAdapter } from '@keyloom/adapters'
-import { PrismaClient } from '@prisma/client'
+import { PrismaAdapter } from "@keyloom/adapters";
+import { PrismaClient } from "@prisma/client";
 
-const db = new PrismaClient()
+const db = new PrismaClient();
 export default {
   adapter: PrismaAdapter(db),
   baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
-  session: { strategy: 'database', ttlMinutes: 60, rolling: true },
-}
+  session: { strategy: "database", ttlMinutes: 60, rolling: true },
+};
 ```
 
 ## Runtime flows
@@ -54,16 +55,16 @@ export default {
 <Tab value="register" title="Register">
 
 ```ts
-import { register } from '@keyloom/core/runtime/register'
-await register({ email, password })
+import { register } from "@keyloom/core/runtime/register";
+await register({ email, password });
 ```
 
 </Tab>
 <Tab value="login" title="Login">
 
 ```ts
-import { login } from '@keyloom/core/runtime/login'
-await login({ email, password })
+import { login } from "@keyloom/core/runtime/login";
+await login({ email, password });
 ```
 
 </Tab>
@@ -75,5 +76,3 @@ await login({ email, password })
 - rate limit: `import * as rateLimit from '@keyloom/core/guard/rate-limit'`
 - jwt helpers: `import * as jwt from '@keyloom/core/jwt'`
 - RBAC helpers: `import * as rbac from '@keyloom/core/rbac/*'`
-
-

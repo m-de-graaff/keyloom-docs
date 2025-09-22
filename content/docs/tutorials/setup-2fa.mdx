@@ -2,10 +2,9 @@
 title: Set up 2FA (TOTP)
 ---
 
-import { Step, Steps } from 'fumadocs-ui/components/steps';
-
-import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
-
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Tabs, Tab } from "fumadocs-ui/components/tabs";
+import { Callout } from "fumadocs-ui/components/callout";
 
 Enable time-based one-time passwords (TOTP) for stronger account security.
 
@@ -30,18 +29,18 @@ Two-factor setup should be available to authenticated users only. Use `guard({ v
 
 ```tsx
 // app/(auth)/setup-2fa/page.tsx
-import { guard } from '@keyloom/nextjs'
-import { TwoFactorSetup } from '@keyloom/ui/auth'
-export const metadata = { title: 'Two-factor authentication' }
+import { guard } from "@keyloom/nextjs";
+import { TwoFactorSetup } from "@keyloom/ui/auth";
+export const metadata = { title: "Two-factor authentication" };
 export default async function Page() {
-  await guard({ visibility: 'private', redirectTo: '/sign-in' })
+  await guard({ visibility: "private", redirectTo: "/sign-in" });
   return (
     <div className="min-h-dvh grid place-items-center p-6">
       <div className="w-full max-w-md p-6 border rounded">
         <TwoFactorSetup />
       </div>
     </div>
-  )
+  );
 }
 ```
 
@@ -50,8 +49,11 @@ export default async function Page() {
 
 ```tsx
 // pages/setup-2fa.tsx
-import dynamic from 'next/dynamic'
-const TwoFactorSetup = dynamic(() => import('@keyloom/ui/auth').then(m => m.TwoFactorSetup), { ssr: false })
+import dynamic from "next/dynamic";
+const TwoFactorSetup = dynamic(
+  () => import("@keyloom/ui/auth").then((m) => m.TwoFactorSetup),
+  { ssr: false }
+);
 export default function Page() {
   return (
     <div className="min-h-screen grid place-items-center p-6">
@@ -59,7 +61,7 @@ export default function Page() {
         <TwoFactorSetup />
       </div>
     </div>
-  )
+  );
 }
 ```
 
@@ -78,4 +80,3 @@ export default function Page() {
 - Invalid code: verify device time sync; TOTP is time-based.
 - 404 on setup/verify: ensure your API handler is configured.
 - Access control: protect the page with `guard` to require authentication.
-

@@ -1,9 +1,9 @@
 ---
-title: @keyloom/nextjs Reference
+title: "@keyloom/nextjs Reference"
 ---
 
-import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
-import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs, Tab } from "fumadocs-ui/components/tabs";
+import { Callout } from "fumadocs-ui/components/callout";
 
 Next.js integration: handlers, middleware, and server helpers.
 
@@ -13,18 +13,18 @@ Next.js integration: handlers, middleware, and server helpers.
 <Tab value="app" title="App Router">
 
 ```ts
-import { createNextHandler } from '@keyloom/nextjs'
-import config from '@/keyloom.config'
-export const { GET, POST } = createNextHandler(config)
+import { createNextHandler } from "@keyloom/nextjs";
+import config from "@/keyloom.config";
+export const { GET, POST } = createNextHandler(config);
 ```
 
 </Tab>
 <Tab value="pages" title="Pages Router">
 
 ```ts
-import { createPagesApiHandler } from '@keyloom/nextjs'
-import config from '@/keyloom.config'
-export default createPagesApiHandler(config)
+import { createPagesApiHandler } from "@keyloom/nextjs";
+import config from "@/keyloom.config";
+export default createPagesApiHandler(config);
 ```
 
 </Tab>
@@ -32,8 +32,21 @@ export default createPagesApiHandler(config)
 
 ## Middleware
 
-- Default export: `export { default } from '@keyloom/nextjs/middleware'`
-- Custom: `createAuthMiddleware({ /* options */ })`
+```ts
+// middleware.ts
+import { createAuthMiddleware } from "@keyloom/nextjs/middleware";
+import config from "@/keyloom.config";
+export default createAuthMiddleware(config);
+```
+
+```ts
+// With options
+import { createAuthMiddleware } from "@keyloom/nextjs/middleware";
+import config from "@/keyloom.config";
+export default createAuthMiddleware(config, {
+  /* routes, customValidate, ... */
+});
+```
 
 ## Server helpers
 
@@ -48,6 +61,6 @@ export default createPagesApiHandler(config)
 - Server: `createJwtConfig`, `getJwtSession`, `verifyJwtToken`, `requireJwtAuth`
 
 <Callout>
-Use middleware for coarse-grained protection and `guard()` for fine-grained checks in Server Components.
+  Use middleware for coarse-grained protection and `guard()` for fine-grained
+  checks in Server Components.
 </Callout>
-

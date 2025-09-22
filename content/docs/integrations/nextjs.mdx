@@ -2,8 +2,9 @@
 title: Next.js Integration
 ---
 
-import { Step, Steps } from 'fumadocs-ui/components/steps';
-import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Tabs, Tab } from "fumadocs-ui/components/tabs";
+import { Callout } from "fumadocs-ui/components/callout";
 
 Keyloom provides first-class Next.js support with a shared API handler, middleware, and helpers for both the App Router and the Pages Router.
 
@@ -27,7 +28,8 @@ DATABASE_URL=postgres://...
 ```
 
 <Callout>
-AUTH_SECRET must be base64url (A–Z a–z 0–9 - _) and decode to at least 32 bytes. `keyloom doctor --fix` can generate it.
+  AUTH_SECRET must be base64url (A–Z a–z 0–9 - _) and decode to at least 32
+  bytes. `keyloom doctor --fix` can generate it.
 </Callout>
 
 ### 2) Configure the API route
@@ -37,9 +39,9 @@ AUTH_SECRET must be base64url (A–Z a–z 0–9 - _) and decode to at least 32 
 
 ```ts
 // app/api/auth/[[...keyloom]]/route.ts
-import { createNextHandler } from '@keyloom/nextjs'
-import config from '@/keyloom.config'
-export const { GET, POST } = createNextHandler(config)
+import { createNextHandler } from "@keyloom/nextjs";
+import config from "@/keyloom.config";
+export const { GET, POST } = createNextHandler(config);
 ```
 
 </Tab>
@@ -47,9 +49,9 @@ export const { GET, POST } = createNextHandler(config)
 
 ```ts
 // pages/api/auth/[...keyloom].ts
-import { createPagesApiHandler } from '@keyloom/nextjs'
-import config from '@/keyloom.config'
-export default createPagesApiHandler(config)
+import { createPagesApiHandler } from "@keyloom/nextjs";
+import config from "@/keyloom.config";
+export default createPagesApiHandler(config);
 ```
 
 </Tab>
@@ -62,7 +64,9 @@ export default createPagesApiHandler(config)
 
 ```ts
 // middleware.ts
-export { default } from '@keyloom/nextjs/middleware'
+import { createAuthMiddleware } from "@keyloom/nextjs/middleware";
+import config from "@/keyloom.config";
+export default createAuthMiddleware(config);
 ```
 
 </Tab>
@@ -70,10 +74,11 @@ export { default } from '@keyloom/nextjs/middleware'
 
 ```ts
 // middleware.ts
-import { createAuthMiddleware } from '@keyloom/nextjs/middleware'
-export default createAuthMiddleware({
-  // Use a routes manifest for precise protection when your app grows
-})
+import { createAuthMiddleware } from "@keyloom/nextjs/middleware";
+import config from "@/keyloom.config";
+export default createAuthMiddleware(config, {
+  // routes, customValidate, etc.
+});
 ```
 
 </Tab>
@@ -86,10 +91,13 @@ export default createAuthMiddleware({
 
 ```ts
 // app/(private)/dashboard/page.tsx
-import { guard } from '@keyloom/nextjs'
+import { guard } from "@keyloom/nextjs";
 export default async function Dashboard() {
-  const { user } = await guard({ visibility: 'private', redirectTo: '/sign-in' })
-  return <div>Hello {user?.name}</div>
+  const { user } = await guard({
+    visibility: "private",
+    redirectTo: "/sign-in",
+  });
+  return <div>Hello {user?.name}</div>;
 }
 ```
 
@@ -98,13 +106,15 @@ export default async function Dashboard() {
 
 ```ts
 // pages/dashboard.tsx
-import { getSession } from '@keyloom/nextjs'
+import { getSession } from "@keyloom/nextjs";
 export async function getServerSideProps() {
-  const { user } = await getSession()
-  if (!user) return { redirect: { destination: '/sign-in', permanent: false } }
-  return { props: {} }
+  const { user } = await getSession();
+  if (!user) return { redirect: { destination: "/sign-in", permanent: false } };
+  return { props: {} };
 }
-export default function Page() { return <div>Dashboard</div> }
+export default function Page() {
+  return <div>Dashboard</div>;
+}
 ```
 
 </Tab>
@@ -119,19 +129,21 @@ export default function Page() { return <div>Dashboard</div> }
 <Tab value="client" title="Client form">
 
 ```tsx
-"use client"
-import { SignInForm } from '@keyloom/ui/auth'
-export default function Page() { return <SignInForm /> }
+"use client";
+import { SignInForm } from "@keyloom/ui/auth";
+export default function Page() {
+  return <SignInForm />;
+}
 ```
 
 </Tab>
 <Tab value="server" title="Server session">
 
 ```tsx
-import { getSession } from '@keyloom/nextjs'
+import { getSession } from "@keyloom/nextjs";
 export default async function Page() {
-  const { user } = await getSession()
-  return <pre>{JSON.stringify(user, null, 2)}</pre>
+  const { user } = await getSession();
+  return <pre>{JSON.stringify(user, null, 2)}</pre>;
 }
 ```
 
@@ -156,4 +168,3 @@ All Keyloom POST endpoints enforce CSRF. If you build custom forms, call `GET /a
 - CSRF 403 on POST: ensure the shared API handler is mounted and requests include the CSRF token
 - 401 after redirect: verify cookie domain/secure flags and that base URL matches the current origin
 - OAuth callback errors: confirm exact redirect URIs in provider consoles
-

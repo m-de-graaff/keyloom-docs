@@ -2,10 +2,9 @@
 title: Create a Login Page
 ---
 
-import { Step, Steps } from 'fumadocs-ui/components/steps';
-
-import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
-
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Tabs, Tab } from "fumadocs-ui/components/tabs";
+import { Callout } from "fumadocs-ui/components/callout";
 
 <Steps>
 
@@ -17,15 +16,15 @@ import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 Create app/api/auth/[[...keyloom]]/route.ts:
 
 ```ts
-import { createNextHandler } from '@keyloom/nextjs'
-import { PrismaAdapter } from '@keyloom/adapters'
-import { PrismaClient } from '@prisma/client'
+import { createNextHandler } from "@keyloom/nextjs";
+import { PrismaAdapter } from "@keyloom/adapters";
+import { PrismaClient } from "@prisma/client";
 
-const db = new PrismaClient()
+const db = new PrismaClient();
 export const { GET, POST } = createNextHandler({
   adapter: PrismaAdapter(db),
   baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
-})
+});
 ```
 
 </Tab>
@@ -34,22 +33,22 @@ export const { GET, POST } = createNextHandler({
 Create pages/api/auth/[...keyloom].ts:
 
 ```ts
-import { createPagesApiHandler } from '@keyloom/nextjs'
-import { PrismaAdapter } from '@keyloom/adapters'
-import { PrismaClient } from '@prisma/client'
+import { createPagesApiHandler } from "@keyloom/nextjs";
+import { PrismaAdapter } from "@keyloom/adapters";
+import { PrismaClient } from "@prisma/client";
 
-const db = new PrismaClient()
+const db = new PrismaClient();
 export default createPagesApiHandler({
   adapter: PrismaAdapter(db),
   baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
-})
+});
 ```
 
 </Tab>
 </Tabs>
 
 <Callout>
-Ensure AUTH_SECRET is a base64url string decoding to at least 32 bytes.
+  Ensure AUTH_SECRET is a base64url string decoding to at least 32 bytes.
 </Callout>
 
 ---
@@ -60,11 +59,11 @@ Ensure AUTH_SECRET is a base64url string decoding to at least 32 bytes.
 <Tab value="app-router" title="App Router">
 
 ```tsx
-"use client"
-import { Card } from '@keyloom/ui/components/card'
-import { Providers, SignInForm } from '@keyloom/ui/auth'
+"use client";
+import { Card } from "@keyloom/ui/components/card";
+import { Providers, SignInForm } from "@keyloom/ui/auth";
 
-export const metadata = { title: 'Sign in' }
+export const metadata = { title: "Sign in" };
 export default function Page() {
   return (
     <div className="min-h-dvh grid place-items-center p-6">
@@ -82,7 +81,7 @@ export default function Page() {
         <SignInForm redirectTo="/dashboard" />
       </Card>
     </div>
-  )
+  );
 }
 ```
 
@@ -90,9 +89,15 @@ export default function Page() {
 <Tab value="pages-router" title="Pages Router">
 
 ```tsx
-import dynamic from 'next/dynamic'
-const SignInForm = dynamic(() => import('@keyloom/ui/auth').then(m => m.SignInForm), { ssr: false })
-const Providers = dynamic(() => import('@keyloom/ui/auth').then(m => m.Providers), { ssr: false })
+import dynamic from "next/dynamic";
+const SignInForm = dynamic(
+  () => import("@keyloom/ui/auth").then((m) => m.SignInForm),
+  { ssr: false }
+);
+const Providers = dynamic(
+  () => import("@keyloom/ui/auth").then((m) => m.Providers),
+  { ssr: false }
+);
 export default function Page() {
   return (
     <div className="min-h-screen grid place-items-center p-6">
@@ -102,7 +107,7 @@ export default function Page() {
         <SignInForm redirectTo="/dashboard" />
       </div>
     </div>
-  )
+  );
 }
 ```
 
@@ -124,4 +129,3 @@ Keyloom exposes GET /api/auth/csrf that sets a CSRF cookie and returns a token. 
 - OAuth provider not shown: Define providers in env and UI via a providers.config.ts or pass props to `<Providers />`.
 
 </Steps>
-
