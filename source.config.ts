@@ -9,9 +9,6 @@ import {
 // see https://fumadocs.dev/docs/mdx/collections#define-docs
 export const docs = defineDocs({
 	docs: {
-		postprocess: {
-			includeProcessedMarkdown: true,
-		},
 		schema: frontmatterSchema,
 	},
 	meta: {
@@ -20,7 +17,5 @@ export const docs = defineDocs({
 });
 
 export default defineConfig({
-	mdxOptions: {
-		// MDX options
-	},
+	mdxOptions: {},
 });

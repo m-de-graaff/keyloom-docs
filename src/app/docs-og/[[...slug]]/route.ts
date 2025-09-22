@@ -1,12 +1,15 @@
 import { generateOGImage } from "fumadocs-ui/og";
 import { source } from "@/lib/source";
 import { notFound } from "next/navigation";
+import type { NextRequest } from "next/server";
 
 export async function GET(
-	_req: Request,
-	{ params }: RouteContext<"/docs-og/[...slug]">,
+	_req: NextRequest,
+	{ params }: { params: Promise<{ slug?: string[] }> },
 ) {
 	const { slug } = await params;
+	if (!slug) notFound();
+
 	const page = source.getPage(slug.slice(0, -1));
 	if (!page) notFound();
 
