@@ -1,0 +1,55 @@
+---
+title: Adapters
+description: Use or implement adapters to connect Keyloom to your database. Prisma/Drizzle and SQL/NoSQL backends supported.
+---
+
+# Adapters
+
+Adapters implement a small contract to persist users, sessions, verification tokens, and OAuth accounts. Use a built-in adapter or create your own.
+
+## Use Prisma Adapter
+
+```ts
+import { PrismaAdapter } from "@keyloom/adapters";
+import { PrismaClient } from "@prisma/client";
+
+const db = new PrismaClient();
+const adapter = PrismaAdapter(db);
+```
+
+Pass `adapter` into your `keyloom.config.ts` or server builder.
+
+## Adapter Interface
+
+See the Core overview for the full `Adapter` TypeScript interface. Any production adapter must implement:
+
+- Users: create/get/update; unique email
+- Accounts: link/get by provider
+- Sessions: create/get/delete
+- Tokens: create/use verification tokens (single-use, hashed at rest)
+- Audit: append audit events
+
+## Testing & Contracts
+
+The repo includes adapter contract tests under `packages/adapters/_contracts`. Use these to validate your custom adapter against the expected behavior (sessions, RBAC, refresh store, etc.).
+
+## Advanced: Other Adapters
+
+Available packages:
+- `@keyloom/adapters/prisma`
+- `@keyloom/adapters/drizzle`
+- `@keyloom/adapters/postgres`
+- `@keyloom/adapters/mysql2`
+- `@keyloom/adapters/mongo`
+
+Each package exposes a factory similar to `PrismaAdapter(...)`. Consult package READMEs or upcoming per-adapter pages.
+
+## Memory Adapter (Dev/Test)
+
+```ts
+import { memoryAdapter } from "@keyloom/core";
+const adapter = memoryAdapter();
+```
+
+Useful for local prototyping and unit tests. Not for production.
+

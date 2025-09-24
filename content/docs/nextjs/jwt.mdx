@@ -1,0 +1,83 @@
+---
+title: Next.js JWT Utilities
+description: Verify and consume Keyloom JWTs on the server and in middleware using @keyloom/nextjs/jwt-server.
+---
+
+# JWT Utilities (server)
+
+Utilities for verifying JWT access/refresh tokens issued by Keyloom.
+
+```ts
+import {
+  extractAccessToken,
+  extractRefreshToken,
+  verifyJwtToken,
+  getJwtSession,
+  requireJwtAuth,
+  createJwtConfig,
+  clearServerJwksCache,
+} from "@keyloom/nextjs/jwt-server";
+```
+
+## Cookies
+
+- `__keyloom_access`: short-lived access token
+- `__keyloom_refresh`: long-lived refresh token
+
+## Create JwtConfig from env
+
+```ts
+const jwt = createJwtConfig({
+  KEYLOOM_JWT_JWKS_URL: process.env.KEYLOOM_JWT_JWKS_URL,
+  KEYLOOM_JWT_ISSUER: process.env.KEYLOOM_JWT_ISSUER,
+  KEYLOOM_JWT_AUDIENCE: process.env.KEYLOOM_JWT_AUDIENCE,
+  KEYLOOM_JWT_CLOCK_SKEW_SEC: process.env.KEYLOOM_JWT_CLOCK_SKEW_SEC,
+});
+```
+
+## Verify a token
+
+```ts
+const { valid, claims, error } = await verifyJwtToken(token, {
+  jwksUrl: process.env.KEYLOOM_JWT_JWKS_URL!,
+  expectedIssuer: process.env.KEYLOOM_JWT_ISSUER,
+  expectedAudience: process.env.KEYLOOM_JWT_AUDIENCE,
+  clockSkewSec: 60,
+});
+```
+
+## Get current session (server)
+
+```ts
+const { user, session, claims } = await getJwtSession({
+  jwksUrl: process.env.KEYLOOM_JWT_JWKS_URL!,
+  expectedIssuer: process.env.KEYLOOM_JWT_ISSUER,
+});
+```
+
+- `user`: `{ id, email? } | null`
+- `session`: `{ id, userId, expiresAt } | null`
+
+## Require authentication
+
+```ts
+const { user, session } = await requireJwtAuth({ jwksUrl: process.env.KEYLOOM_JWT_JWKS_URL! });
+```
+
+Throws `Error("Authentication required")` when not authenticated.
+
+## Middleware access
+
+```ts
+import type { NextRequest } from "next/server";
+import { getJwtSession } from "@keyloom/nextjs/jwt-server";
+
+export function middleware(req: NextRequest) {
+  // Beware: network fetch to JWKS may be slower in middleware; rely on server guards if needed
+}
+```
+
+## JWKS Cache
+
+`clearServerJwksCache()` clears the in-memory JWKS cache, useful for tests.
+

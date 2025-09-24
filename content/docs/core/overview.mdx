@@ -1,0 +1,118 @@
+---
+title: Core Overview
+description: The @keyloom/core package — primitives, configuration, runtime flows, guards, JWT, RBAC, tokens, and utilities.
+---
+
+# @keyloom/core
+
+Keyloom Core provides the framework‑agnostic building blocks: configuration, runtime auth flows, session model, OAuth helpers, JWT tools, RBAC, CSRF/rate‑limit guards, token issuance, and error types.
+
+- Package: `@keyloom/core`
+- Surface: strongly typed, tree‑shakable exports
+- Works in Node runtimes and Next.js server contexts
+
+## Install
+
+```bash
+pnpm add @keyloom/core
+```
+
+## Quick Start
+
+```ts
+import { defineKeyloom, memoryAdapter } from "@keyloom/core";
+
+export default defineKeyloom({
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+  session: { strategy: "database", ttlMinutes: 60, rolling: true },
+  adapter: memoryAdapter(), // use a DB adapter in production
+  providers: [],
+  rbac: { enabled: false },
+  cookie: { sameSite: "lax" },
+  secrets: { authSecret: process.env.AUTH_SECRET ?? "dev-secret" },
+});
+```
+
+## What’s Included
+
+- Configuration: `defineKeyloom`, `createKeyloomConfig`, `validateKeyloomConfig`, defaults
+- Runtime flows: `register`, `login`, `logout`, `getCurrentSession`
+- Guards: `csrf.issueCsrfToken`, `csrf.validateDoubleSubmit`, `rateLimit.rateLimit`
+- Session model: `newSession` (internal), `session/cookie` helpers
+- JWT: `jwt.sign`, `jwt.verify`, JWKS helpers, claims/types
+- OAuth: `startOAuth`, `completeOAuth`, `makeAppleClientSecret`
+- RBAC: `rbac.context`, `withRole`, `policy`, `invites` and types
+- Tokens: `issueVerificationToken`
+- Adapters: Type contracts plus in‑memory adapter for dev/tests
+- Errors: `KeyloomError`, common codes in `ERR`
+- Utilities: `util/time` and more
+
+## Adapter Interface
+
+Adapters bridge Keyloom to your datastore. You can use the Prisma/Drizzle adapters from `@keyloom/adapters` or write your own.
+
+```ts
+import type { Adapter } from "@keyloom/core";
+
+export interface Adapter {
+  createUser(data: Partial<User>): Promise<User>
+  getUser(id: ID): Promise<User | null>
+  getUserByEmail(email: string): Promise<User | null>
+  updateUser(id: ID, data: Partial<User>): Promise<User>
+
+  linkAccount(acc: Account): Promise<Account>
+  getAccountByProvider(provider: string, providerAccountId: string): Promise<Account | null>
+
+  createSession(s: Omit<Session, 'id'|'createdAt'|'updatedAt'>): Promise<Session>
+  getSession(id: ID): Promise<Session | null>
+  deleteSession(id: ID): Promise<void>
+
+  createVerificationToken(v: Omit<VerificationToken,'id'|'createdAt'|'consumedAt'>): Promise<VerificationToken>
+  useVerificationToken(identifier: string, token: string): Promise<VerificationToken | null>
+
+  appendAudit(event: AuditEvent): Promise<void>
+}
+```
+
+For local development/testing, use the in‑memory adapter:
+
+```ts
+import { memoryAdapter } from "@keyloom/core";
+const adapter = memoryAdapter();
+```
+
+## Error Handling
+
+All domain errors use `KeyloomError` with a machine‑readable `code`:
+
+- `ERR.USER_NOT_FOUND`
+- `ERR.EMAIL_EXISTS`
+- `ERR.ACCOUNT_LINKED`
+- `ERR.SESSION_NOT_FOUND`
+- `ERR.TOKEN_NOT_FOUND`, `ERR.TOKEN_EXPIRED`, `ERR.TOKEN_CONSUMED`
+- `ERR.ADAPTER_UNIQUE_VIOLATION`
+
+Catch and map these in your server/UI to friendly messages.
+
+```ts
+import { KeyloomError, ERR } from "@keyloom/core";
+
+try {
+  // ...
+} catch (e) {
+  if (e instanceof KeyloomError) {
+    switch (e.code) {
+      case ERR.USER_NOT_FOUND: /* map to 404 or invalid login */ break;
+    }
+  }
+}
+```
+
+## Typical Integration Patterns
+
+- Next.js App Router: pair core with `@keyloom/nextjs` handler + middleware
+- Node API (Fastify): use `@keyloom/server` and a DB adapter
+- React apps: use `@keyloom/react` hooks; pair with `@keyloom/ui` for forms
+
+Continue to Configuration for a complete reference.
+

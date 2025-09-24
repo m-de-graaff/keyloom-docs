@@ -1,0 +1,58 @@
+---
+title: CLI
+description: The @keyloom/cli s interactive toolchain for scaffolding, migrations, routes, and diagnostics.
+---
+
+# @keyloom/cli
+
+Interactive CLI for installing, scaffolding, and maintaining Keyloom projects. Uses Commander + Inquirer with spinners and friendly prompts.
+
+## Install/Invoke
+
+```bash
+# npx (recommended)
+npx keyloom init
+
+# pnpm dlx
+dlx keyloom init
+```
+
+## Commands
+
+### keyloom init
+- Detects package manager and framework
+- Creates `keyloom.config.ts` with sensible defaults
+- Optionally adds Next.js middleware and starter routes
+- Installs provider/adapter templates on request
+
+### keyloom migrate
+- Runs database migrations for supported adapters (e.g., Prisma)
+- Environment-aware; prompts for confirmation in non-dev
+
+### keyloom routes
+- Scans your Next.js app for routes and generates a visibility manifest
+- Useful with `@keyloom/nextjs` middleware `routes` option
+
+### keyloom doctor
+- Validates environment (Node, package manager)
+- Checks `AUTH_SECRET` properties and warns on insecure defaults
+- Verifies adapter/provider presence and compatible versions
+
+### keyloom generate
+- Scaffolds example pages and API routes (Next.js App/Pages Router)
+- Can add OAuth buttons and basic forms
+
+### keyloom ui
+- Adds `@keyloom/ui` and sample auth screens
+- Optional Tailwind preset wiring
+
+## Configuration
+
+Most commands are interactive; advanced flags are available for CI usage.
+
+## Troubleshooting
+
+- If detection fails, re-run with `--verbose` to see checks
+- Ensure your Node version and package manager match the workspace root
+- If templates dont appear, check that your app paths conform to Next.js conventions
+

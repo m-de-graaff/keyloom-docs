@@ -1,0 +1,78 @@
+---
+title: OAuth Providers
+description: Add OAuth with providers from @keyloom/providers or build your own via the provider factory.
+---
+
+# Providers
+
+Add OAuth 2.0 / OIDC providers by installing `@keyloom/providers` and listing providers in your `keyloom.config.ts`.
+
+## Install
+
+```bash
+pnpm add @keyloom/providers
+```
+
+## Usage
+
+```ts title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { github, google } from "@keyloom/providers";
+
+export default defineKeyloom({
+  // ...
+  providers: [
+    github({ clientId: process.env.GITHUB_CLIENT_ID!, clientSecret: process.env.GITHUB_CLIENT_SECRET! }),
+    google({ clientId: process.env.GOOGLE_CLIENT_ID!, clientSecret: process.env.GOOGLE_CLIENT_SECRET! }),
+  ],
+});
+```
+
+Routes handled by the Next.js handler:
+- `GET /api/auth/oauth/:provider/start`
+- `GET/POST /api/auth/oauth/:provider/callback`
+
+## Available Providers
+
+- GitHub, Google, Apple, Auth0, GitLab, Microsoft, Discord, X (Twitter)
+- `dev` provider for local development
+
+```ts
+import { github, google, apple, auth0, gitlab, microsoft, discord, x } from "@keyloom/providers";
+```
+
+## Custom Providers
+
+Use the provider factory utilities to create a new provider quickly.
+
+```ts
+import { createProvider } from "@keyloom/providers/factory";
+
+export default createProvider({
+  id: "my-idp",
+  client: { 
+    authorizeUrl: "https://idp.example.com/oauth/authorize",
+    tokenUrl: "https://idp.example.com/oauth/token",
+    userUrl: "https://idp.example.com/userinfo",
+  },
+  profile: (raw) => ({ id: raw.sub, email: raw.email, name: raw.name }),
+  scopes: ["openid", "profile", "email"],
+});
+```
+
+## Error Handling
+
+- Invalid callback: `{ error: "invalid_callback" }` (400)
+- Unknown provider: `provider_not_found:<id>`
+- Token exchange failures bubble as 400/500 responses with safe messages
+
+## Security
+
+- OAuth state is sealed (AES-GCM) and stored in an HttpOnly cookie with short TTL; cleared after callback
+- PKCE S256 supported for web flows
+
+## Troubleshooting
+
+- Mismatched redirect URI: ensure your callback path matches the configured one (e.g., `/api/auth/oauth/github/callback`)
+- Missing client credentials: set the provider ENV vars, rebuild, and retry
+

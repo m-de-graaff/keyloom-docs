@@ -1,0 +1,60 @@
+---
+title: Next.js Integration
+description: The @keyloom/nextjs package 7 handler, middleware, JWT helpers, and server utilities for App Router.
+---
+
+# @keyloom/nextjs
+
+Next.js integration provides:
+
+- API handler: `createNextHandler(config)` to mount under `app/api/auth/[[...keyloom]]/route.ts`
+- Middleware: `createAuthMiddleware(config, options?)` for route visibility (public/private/role)
+- JWT utilities: server verification, cookie helpers, optional edge middleware mode
+- Server helpers: `getSession`, `getUser`, `guard` usable in Server Components and route handlers
+
+## Install
+
+```bash
+pnpm add @keyloom/core @keyloom/nextjs
+```
+
+## Minimal Setup
+
+```ts title="app/api/auth/[[...keyloom]]/route.ts"
+import { createNextHandler } from "@keyloom/nextjs";
+import config from "@/keyloom.config";
+
+export const { GET, POST } = createNextHandler(config);
+```
+
+```ts title="middleware.ts"
+import { createAuthMiddleware } from "@keyloom/nextjs/middleware";
+import config from "@/keyloom.config";
+
+export default createAuthMiddleware(config, {
+  publicRoutes: ["/", "/sign-in"],
+});
+
+export const config = {
+  matcher: ["/((?!_next|.*\\.(?:ico|png|jpg|svg|css|js|map)).*)"],
+};
+```
+
+## Server Helpers
+
+- `getSession(config?)` d return `{ session, user }` for DB or JWT strategy
+- `getUser(config?)` d convenience to read `user`
+- `guard(rule?, config?)` d enforce private/role/org routes server-side (App Router)
+
+```ts
+import { getSession, guard } from "@keyloom/nextjs";
+
+export default async function Page() {
+  await guard({ visibility: "private" });
+  const { user } = await getSession();
+  return <div>Hello {user?.id}</div>;
+}
+```
+
+Continue to the Handler and Middleware pages for full API details.
+

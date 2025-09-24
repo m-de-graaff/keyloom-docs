@@ -1,0 +1,65 @@
+---
+title: Security & Error Handling
+description: Security model, CSRF, JWT/JWKS, cookies, rate limiting, and error codes.
+---
+
+# Security & Errors
+
+Keyloom follows secure-by-default practices and clear error contracts.
+
+## Secrets
+
+- `AUTH_SECRET` (required): base64url, 32 bytes recommended
+- Used to seal OAuth state and to hash verification tokens (adapters)
+
+## Cookies
+
+- Database sessions: `__keyloom_session` (HttpOnly, `SameSite=Lax` by default)
+- JWT sessions: `__keyloom_access` (short TTL), `__keyloom_refresh` (longer TTL)
+- Org selection: cookie named from `ORG_COOKIE_NAME` in core constants
+
+## CSRF
+
+- Double-submit pattern for state-changing POSTs
+- Fetch `GET /api/auth/csrf` or `/v1/auth/csrf`, then send header `x-keyloom-csrf` matching `__keyloom_csrf`
+
+## JWT & JWKS
+
+- Algorithms: `EdDSA` (default) or `ES256`
+- JWKS endpoint: `/.well-known/jwks.json` serves public keys for verification
+- Key rotation & overlap windows are configurable; public verification uses `verifyJwtFull`
+
+### Next.js server JWT utilities
+
+- `extractAccessToken(req?)`, `extractRefreshToken(req?)`
+- `verifyJwtToken(token, { jwksUrl, expectedIssuer?, expectedAudience?, clockSkewSec? })`
+- `getJwtSession(config, req?)` d returns `{ user, session, claims }` or nulls
+- `requireJwtAuth(config, req?)` d throws if not authenticated
+- `createJwtConfig(envLike)` d derives config from env values
+
+## Rate Limiting
+
+- In-memory token bucket helper for basic use: `rateLimit(key, { capacity, refillPerSec })`
+- Production: integrate Redis or an external limiter at your proxy/API gateway
+
+## Error Model
+
+Domain errors are `KeyloomError` with `code` and optional message.
+
+Common codes:
+- `USER_NOT_FOUND`
+- `EMAIL_EXISTS`
+- `ACCOUNT_LINKED`
+- `SESSION_NOT_FOUND`
+- `TOKEN_NOT_FOUND`, `TOKEN_EXPIRED`, `TOKEN_CONSUMED`
+- `ADAPTER_UNIQUE_VIOLATION`
+
+HTTP responses from handlers return minimal JSON `{ error: code }` and appropriate status.
+
+## Troubleshooting
+
+- `csrf`: ensure header + cookie match; issue a fresh token before POST
+- `invalid_refresh_token`: refresh token missing/expired/rotated; force re-login
+- JWT verification errors: verify `JWKS_URL` reachability and issuer/audience settings
+- SameSite=None requires HTTPS in modern browsers
+

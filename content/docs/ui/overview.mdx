@@ -1,0 +1,78 @@
+---
+title: UI Components
+description: The @keyloom/ui component library d auth flows, org management, primitives, icons, and theme.
+---
+
+# @keyloom/ui
+
+A headless-friendly, Tailwind-compatible UI kit for common auth and org flows.
+
+## Install
+
+```bash
+pnpm add @keyloom/ui
+```
+
+Optional peers (ensure your app has): `react`, `react-dom`, `tailwindcss`, `@radix-ui/*`, `lucide-react`.
+
+## Exports
+
+```ts
+import * as theme from "@keyloom/ui";
+import { AuthUIProvider } from "@keyloom/ui";
+import * as auth from "@keyloom/ui/auth";
+import * as org from "@keyloom/ui/org";
+import * as rbac from "@keyloom/ui/rbac";
+import * as components from "@keyloom/ui/components";
+import * as primitives from "@keyloom/ui/primitives";
+import * as icons from "@keyloom/ui/icons";
+```
+
+## Provider
+
+```tsx
+import { AuthUIProvider } from "@keyloom/ui";
+
+<AuthUIProvider basePath="/api/auth">{children}</AuthUIProvider>
+```
+
+## Auth Components
+
+- Forms: `SignInForm`, `SignUpForm`, `ResetPasswordForm`, `ForgotPasswordForm`, `EmailVerificationForm`, `TwoFactorSetup`, `TwoFactorVerify`, `MagicLinkForm`
+- Buttons: `Providers`, `UserButton`
+- Layouts: `AuthLayout`
+
+## Org Components
+
+- `OrgSwitcher`, `CreateOrgDialog`, `InviteMemberDialog`, `MembersTable`, `RoleBadge`, `OrganizationCellView`
+
+## RBAC
+
+- `RoleGate` d render children only for allowed roles
+
+## Primitives & Components
+
+- Primitives: `provider-button`, `data-table`, `form`, `input-otp`
+- Components: typical UI parts (`button`, `card`, `input`, `dialog`, `dropdown-menu`, etc.)
+
+## Theme
+
+- Tokens: `@keyloom/ui/theme/tokens`
+- Tailwind preset: `@keyloom/ui/theme/tailwind-preset.cjs`
+- CSS vars: `@keyloom/ui/theme/css-vars.css`
+
+## Example
+
+```tsx
+import { SignInForm } from "@keyloom/ui/auth";
+
+export default function Page() {
+  return <SignInForm onSuccess={() => router.push("/dashboard")} />;
+}
+```
+
+## Troubleshooting
+
+- Ensure CSS and Tailwind preset are wired in your app
+- Base path must match your Keyloom API route (`/api/auth` by default)
+

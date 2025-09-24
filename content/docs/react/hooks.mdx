@@ -1,0 +1,141 @@
+---
+title: React Hooks
+description: The @keyloom/react package — session state, auth actions, and utilities.
+---
+
+# @keyloom/react
+
+React hooks and utilities for working with Keyloom sessions and auth flows from the client. Works with the Next.js handler routes under `/api/auth`.
+
+## Install
+
+```bash
+pnpm add @keyloom/react
+```
+
+## Provider
+
+```tsx
+import { SessionProvider } from "@keyloom/react";
+
+export default function App({ children }) {
+  return <SessionProvider basePath="/api/auth">{children}</SessionProvider>;
+}
+```
+
+- `basePath` (default `/api/auth`): points to your Keyloom API route
+
+## Core Hooks
+
+### useSession()
+
+```ts
+const { data: { session, user }, status, error, refresh } = useSession();
+```
+- `status`: `"loading" | "authenticated" | "unauthenticated"`
+- `refresh()`: refetch `/session`
+
+### useUser()
+```ts
+const { user, loading, error } = useUser();
+```
+
+### useSessionStatus()
+```ts
+const status = useSessionStatus();
+```
+
+### useSessionRefresh()
+```ts
+const { refresh } = useSessionRefresh();
+```
+
+## Auth Actions
+
+### useLogin()
+
+```ts
+const { login, loading, error } = useLogin();
+await login({ email, password });
+// or OAuth
+await login({ provider: "github", callbackUrl: "/dashboard" });
+```
+
+### useLogout()
+```ts
+const { logout } = useLogout();
+await logout();
+```
+
+### useRegister()
+```ts
+const { register } = useRegister();
+await register({ email, password });
+```
+
+### useOAuth()
+```ts
+const { login } = useOAuth();
+await login({ provider: "google", callbackUrl: "/" });
+```
+
+### usePasswordReset()
+```ts
+const { request, reset } = usePasswordReset();
+await request({ email });
+await reset({ identifier: email, token, newPassword });
+```
+
+### useEmailVerification()
+```ts
+const { verify } = useEmailVerification();
+await verify({ identifier: email, token });
+```
+
+## Utilities
+
+### Forms
+```ts
+const { values, setValue, submit, submitting, error, reset } = useAuthForm({ email: "", password: "" });
+await submit(async ({ email, password }) => {
+  await login({ email, password });
+});
+```
+
+### Redirect
+```ts
+const { redirect } = useAuthRedirect();
+redirect("/dashboard");
+```
+
+### Errors
+```ts
+const { error, setError } = useAuthError();
+```
+
+### Guards
+```ts
+const { allowed, status } = useAuthGuard({ requireAuth: true, redirectTo: "/login" });
+```
+
+### Permissions (RBAC)
+```ts
+const { hasRole, roles } = usePermissions();
+```
+
+## Non-hook Utilities
+
+```ts
+import { getSession, signIn, signOut } from "@keyloom/react";
+
+const data = await getSession("/api/auth");
+await signIn({ email, password }, "/api/auth");
+await signOut("/api/auth");
+```
+
+## Troubleshooting
+
+- Ensure your app includes a `<SessionProvider>` at the root
+- CSRF errors: fetch the `/csrf` endpoint once before POSTing, and send `x-keyloom-csrf` header
+- OAuth flows navigate the browser to the provider; call from user-initiated events
+

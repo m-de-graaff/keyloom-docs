@@ -1,0 +1,63 @@
+---
+title: Next.js Middleware
+description: Route-level visibility and edge checks with createAuthMiddleware.
+---
+
+# Middleware: createAuthMiddleware
+
+The middleware enforces public/private/role-gated routes, optional org requirements, and can verify sessions at the edge.
+
+```ts title="middleware.ts"
+import { createAuthMiddleware } from "@keyloom/nextjs/middleware";
+import config from "@/keyloom.config";
+
+export default createAuthMiddleware(config, {
+  publicRoutes: ["/", "/sign-in"],
+  // verifyAtEdge: true, // optional; fetches /api/auth/session
+});
+
+export const config = {
+  matcher: ["/((?!_next|.*\\.(?:ico|png|jpg|svg|css|js|map)).*)"],
+};
+```
+
+## Options
+
+```ts
+createAuthMiddleware(config, {
+  publicRoutes?: (string|RegExp)[],
+  routes?: KeyloomRoutesManifest, // declarative visibility
+  verifyAtEdge?: boolean, // slower, stricter
+  afterAuth?: ({ authed, req, next, redirect }) => NextResponse,
+  customValidate?: async ({ req, url, authed, userId }) => NextResponse | void,
+})
+```
+
+- `publicRoutes`: simple allowlist paths
+- `routes`: rich manifest (pattern, roles, org requirement, redirect, API vs page handling)
+- `verifyAtEdge`: consults `/api/auth/session` to confirm session
+- `customValidate`: run your own edge checks; return `NextResponse` to short-circuit
+
+## Visibility
+
+- `public`: always allowed
+- `!public` or `private`: require session
+- `!authed`: pages only for unauthenticated users
+- `role:<name>` or `roles: ["admin", "member"]` d require RBAC membership/role
+
+When RBAC is enabled, role/org checks try best-effort validation at the edge (org cookie + adapter membership). If validation is inconclusive at the edge, the middleware fails open and relies on server guards.
+
+## Org Requirement
+
+If a route requires an active organization and no org cookie is present, the middleware redirects to `/select-org`.
+
+## API Behavior
+
+For API routes, unauthorized access returns `401 { error: 'unauthorized' }` instead of a redirect.
+
+## Troubleshooting
+
+- Redirect loops: ensure that your `redirectTo` does not point to a path protected by the same rule
+- Edge verification fails: set `verifyAtEdge: false` and rely on server guards, or confirm your API route is reachable
+- RBAC disabled: role/org checks are skipped when `config.rbac?.enabled === false`
+

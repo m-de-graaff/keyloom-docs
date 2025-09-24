@@ -1,0 +1,72 @@
+---
+title: Next.js Handler (API routes)
+description: The createNextHandler API and the built-in endpoints exposed under /api/auth/[[...keyloom]].
+---
+
+# Handler: createNextHandler
+
+Exports GET/POST handlers for the Keyloom API routes in the App Router.
+
+```ts
+import { createNextHandler } from "@keyloom/nextjs";
+import config from "@/keyloom.config";
+export const { GET, POST } = createNextHandler(config);
+```
+
+## Endpoints
+
+The handler maps these endpoints:
+
+GET
+- `GET /api/auth/session` → `{ session, user }` (DB or JWT strategy)
+- `GET /api/auth/csrf` → issues CSRF token and sets `__keyloom_csrf`
+- `GET /api/auth/oauth/:provider/start` → redirects to provider
+- `GET /api/auth/oauth/:provider/callback` → handles provider callback, sets session cookie, redirects
+
+POST
+- `POST /api/auth/oauth/:provider/callback` → form_post callback (Apple etc.)
+- `POST /api/auth/register` → `{ userId, requiresVerification }`
+- `POST /api/auth/login` → sets session cookie, returns `{ sessionId }`
+- `POST /api/auth/logout` → clears session cookie, `{ ok: true }`
+- `POST /api/auth/password/request` → issues verification token (store via adapter), `{ ok: true }`
+- `POST /api/auth/password/reset` → uses token, updates credential, `{ ok: true }`
+- `POST /api/auth/email/verify` → uses token, sets `emailVerified`, `{ ok: true }`
+
+## Configuration Notes
+
+- `config.adapter` is used for user/session/token storage
+- `config.secrets.authSecret` is required to seal OAuth state and hash verification tokens
+- `config.baseUrl` is used to build OAuth callback URLs
+- `config.session.ttlMinutes` influences login session TTL (database strategy)
+
+## Hooks and Plugins
+
+- `config.hooks.onRequest({ kind, req })` → optionally return a `Response` to short-circuit (deny/redirect/metrics)
+- `config.plugins` → array of additional `{ method: 'GET'|'POST'; path: RegExp; handler(req, ctx) }`
+
+## JWT Strategy
+
+When `config.sessionStrategy === 'jwt'` (or equivalent env), the handler will:
+- For `GET /session`, infer `jwksUrl` and verify the access token from cookies or `Authorization` header
+- For login, you typically use `@keyloom/server` to issue tokens and set `__keyloom_access`/`__keyloom_refresh`
+
+See the JWT page and `jwt-server` utilities for details.
+
+## Error Handling
+
+- 404 `{ error: 'not_found' }` for unknown paths
+- 405 `{ error: 'method_not_allowed' }` for unsupported methods
+- 403 `{ error: 'csrf' }` if CSRF validation fails for state-changing POSTs
+- 400 `{ error: 'invalid_request'|'invalid_token' }` for malformed inputs
+
+## Example: Custom provider start
+
+```ts
+// /app/sign-in/page.tsx
+function SignInPage() {
+  return (
+    <a href="/api/auth/oauth/github/start?callbackUrl=/dashboard">Continue with GitHub</a>
+  );
+}
+```
+
