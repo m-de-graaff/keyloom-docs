@@ -18,12 +18,14 @@ export const { GET, POST } = createNextHandler(config);
 The handler maps these endpoints:
 
 GET
+
 - `GET /api/auth/session` → `{ session, user }` (DB or JWT strategy)
 - `GET /api/auth/csrf` → issues CSRF token and sets `__keyloom_csrf`
 - `GET /api/auth/oauth/:provider/start` → redirects to provider
 - `GET /api/auth/oauth/:provider/callback` → handles provider callback, sets session cookie, redirects
 
 POST
+
 - `POST /api/auth/oauth/:provider/callback` → form_post callback (Apple etc.)
 - `POST /api/auth/register` → `{ userId, requiresVerification }`
 - `POST /api/auth/login` → sets session cookie, returns `{ sessionId }`
@@ -47,6 +49,7 @@ POST
 ## JWT Strategy
 
 When `config.sessionStrategy === 'jwt'` (or equivalent env), the handler will:
+
 - For `GET /session`, infer `jwksUrl` and verify the access token from cookies or `Authorization` header
 - For login, you typically use `@keyloom/server` to issue tokens and set `__keyloom_access`/`__keyloom_refresh`
 
@@ -65,8 +68,61 @@ See the JWT page and `jwt-server` utilities for details.
 // /app/sign-in/page.tsx
 function SignInPage() {
   return (
-    <a href="/api/auth/oauth/github/start?callbackUrl=/dashboard">Continue with GitHub</a>
+    <a href="/api/auth/oauth/github/start?callbackUrl=/dashboard">
+      Continue with GitHub
+    </a>
   );
 }
 ```
 
+---
+
+## Request/response schemas (summary)
+
+| Method   | Path                             | Success                                                    | Errors                                   |
+| -------- | -------------------------------- | ---------------------------------------------------------- | ---------------------------------------- | ------------------------------ |
+| GET      | /api/auth/session                | 200 `{ user, session }` or `{ user: null, session: null }` | 401 `{ error: 'unauthorized' }`          |
+| GET      | /api/auth/csrf                   | 200 `{ token }` and Set-Cookie                             | -                                        |
+| POST     | /api/auth/login                  | 200 `{ sessionId }` and Set-Cookie                         | 400 `{ error: 'invalid_request' }`       |
+| POST     | /api/auth/logout                 | 200 `{ ok: true }` and clears cookies                      | -                                        |
+| GET/POST | /api/auth/oauth/:provider/(start | callback)                                                  | 302 Redirect with cookies set on success | 400/401 provider error details |
+| GET      | /api/auth/jwks                   | 200 `{ keys: Jwk[] }`                                      | -                                        |
+
+See Server overview for deeper schemas.
+
+## Example: custom start and callback
+
+```ts title="app/api/auth/[...keyloom]/route.ts"
+import { createNextHandler } from "@keyloom/nextjs";
+import cfg from "@/keyloom.config";
+
+export const { GET, POST } = createNextHandler(cfg, {
+  onRequest: ({ kind, req }) => {
+    // add logging, rate limiting, or A/B testing here
+  },
+});
+```
+
+## Performance and edge notes
+
+- Prefer App Router route handlers for streaming and simpler responses
+- Keep handlers stateless; use adapter for persistence
+- JWT strategy minimizes DB lookups on /session
+- Cache JWKS at the server boundary
+
+## Troubleshooting
+
+- CSRF error on POST: ensure CSRF cookie present, same-site rules, and token header/body included
+- 405 errors: check you export both GET and POST and match your route file path
+- Provider callback failure: confirm provider app settings and exact callback URL
+
+## See also
+
+- Next.js overview: [/docs/nextjs/overview](/docs/nextjs/overview)
+- Middleware: [/docs/nextjs/middleware](/docs/nextjs/middleware)
+- Core JWT: [/docs/core/jwt](/docs/core/jwt)
+
+## Next steps
+
+- Add a sign-in page with provider start links
+- Wire logout and session display in your layout

@@ -15,8 +15,8 @@ export default defineKeyloom({
   rbac: {
     enabled: true,
     roles: {
-      admin: { permissions: ['manage:org', 'manage:users', 'read'] },
-      member: { permissions: ['read'] },
+      admin: { permissions: ["manage:org", "manage:users", "read"] },
+      member: { permissions: ["read"] },
     },
   },
 });
@@ -32,7 +32,7 @@ Types (from `@keyloom/core`):
 ## Permission mapping
 
 ```ts
-import { toPermissionMap } from '@keyloom/core/rbac/policy';
+import { toPermissionMap } from "@keyloom/core/rbac/policy";
 
 const permMap = toPermissionMap(config.rbac); // { 'manage:org': ['admin'], 'read': ['admin','member'] }
 ```
@@ -40,17 +40,20 @@ const permMap = toPermissionMap(config.rbac); // { 'manage:org': ['admin'], 'rea
 ## Core guard (generic)
 
 ```ts
-import { withRole } from '@keyloom/core/rbac/with-role';
+import { withRole } from "@keyloom/core/rbac/with-role";
 
-const handler = withRole(async () => {
-  // protected logic
-  return 'ok'
-}, {
-  requiredRoles: ['admin','member'],
-  requiredPermission: 'manage:org',
-  getRole: async () => ({ role: 'admin' }),
-  permMap,
-});
+const handler = withRole(
+  async () => {
+    // protected logic
+    return "ok";
+  },
+  {
+    requiredRoles: ["admin", "member"],
+    requiredPermission: "manage:org",
+    getRole: async () => ({ role: "admin" }),
+    permMap,
+  }
+);
 ```
 
 - If `requiredRoles` is provided, the current role must be included
@@ -61,7 +64,11 @@ const handler = withRole(async () => {
 For app router ergonomics use `@keyloom/nextjs/rbac`:
 
 ```ts
-import { withRole, getActiveOrgId, setActiveOrgCookie } from '@keyloom/nextjs/rbac';
+import {
+  withRole,
+  getActiveOrgId,
+  setActiveOrgCookie,
+} from "@keyloom/nextjs/rbac";
 ```
 
 - `getActiveOrgId()` - reads current org from cookie
@@ -74,7 +81,10 @@ When RBAC is enabled, your adapter should implement membership queries:
 
 ```ts
 interface RbacAdapter {
-  getMembership(userId: string, orgId: string): Promise<{ role: string } | null>
+  getMembership(
+    userId: string,
+    orgId: string
+  ): Promise<{ role: string } | null>;
 }
 ```
 
@@ -86,3 +96,140 @@ Use provided memory adapter implementation as a reference.
 - Use middleware for coarse gating and `withRole` for server-side enforcement
 - Keep permissions small and composable (e.g., `read`, `write`, `manage:org`)
 
+---
+
+## Prerequisites
+
+- Define roles and permissions in `keyloom.config.ts`
+- Ensure your adapter can read memberships: `getMembership(userId, orgId)`
+- Choose an organization selection strategy (cookie, query param, page)
+
+## Organization selection workflow (example)
+
+```ts title="app/orgs/actions.ts"
+"use server";
+import { setActiveOrgCookie } from "@keyloom/nextjs/rbac";
+
+export async function selectOrg(orgId: string) {
+  // validate orgId belongs to user before setting
+  return new Response(null, {
+    status: 204,
+    headers: { "set-cookie": setActiveOrgCookie(orgId) },
+  });
+}
+```
+
+```tsx title="app/orgs/page.tsx"
+import { getActiveOrgId } from "@keyloom/nextjs/rbac";
+import { selectOrg } from "./actions";
+
+export default async function OrgsPage() {
+  const current = getActiveOrgId();
+  const orgs = [
+    { id: "org_1", name: "Acme" },
+    { id: "org_2", name: "Globex" },
+  ];
+  return (
+    <form action={(fd) => selectOrg(String(fd.get("orgId")))}>
+      <select name="orgId" defaultValue={current ?? undefined}>
+        {orgs.map((o) => (
+          <option key={o.id} value={o.id}>
+            {o.name}
+          </option>
+        ))}
+      </select>
+      <button type="submit">Use organization</button>
+    </form>
+  );
+}
+```
+
+## Server action enforcement
+
+```ts title="app/actions/admin.ts"
+import { withRole } from "@keyloom/nextjs/rbac";
+import cfg from "@/keyloom.config";
+
+export async function adminOnly(action: () => Promise<Response>) {
+  return withRole(action, {
+    requiredRoles: ["owner", "admin"],
+    getUser: async () => ({ id: "usr_42" }),
+    adapter: (cfg as any).adapter,
+    rbacEnabled: cfg.rbac?.enabled !== false,
+    config: cfg, // derive permission map when provided
+  });
+}
+```
+
+## API reference
+
+| API                         | From                           | Signature                                                                                                             | Returns                 |
+| --------------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------------------------- | ----------------------- | --------------------- |
+| `toPermissionMap(rbac)`     | `@keyloom/core/rbac/policy`    | `(RbacConfig) => Record<permission, role[]>`                                                                          | permission to roles map |
+| `withRole(handler, opts)`   | `@keyloom/core/rbac/with-role` | `opts: { requiredRoles?, requiredPermission?, getRole, permMap?, onDenied? }`                                         | wrapper enforcing RBAC  |
+| `withRole(action, opts)`    | `@keyloom/nextjs/rbac`         | `opts: { getUser, adapter, orgId?, requiredRoles?, requiredPermission?, permMap?, onDenied?, rbacEnabled?, config? }` | Response or redirect    |
+| `getActiveOrgId()`          | `@keyloom/nextjs/rbac`         | `() => string                                                                                                         | null`                   | reads `__keyloom_org` |
+| `setActiveOrgCookie(orgId)` | `@keyloom/nextjs/rbac`         | `(string) => string`                                                                                                  | Set-Cookie header value |
+
+Types (core): `RbacConfig`, `RbacRolesMapping`, `Role`, `Permission`, `Membership`.
+
+## Realistic permission mapping
+
+```ts
+const rbac = {
+  enabled: true,
+  roles: {
+    owner: {
+      permissions: ["manage:org", "manage:users", "billing", "read", "write"],
+    },
+    admin: { permissions: ["manage:users", "read", "write"] },
+    member: { permissions: ["read"] },
+    viewer: { permissions: ["read"] },
+  },
+} as const;
+```
+
+Business rules examples:
+
+- Only `owner` can access billing and transfer ownership
+- `admin` can invite/remove members and manage resources
+- `member` can read and write project resources
+- `viewer` can only read
+
+## Adapter contract
+
+```ts
+interface RbacAdapter {
+  getMembership(
+    userId: string,
+    orgId: string
+  ): Promise<{ role: string } | null>;
+}
+```
+
+- Implement `getMembership` efficiently (index on userId+orgId)
+- Return `null` for non-members to enforce 403
+
+## Troubleshooting
+
+- No active org: set cookie via `setActiveOrgCookie` after user selection
+- Access denied: role missing required permission; check `toPermissionMap` result
+- RBAC ignored in middleware: ensure `config.rbac.enabled !== false`
+- Edge checks failing: rely on server `withRole` for final enforcement
+
+## Performance and security
+
+- Derive permission map once per request; avoid recomputing repeatedly
+- Keep the org cookie HttpOnly and SameSite=Lax
+- Do not trust client-provided orgId without server validation
+
+## See also
+
+- Next.js middleware: [/docs/nextjs/middleware](/docs/nextjs/middleware)
+- Server helpers: [/docs/nextjs/overview](/docs/nextjs/overview)
+- Configuration: [/docs/core/config](/docs/core/config)
+
+## Next steps
+
+- Add an org selection page and persist selection
+- Wrap sensitive server actions with `withRole`

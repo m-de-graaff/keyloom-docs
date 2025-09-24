@@ -36,6 +36,7 @@ The repo includes adapter contract tests under `packages/adapters/_contracts`. U
 ## Advanced: Other Adapters
 
 Available packages:
+
 - `@keyloom/adapters/prisma`
 - `@keyloom/adapters/drizzle`
 - `@keyloom/adapters/postgres`
@@ -53,3 +54,154 @@ const adapter = memoryAdapter();
 
 Useful for local prototyping and unit tests. Not for production.
 
+---
+
+## Prerequisites
+
+- Choose a database (Postgres, MySQL, SQLite, MongoDB, etc.)
+- Install a compatible adapter package or plan a custom adapter
+- Run migrations to create tables for users, accounts, sessions, tokens
+
+## Database schemas
+
+```prisma title="Prisma schema (minimal)"
+model User { id String @id @default(cuid()) email String? @unique name String? createdAt DateTime @default(now()) }
+model Account { id String @id @default(cuid()) provider String providerAccountId String userId String @unique(userId, provider, providerAccountId) references User(id) }
+model Session { id String @id @default(cuid()) userId String expiresAt DateTime }
+model VerificationToken { id String @id @default(cuid()) identifier String tokenHash String expiresAt DateTime }
+model RefreshToken { jti String @id userId String tokenHash String expiresAt DateTime parentJti String? }
+model Membership { userId String orgId String role String @@id([userId, orgId]) }
+```
+
+```ts title="Drizzle (Postgres)"
+export const users = pgTable("users", {
+  id: text("id").primaryKey(),
+  email: text("email").unique(),
+  name: text("name"),
+});
+export const accounts = pgTable("accounts", {
+  id: text("id").primaryKey(),
+  provider: text("provider").notNull(),
+  providerAccountId: text("provider_account_id").notNull(),
+  userId: text("user_id").notNull(),
+});
+export const sessions = pgTable("sessions", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+});
+export const verificationTokens = pgTable("verification_tokens", {
+  id: text("id").primaryKey(),
+  identifier: text("identifier").notNull(),
+  tokenHash: text("token_hash").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+});
+export const memberships = pgTable(
+  "memberships",
+  {
+    userId: text("user_id").notNull(),
+    orgId: text("org_id").notNull(),
+    role: text("role").notNull(),
+  },
+  (t) => ({ pk: primaryKey({ columns: [t.userId, t.orgId] }) })
+);
+```
+
+## Adapter API (reference)
+
+| Method                                                          | Params                             | Returns                          |
+| --------------------------------------------------------------- | ---------------------------------- | -------------------------------- | ------ |
+| `createUser(data)`                                              | `{ email?, name? }`                | `Promise<{ id, email?, name? }>` |
+| `getUser(id)`                                                   | `string`                           | `Promise<User                    | null>` |
+| `getUserByEmail(email)`                                         | `string`                           | `Promise<User                    | null>` |
+| `updateUser(id, data)`                                          | `string, Partial<User>`            | `Promise<User>`                  |
+| `linkAccount(userId, { provider, providerAccountId, ... })`     | `string, Account`                  | `Promise<void>`                  |
+| `getAccountByProvider(provider, providerAccountId)`             | `string, string`                   | `Promise<Account                 | null>` |
+| `createSession({ userId, expiresAt })`                          | `Session`                          | `Promise<Session>`               |
+| `getSession(id)`                                                | `string`                           | `Promise<Session                 | null>` |
+| `deleteSession(id)`                                             | `string`                           | `Promise<void>`                  |
+| `createVerificationToken({ identifier, tokenHash, expiresAt })` | `VerificationToken`                | `Promise<void>`                  |
+| `useVerificationToken(identifier, tokenHash)`                   | `string, string`                   | `Promise<boolean>`               |
+| `getMembership(userId, orgId)`                                  | `string, string`                   | `Promise<{ role }                | null>` |
+| `appendAudit(event)`                                            | `{ type, userId?, orgId?, meta? }` | `Promise<void>`                  |
+
+Note: Real interfaces include additional fields. See `@keyloom/*adapter*/readme` for exact signatures.
+
+## Runnable: custom adapter skeleton
+
+```ts
+export function myAdapter(db: any) {
+  return {
+    async createUser(data) {
+      /* insert */ return { id: "...", ...data };
+    },
+    async getUser(id) {
+      /* select */ return null;
+    },
+    async getUserByEmail(email) {
+      /* select */ return null;
+    },
+    async updateUser(id, data) {
+      /* update */ return { id, ...data };
+    },
+    async linkAccount(userId, acc) {
+      /* upsert */
+    },
+    async getAccountByProvider(p, pid) {
+      /* select */ return null;
+    },
+    async createSession(s) {
+      /* insert */ return s;
+    },
+    async getSession(id) {
+      /* select */ return null;
+    },
+    async deleteSession(id) {
+      /* delete */
+    },
+    async createVerificationToken(t) {
+      /* insert */
+    },
+    async useVerificationToken(identifier, tokenHash) {
+      /* delete where match */ return true;
+    },
+    async getMembership(userId, orgId) {
+      /* select */ return { role: "member" };
+    },
+    async appendAudit(e) {
+      /* insert */
+    },
+  };
+}
+```
+
+## Migrations & schema evolution
+
+- Use additive migrations; avoid destructive changes without backfills
+- Keep unique indexes on emails and provider accounts
+- Add composite PKs where logical IDs exist (e.g., membership)
+- For refresh tokens, store only hashes; rotate regularly and prune expired
+
+## Performance considerations
+
+- Add indexes: `accounts(provider, providerAccountId)`, `sessions(userId, expiresAt)`
+- Prefer short-lived sessions for high-throughput systems; rely on JWT strategy when possible
+- Use connection pooling; for serverless, prefer drivers that support Data Proxy/HTTP
+- Batch writes for audit logs or use async outboxes
+
+## Troubleshooting
+
+- Duplicate email errors: ensure `email` is nullable for social logins; enforce uniqueness only when present
+- Session not found after sign-in: verify cookie domain/path and session TTL alignment
+- RBAC query slow: add index on `memberships(userId, orgId)`
+
+## See also
+
+- Installation: [/docs/getting-started/installation](/docs/getting-started/installation)
+- Configuration: [/docs/core/config](/docs/core/config)
+- RBAC: [/docs/core/rbac](/docs/core/rbac)
+
+## Next steps
+
+- Pick an adapter package (Prisma/Drizzle) and run migrations
+- Implement any custom fields needed and extend the adapter

@@ -61,3 +61,118 @@ Keyloom exposes a standard set of endpoints. Paths assume the base route `/api/a
 
 See Next.js Handler for implementation specifics and examples.
 
+---
+
+## Prerequisites
+
+- `keyloom.config.ts` configured and wired to your Next.js handler
+- Public base URL set (for OAuth callbacks)
+- For JWT strategy: JWKS endpoint exposed at `/api/auth/jwks`
+
+## Endpoint schemas and statuses
+
+| Method | Path                         | Request                 | Success                                                    | Errors                               |
+| ------ | ---------------------------- | ----------------------- | ---------------------------------------------------------- | ------------------------------------ |
+| GET    | /api/auth/session            | cookie or Authorization | 200 `{ user, session }` or `{ user: null, session: null }` | 401 `{ error: 'unauthorized' }`      |
+| POST   | /api/auth/signin/:provider   | query `callbackUrl?`    | 302 redirect to provider                                   | 400 `{ error: 'invalid_provider' }`  |
+| GET    | /api/auth/callback/:provider | provider params         | 302 redirect to `callbackUrl` and sets cookies             | 400 `{ error: 'oauth_error', code }` |
+| POST   | /api/auth/logout             | none                    | 200 `{ ok: true }` and clears cookies                      | -                                    |
+| GET    | /api/auth/jwks               | none                    | 200 `{ keys: Jwk[] }`                                      | -                                    |
+
+## Runnable examples
+
+```ts title="Sign in link (UI)"
+export function SignIn() {
+  return (
+    <a href="/api/auth/signin/github?callbackUrl=/dashboard">
+      Continue with GitHub
+    </a>
+  );
+}
+```
+
+```ts title="Read session (server route)"
+export async function GET() {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/session`,
+    {
+      cache: "no-store",
+      headers: { cookie: (await import("next/headers")).cookies().toString() },
+    }
+  );
+  if (res.status === 401) return new Response(null, { status: 401 });
+  const data = await res.json();
+  return Response.json(data);
+}
+```
+
+```ts title="Logout"
+export async function POST() {
+  const res = await fetch(`/api/auth/logout`, { method: "POST" });
+  return Response.json({ ok: res.ok });
+}
+```
+
+```ts title="JWKS consumer (server)"
+const jwks = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/auth/jwks`, {
+  next: { revalidate: 300 },
+}).then((r) => r.json());
+```
+
+## Error handling patterns
+
+- Always return structured JSON for API errors, e.g. `{ error, code, message? }`
+- Map OAuth provider errors to 400 with `code` and minimal message
+- For unauthorized, return 401 with `{ error: 'unauthorized' }`
+
+```ts title="Route handler pattern"
+export async function POST(req: Request) {
+  try {
+    // do work
+    return Response.json({ ok: true });
+  } catch (err: any) {
+    const code = err?.code ?? "unknown_error";
+    const status =
+      code === "invalid_request" ? 400 : code === "unauthorized" ? 401 : 500;
+    return Response.json(
+      {
+        error: code,
+        message:
+          process.env.NODE_ENV === "development" ? err?.message : undefined,
+      },
+      { status }
+    );
+  }
+}
+```
+
+## Performance and rate limiting
+
+- Cache `GET /api/auth/jwks` responses for 5–10 minutes
+- Keep session endpoint lightweight; avoid extra DB queries when using JWT
+- Apply rate limiting to sign-in start and callback endpoints
+- Avoid synchronous logging in request path; defer or batch logs
+
+## Security notes
+
+- Validate inputs (provider name, callback URLs) and reject unknown providers
+- Set appropriate CORS if exposing cross-origin clients; default to same-origin
+- Ensure cookies are `secure`, `httpOnly`, `sameSite: 'lax'` unless cross-site required
+
+## Troubleshooting
+
+- 302 loops after callback: verify `baseUrl`, cookie domain/path, and callback URL configuration
+- 401 from /session: ensure cookies are forwarded in server fetches and domain/path match
+- `kid` not found when verifying JWTs: publish rotated keys and keep overlap window active
+
+## See also
+
+- Next.js Handler: [/docs/nextjs/handler](/docs/nextjs/handler)
+- Next.js Overview: [/docs/nextjs/overview](/docs/nextjs/overview)
+- Core JWT: [/docs/core/jwt](/docs/core/jwt)
+- Security: [/docs/security/overview](/docs/security/overview)
+
+## Next steps
+
+- Add provider configuration and complete a full sign-in flow
+- Instrument logging and add rate limiting on auth endpoints

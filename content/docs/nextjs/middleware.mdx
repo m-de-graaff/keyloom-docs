@@ -47,3 +47,63 @@ export const config = {
 - If redirects loop, verify `baseUrl` and cookie domain/path settings
 - In development, set `cookie.secure: false`
 
+---
+
+## Prerequisites
+
+- `keyloom.config.ts` configured
+- Public sign-in route defined and included in `publicRoutes`
+- Correct `matcher` excluding Next internals and asset files
+
+## Advanced route matching
+
+```ts title="middleware.ts (advanced matcher)"
+export const config = {
+  matcher: [
+    // protect everything under /app except public
+    "/app/:path*",
+    // protect APIs except health
+    "/api/(?!health).*",
+  ],
+};
+```
+
+## Edge runtime compatibility
+
+- Works in Edge; avoid heavy DB calls in middleware
+- Use `verifyAtEdge: true` only with JWT strategy and cached JWKS
+- For APIs requiring DB, verify on the server handler instead
+
+## Error handling patterns
+
+- For pages: redirect to `/sign-in` when unauthenticated
+- For APIs: return JSON `{ error: 'unauthorized' }` with 401
+
+```ts title="middleware.ts (API example)"
+export default createAuthMiddleware(config, {
+  publicRoutes: ["/api/health"],
+  onUnauthorized: (ctx) => {
+    if (ctx.isApi)
+      return new Response(JSON.stringify({ error: "unauthorized" }), {
+        status: 401,
+      });
+    return Response.redirect(new URL("/sign-in", ctx.req.url));
+  },
+});
+```
+
+## Performance tips
+
+- Keep `publicRoutes` precise to avoid extra work
+- Prefer a single lightweight cookie read and short-circuit where possible
+- Avoid per-request remote JWKS fetch; cache JWKS in memory
+
+## See also
+
+- Overview: [/docs/nextjs/overview](/docs/nextjs/overview)
+- Handler: [/docs/nextjs/handler](/docs/nextjs/handler)
+- RBAC: [/docs/core/rbac](/docs/core/rbac)
+
+## Next steps
+
+- Add route-level role checks with server-side `withRole`

@@ -3,12 +3,29 @@ title: Installation
 description: Install Keyloom via CLI or manually. Configure secrets, base URL, adapters, providers, and Next.js middleware.
 ---
 
-import { Tabs, TabsList, TabsTrigger, TabsContent } from 'fumadocs-ui/components/tabs';
-
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "fumadocs-ui/components/tabs";
 
 # Installation
 
 You can get started with Keyloom using the CLI (recommended) or manual setup.
+
+## Prerequisites
+
+- Node.js 18+ (LTS) or 20+
+- Next.js 14 or 15 with TypeScript enabled
+- Environment variables management (.env.local, Secret Manager, etc.)
+- If using a database strategy: a supported adapter (Prisma/Drizzle/etc.) and a database
+- If using OAuth: provider apps created (GitHub/Google/etc.) with callback URL set to `${APP_URL}/api/auth/callback/<provider>`
+- A secure `AUTH_SECRET` (32+ random bytes)
+
+```bash title="Generate a strong secret (Node.js)"
+node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+```
 
 <Tabs defaultValue="CLI">
   <TabsList>
@@ -18,9 +35,9 @@ You can get started with Keyloom using the CLI (recommended) or manual setup.
 
   <TabsContent value="CLI">
 
-  ## CLI (Recommended)
+## CLI (Recommended)
 
-  Use the interactive CLI to scaffold config, middleware, and templates:
+Use the interactive CLI to scaffold config, middleware, and templates:
 
   <Tabs defaultValue="npm">
     <TabsList>
@@ -70,21 +87,22 @@ bunx keyloom init
 ```
 
     </TabsContent>
+
   </Tabs>
 
-  The CLI will:
+The CLI will:
 
-  - Detect your package manager and framework
-  - Create `keyloom.config.ts` with sensible defaults
-  - Optionally add Next.js middleware and provider/adapter templates
+- Detect your package manager and framework
+- Create `keyloom.config.ts` with sensible defaults
+- Optionally add Next.js middleware and provider/adapter templates
 
   </TabsContent>
 
   <TabsContent value="Manual">
 
-  ## Install the Package(s)
+## Install the Package(s)
 
-  Choose your package manager and install the core and (optionally) the Next.js integration:
+Choose your package manager and install the core and (optionally) the Next.js integration:
 
   <Tabs defaultValue="npm">
     <TabsList>
@@ -134,9 +152,10 @@ bun add @keyloom/core @keyloom/nextjs
 ```
 
     </TabsContent>
+
   </Tabs>
 
-  If you plan to use a database or OAuth, also install an adapter/provider package. For example, with Prisma and GitHub:
+If you plan to use a database or OAuth, also install an adapter/provider package. For example, with Prisma and GitHub:
 
   <Tabs defaultValue="npm">
     <TabsList>
@@ -186,9 +205,10 @@ bun add @keyloom/adapter-prisma @keyloom/providers
 ```
 
     </TabsContent>
+
   </Tabs>
 
-  ## Manual Setup
+## Manual Setup
 
 ### 1) Set Environment Variables
 
@@ -287,3 +307,212 @@ That's it — your app now has session management and route protection via middl
 
   </TabsContent>
 </Tabs>
+
+---
+
+## Minimal configuration (development)
+
+A minimal, copy-paste ready config to get you running locally with in-memory storage.
+
+```ts title="keyloom.config.ts (minimal dev)"
+import { defineKeyloom, memoryAdapter } from "@keyloom/core";
+
+type Role = "admin" | "member";
+
+export default defineKeyloom({
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+  session: { strategy: "jwt", ttlMinutes: 60, rolling: true },
+  adapter: memoryAdapter(),
+  providers: [],
+  rbac: { enabled: false },
+  cookie: { sameSite: "lax" },
+  secrets: { authSecret: process.env.AUTH_SECRET ?? "dev-secret" },
+});
+```
+
+Environment file for development:
+
+```ini title=".env.local"
+AUTH_SECRET=REPLACE_WITH_RANDOM_32B
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+## Production-ready configuration (recommended)
+
+This template enables stronger defaults and structured roles for RBAC.
+
+```ts title="keyloom.config.ts (production)"
+import { defineKeyloom } from "@keyloom/core";
+import { prismaAdapter } from "@keyloom/adapter-prisma";
+import { prisma } from "@/lib/prisma"; // your Prisma client
+
+export default defineKeyloom({
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
+  session: { strategy: "database", ttlMinutes: 30, rolling: true },
+  adapter: prismaAdapter(prisma),
+  providers: [
+    // e.g. github({ clientId: process.env.GITHUB_CLIENT_ID!, clientSecret: process.env.GITHUB_CLIENT_SECRET! })
+  ],
+  jwt: {
+    issuer: process.env.JWT_ISSUER ?? process.env.NEXT_PUBLIC_APP_URL!,
+    audience: process.env.JWT_AUDIENCE,
+    accessTTL: "15m",
+    refreshTTL: "30d",
+    algorithm: "EdDSA",
+    clockSkewSec: 60,
+    includeOrgRoleInAccess: true,
+    jwksPath: "/api/auth/jwks",
+    keyRotationDays: 30,
+    keyOverlapDays: 7,
+  },
+  rbac: {
+    enabled: true,
+    roles: {
+      owner: { permissions: ["manage:org", "manage:users", "billing", "read"] },
+      admin: { permissions: ["manage:users", "read", "write"] },
+      member: { permissions: ["read"] },
+    },
+  },
+  cookie: {
+    name: "__keyloom",
+    sameSite: "lax",
+    secure: true,
+    domain: process.env.COOKIE_DOMAIN,
+    path: "/",
+  },
+  secrets: { authSecret: process.env.AUTH_SECRET! },
+});
+```
+
+Recommended production environment file:
+
+```ini title=".env.production"
+AUTH_SECRET=REPLACE_WITH_LONG_RANDOM
+NEXT_PUBLIC_APP_URL=https://app.example.com
+COOKIE_DOMAIN=.example.com
+JWT_ISSUER=https://app.example.com
+JWT_AUDIENCE=web
+GITHUB_CLIENT_ID=...
+GITHUB_CLIENT_SECRET=...
+```
+
+## Complete handler and middleware wiring
+
+```ts title="app/api/auth/[...keyloom]/route.ts"
+import { createNextHandler } from "@keyloom/nextjs";
+import config from "@/keyloom.config";
+export const { GET, POST } = createNextHandler(config);
+```
+
+```ts title="middleware.ts"
+import { createAuthMiddleware } from "@keyloom/nextjs/middleware";
+import config from "@/keyloom.config";
+
+export default createAuthMiddleware(config, {
+  publicRoutes: ["/", "/sign-in", "/api/health"],
+});
+
+export const config = {
+  matcher: ["/((?!_next|.*\\.(?:ico|png|jpg|svg|css|js|map)).*)"],
+};
+```
+
+## Error handling and troubleshooting
+
+```ts title="Example: safe OAuth callback handling (server)"
+export async function GET(req: Request) {
+  try {
+    // your route handler logic or call into Keyloom handler
+    return new Response("ok");
+  } catch (err: any) {
+    const code = err?.code ?? "unknown_error";
+    const status = code === "OAUTH_CALLBACK_ERROR" ? 400 : 500;
+    return Response.json(
+      { code, message: err?.message ?? "Something went wrong" },
+      { status }
+    );
+  }
+}
+```
+
+Common issues:
+
+- CLI cannot write files: run with correct project root and permissions; use `--force` to overwrite
+- 307/308 redirect loops: check `baseUrl`, cookie `domain/path`, middleware `matcher`
+- Not authenticated in middleware: ensure cookie name/path match and `publicRoutes` allow your sign-in page
+- Provider callback error: verify callback URL matches exactly, client ID/secret are correct, and scopes are sufficient
+- Edge verification differences: prefer JWT strategy for edge routes; do full verification on the server when needed
+
+## Performance considerations
+
+- Prefer `session.strategy: "jwt"` for edge runtime and horizontally scaled apps
+- Use short access TTLs (10–15m) with `rolling: true` for good UX and reduced risk
+- Enable DB sessions when you need revocation and introspection
+- Minimize provider scopes to only what is required
+- Avoid heavy dependencies in middleware; keep logic small and fast
+
+## Security (production)
+
+- Always set `cookie.secure: true` on HTTPS and `sameSite: "lax"` unless cross-site is required
+- Rotate JWT keys regularly; expose only public JWKS via `/api/auth/jwks`
+- Store secrets in your platform’s secret manager; never commit `.env`
+- Validate `iss` and `aud` during JWT verification in multi-tenant scenarios
+- Enforce role/permission checks on the server even if middleware is used
+
+## Deployment notes
+
+- Vercel
+  - Use App Router with route handlers and middleware
+  - Add env vars in Project Settings → Environment Variables
+  - If using DB sessions, ensure your adapter supports serverless (e.g., Prisma Data Proxy / PlanetScale)
+- Docker
+  - Pass env via `-e` flags or Docker secrets
+  - Expose `NEXT_PUBLIC_APP_URL` and set `AUTH_SECRET`
+- Railway/Fly/Render
+  - Configure env and persistent DB
+  - Ensure `baseUrl` matches public URL (including https)
+
+## Monitoring & observability
+
+- Log auth events (sign-in, sign-out, errors) with request IDs
+- Capture provider error codes for debugging (e.g., OAuth error, description)
+- Consider adding metrics for rate of sign-ins, failures, and token refreshes
+
+## Migration guide (JWT ↔ database)
+
+- JWT → Database
+  - Add adapter and set `session.strategy: "database"`
+  - Update middleware/server utilities to read server session
+  - Migrate rolling behavior and TTLs; plan a cutover
+- Database → JWT
+  - Remove adapter dependency for sessions (still used for users)
+  - Configure `jwt` block and expose `/api/auth/jwks`
+
+## OAuth & JWT flow (overview)
+
+```mermaid
+flowchart TD
+  A[User clicks Sign in] --> B[POST /api/auth/signin/:provider]
+  B --> C[Redirect to Provider]
+  C --> D[GET /api/auth/callback/:provider]
+  D --> E[Issue session (cookie)]
+  E --> F[App requests protected page]
+  F --> G[Middleware checks cookie]
+  G -->|valid| H[Allow]
+  G -->|invalid| I[Redirect /sign-in]
+```
+
+## Next steps
+
+- Follow Basic Usage for session reading and role gating: [/docs/getting-started/basic-usage](/docs/getting-started/basic-usage)
+- Add Next.js middleware rules: [/docs/nextjs/middleware](/docs/nextjs/middleware)
+- Configure providers: [/docs/providers/overview](/docs/providers/overview)
+- Choose an adapter and set up schema: [/docs/adapters/overview](/docs/adapters/overview)
+
+## See also
+
+- Core configuration: [/docs/core/config](/docs/core/config)
+- Core JWT: [/docs/core/jwt](/docs/core/jwt)
+- RBAC: [/docs/core/rbac](/docs/core/rbac)
+- Server endpoints: [/docs/server/overview](/docs/server/overview)
+- Security: [/docs/security/overview](/docs/security/overview)

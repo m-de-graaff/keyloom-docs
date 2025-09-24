@@ -61,7 +61,9 @@ const { user, session, claims } = await getJwtSession({
 ## Require authentication
 
 ```ts
-const { user, session } = await requireJwtAuth({ jwksUrl: process.env.KEYLOOM_JWT_JWKS_URL! });
+const { user, session } = await requireJwtAuth({
+  jwksUrl: process.env.KEYLOOM_JWT_JWKS_URL!,
+});
 ```
 
 Throws `Error("Authentication required")` when not authenticated.
@@ -81,3 +83,88 @@ export function middleware(req: NextRequest) {
 
 `clearServerJwksCache()` clears the in-memory JWKS cache, useful for tests.
 
+---
+
+## Prerequisites
+
+- JWT strategy enabled or JWKS exposed by your server
+- `KEYLOOM_JWT_JWKS_URL` set to your `/api/auth/jwks` endpoint
+- If verifying `aud`/`iss`, set `KEYLOOM_JWT_AUDIENCE` and `KEYLOOM_JWT_ISSUER`
+
+## API reference
+
+| Function                      | Signature                                                                                             | Returns                               |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------- | ---------------------------- |
+| `createJwtConfig(env)`        | `({ KEYLOOM_JWT_JWKS_URL, KEYLOOM_JWT_ISSUER?, KEYLOOM_JWT_AUDIENCE?, KEYLOOM_JWT_CLOCK_SKEW_SEC? })` | `JwtVerifyOptions`                    |
+| `verifyJwtToken(token, opts)` | `(string, { jwksUrl, expectedIssuer?, expectedAudience?, clockSkewSec? })`                            | `{ valid: boolean; claims?; error? }` |
+| `getJwtSession(opts?)`        | `({ jwksUrl, expectedIssuer?, expectedAudience? })`                                                   | `{ user, session, claims }`           |
+| `requireJwtAuth(opts?)`       | same as above                                                                                         | throws on unauthenticated             |
+| `extractAccessToken()`        | `() => string                                                                                         | null`                                 | from cookie or Authorization |
+| `extractRefreshToken()`       | `() => string                                                                                         | null`                                 | from cookie                  |
+| `clearServerJwksCache()`      | `() => void`                                                                                          | clears cache                          |
+
+## Runnable examples
+
+```ts title="app/api/protected/route.ts"
+import { requireJwtAuth } from "@keyloom/nextjs/jwt-server";
+
+export async function GET() {
+  try {
+    const { user, session } = await requireJwtAuth({
+      jwksUrl: process.env.KEYLOOM_JWT_JWKS_URL!,
+      expectedIssuer: process.env.KEYLOOM_JWT_ISSUER,
+    });
+    return Response.json({ user, session });
+  } catch (e) {
+    return Response.json({ error: "unauthorized" }, { status: 401 });
+  }
+}
+```
+
+```ts title="app/dashboard/page.tsx"
+import { getJwtSession } from "@keyloom/nextjs/jwt-server";
+
+export default async function Page() {
+  const { user } = await getJwtSession({
+    jwksUrl: process.env.KEYLOOM_JWKS_URL!,
+  });
+  if (!user) return <a href="/sign-in">Sign in</a>;
+  return <p>Hi {user.id}</p>;
+}
+```
+
+## Error handling
+
+- Map verification errors to 401; avoid leaking details to clients
+- For expired tokens, prompt a refresh flow (server issues new access using refresh)
+
+```ts
+const { valid, error } = await verifyJwtToken(token, { jwksUrl });
+if (!valid) return Response.json({ error: "invalid_token" }, { status: 401 });
+```
+
+## Edge notes
+
+- Avoid verifying refresh tokens in middleware; use server routes
+- Cache JWKS in memory for a few minutes to minimize fetches
+
+## Performance
+
+- Verify once at request boundary and pass claims through
+- Batch external calls after verification; do not mix verification and data loads
+
+## Troubleshooting
+
+- `fetch` to JWKS blocked in middleware: verify your deployment allows outgoing fetches at edge
+- `kid` not found: ensure your JWKS contains active and overlapping keys during rotation
+- `iss` mismatch: set `KEYLOOM_JWT_ISSUER` to your public app URL
+
+## See also
+
+- Core JWT: [/docs/core/jwt](/docs/core/jwt)
+- Handler endpoints: [/docs/nextjs/handler](/docs/nextjs/handler)
+- Middleware: [/docs/nextjs/middleware](/docs/nextjs/middleware)
+
+## Next steps
+
+- Add refresh flow endpoints and integrate session UX

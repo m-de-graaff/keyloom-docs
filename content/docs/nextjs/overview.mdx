@@ -14,9 +14,9 @@ This guide covers how to use Keyloom with Next.js, including route handlers, mid
 
 ## Quick start
 
-1) Install packages and create `keyloom.config.ts` (see Installation)
-2) Add an auth handler route under `app/api/auth/[...keyloom]/route.ts`
-3) Add middleware for route protection
+1. Install packages and create `keyloom.config.ts` (see Installation)
+2. Add an auth handler route under `app/api/auth/[...keyloom]/route.ts`
+3. Add middleware for route protection
 
 ```ts title="app/api/auth/[...keyloom]/route.ts"
 import { createNextHandler } from "@keyloom/nextjs";
@@ -93,3 +93,67 @@ Pass your `defineKeyloom` config to `createNextHandler` and the middleware. Comm
 
 See Configuration for the full reference.
 
+---
+
+## Request/response schemas (summary)
+
+- GET /api/auth/session
+  - 200 `{ user: { id, email?, name? }, session: { id, userId, expiresAt } } | { user: null, session: null }`
+- POST /api/auth/signin/:provider
+  - 302 redirect to provider (query `callbackUrl` optional)
+- GET /api/auth/callback/:provider
+  - 302 redirect to `callbackUrl` (or default)
+  - Sets cookies for session (DB) or JWTs (JWT strategy)
+- POST /api/auth/logout
+  - 200 `{ ok: true }` and clears auth cookies
+- GET /api/auth/jwks
+  - 200 `{ keys: Jwk[] }`
+
+See Handler page for full schemas.
+
+## Edge runtime notes
+
+- Middleware supports Edge, but heavy verification can be slow; prefer server verification for complex checks
+- Use JWT strategy for Edge; database sessions require serverless-compatible adapters
+
+## Server session reading with error handling
+
+```ts title="app/dashboard/page.tsx"
+import { getServerSession } from "@keyloom/nextjs";
+import cfg from "@/keyloom.config";
+
+export default async function Page() {
+  try {
+    const session = await getServerSession(cfg);
+    if (!session) return <a href="/sign-in">Sign in</a>;
+    return <div>Hello {session.user?.name ?? session.user?.id}</div>;
+  } catch (e) {
+    console.error("session_error", e);
+    return <div>Temporary issue. Please retry.</div>;
+  }
+}
+```
+
+## Performance tips
+
+- Do not fetch session on client if already checked in middleware
+- Cache public JWKS responses for 5-10 minutes
+- Avoid large route matchers in middleware; prefer concise patterns
+- Minimize provider scopes to reduce OAuth latency
+
+## Troubleshooting
+
+- Infinite redirects after sign-in: verify `baseUrl`, callback URL, and cookie domain/path
+- 401 on protected pages: ensure middleware matcher excludes assets and includes your paths
+- CSRF errors on POST: ensure CSRF token is included or disable where appropriate for OAuth redirects
+
+## See also
+
+- Handler reference: [/docs/nextjs/handler](/docs/nextjs/handler)
+- Middleware: [/docs/nextjs/middleware](/docs/nextjs/middleware)
+- Core JWT: [/docs/core/jwt](/docs/core/jwt)
+
+## Next steps
+
+- Wire middleware and handler in your app
+- Configure one provider and test the full sign-in flow

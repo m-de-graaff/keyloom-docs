@@ -44,3 +44,118 @@ Keyloom provides a secure baseline and flexible options. This page summarizes th
 - Use HTTPS and HSTS
 - Limit provider scopes to what you need
 
+---
+
+## Prerequisites
+
+- HTTPS enabled in all environments (use HSTS in production)
+- Strong `AUTH_SECRET` (32+ random bytes) stored in secret manager
+- Accurate `NEXT_PUBLIC_APP_URL` and cookie domain/path
+
+## Production hardening checklist
+
+- [ ] HTTPS enforced and HSTS set (`max-age >= 15552000`)
+- [ ] Secure cookies (`secure: true`, `httpOnly: true`, `sameSite: 'lax'`)
+- [ ] CSP configured (script-src 'self' with hashes/nonces)
+- [ ] Rate limiting on auth endpoints
+- [ ] Provider scopes minimized and secrets rotated
+- [ ] CSRF protection on unsafe methods (POST/PUT/PATCH/DELETE)
+- [ ] JWT keys rotated regularly; JWKS public only
+- [ ] Logging/monitoring with redaction of PII and secrets
+
+## Cookie security configuration
+
+```ts title="keyloom.config.ts"
+export default defineKeyloom({
+  cookie: {
+    name: "__keyloom",
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    httpOnly: true,
+    domain: process.env.COOKIE_DOMAIN, // e.g. .example.com
+    path: "/",
+  },
+});
+```
+
+- Use `sameSite: 'none'` only when you truly need cross-site cookies
+- Scope `domain` minimally; avoid sharing across unrelated subdomains
+
+## CSRF protection examples
+
+- Use provided `GET /api/auth/csrf` and include token for unsafe methods
+
+```ts title="Client fetch with CSRF"
+const token = (await fetch("/api/auth/csrf").then((r) => r.json())).token;
+await fetch("/api/secure/action", {
+  method: "POST",
+  headers: { "x-csrf-token": token },
+});
+```
+
+```ts title="Server verify (pattern)"
+export async function POST(req: Request) {
+  const token = req.headers.get("x-csrf-token");
+  if (!token) return Response.json({ error: "csrf" }, { status: 403 });
+  // optionally compare to cookie or server store
+  return Response.json({ ok: true });
+}
+```
+
+## OAuth provider scope guidance
+
+- Request only minimal scopes needed (e.g., `read:user` instead of full `user`)
+- Rotate client secrets periodically; store in secret manager
+- Verify `state`/PKCE; reject callbacks with mismatched state
+- Ensure callback URLs exactly match provider app configuration
+
+## Input validation and sanitization
+
+- Validate request bodies and params using a schema validator
+
+```ts title="Example with Zod"
+import { z } from "zod";
+
+const CreateInput = z.object({
+  name: z.string().min(1),
+  email: z.string().email(),
+});
+export async function POST(req: Request) {
+  const json = await req.json().catch(() => null);
+  const parse = CreateInput.safeParse(json);
+  if (!parse.success)
+    return Response.json({ error: "invalid_request" }, { status: 400 });
+  // proceed with safe data
+}
+```
+
+- Always encode untrusted output; avoid directly injecting user content into HTML
+
+## Deployment security considerations
+
+- Enforce HTTPS at the platform layer (Vercel: Redirects, HSTS header)
+- Set security headers: `Strict-Transport-Security`, `Content-Security-Policy`, `X-Frame-Options`, `Referrer-Policy`
+- Keep runtime up-to-date and enable automatic dependency updates where safe
+
+## Monitoring and logging
+
+- Log auth events (sign-in, sign-out, errors) with request IDs; avoid sensitive data
+- Alert on unusual patterns (failed logins surge, multiple org switches)
+- Redact tokens, cookies, and secrets from logs
+
+## Troubleshooting
+
+- Cookies not sent: check `domain`, `path`, `sameSite`, HTTPS, and subdomain usage
+- CSRF errors: ensure token included and same-site rules align with your flow
+- OAuth failures: confirm provider scopes, client ID/secret, and exact callback URL
+
+## See also
+
+- Core JWT: [/docs/core/jwt](/docs/core/jwt)
+- Handler endpoints: [/docs/server/overview](/docs/server/overview)
+- Next.js Middleware: [/docs/nextjs/middleware](/docs/nextjs/middleware)
+
+## Next steps
+
+- Review provider scopes per integration and rotate secrets
+- Add rate limiting and security headers to your deployment

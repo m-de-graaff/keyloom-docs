@@ -10,7 +10,14 @@ Low-level JWT utilities from `@keyloom/core/jwt` for signing, verification, keys
 ## Types
 
 ```ts
-import type { JwtHeader, JwtClaims, JwtConfig, Jwk, Keystore, RotationPolicy } from "@keyloom/core/jwt";
+import type {
+  JwtHeader,
+  JwtClaims,
+  JwtConfig,
+  Jwk,
+  Keystore,
+  RotationPolicy,
+} from "@keyloom/core/jwt";
 ```
 
 - `JwtHeader`: `{ alg: 'EdDSA' | 'ES256'; kid: string; typ: 'JWT' }`
@@ -30,11 +37,15 @@ import type { JwtHeader, JwtClaims, JwtConfig, Jwk, Keystore, RotationPolicy } f
 import { createSigner, sign } from "@keyloom/core/jwt";
 
 // Using a signer (preferred)
-const signer = createSigner(privateKey, publicKey, 'kid123', 'EdDSA');
+const signer = createSigner(privateKey, publicKey, "kid123", "EdDSA");
 const token = await signer.sign({ iss, sub: userId, iat, exp });
 
 // Direct sign
-const token2 = await sign({ alg: 'EdDSA', kid: 'kid123', typ: 'JWT' }, { iss, sub, iat, exp }, privateKey);
+const token2 = await sign(
+  { alg: "EdDSA", kid: "kid123", typ: "JWT" },
+  { iss, sub, iat, exp },
+  privateKey
+);
 ```
 
 ## Verification
@@ -48,25 +59,31 @@ const { header, claims } = await verify(token, jwks);
 // Full verification with timing and issuer/audience checks
 const out = await verifyFull(token, jwks, {
   clockSkewSec: 60,
-  expectedIssuer: 'https://app.example.com',
-  expectedAudience: 'my-audience',
+  expectedIssuer: "https://app.example.com",
+  expectedAudience: "my-audience",
 });
 ```
 
 ## Keystore and JWKS
 
 ```ts
-import { newKeystore, rotateKeys, exportPublicKeys, exportJwks, genKeyPair } from "@keyloom/core/jwt";
+import {
+  newKeystore,
+  rotateKeys,
+  exportPublicKeys,
+  exportJwks,
+  genKeyPair,
+} from "@keyloom/core/jwt";
 
 // Create and rotate a keystore
-let ks = await newKeystore({ alg: 'EdDSA' });
+let ks = await newKeystore({ alg: "EdDSA" });
 ks = await rotateKeys(ks, { rotationDays: 30, overlapDays: 7 });
 
 // Export public keys for verification
 const jwks = exportPublicKeys(ks); // JWK[]
 
 // Generate a standalone keypair
-const { privateKey, publicKey, kid } = await genKeyPair('EdDSA');
+const { privateKey, publicKey, kid } = await genKeyPair("EdDSA");
 ```
 
 - Store private keys securely server side.
@@ -78,7 +95,7 @@ const { privateKey, publicKey, kid } = await genKeyPair('EdDSA');
 import { newRefreshToken, TokenRotator } from "@keyloom/core/jwt";
 
 // Create a refresh token record for a user
-const rec = await newRefreshToken({ userId: 'u_1', ttl: '30d' });
+const rec = await newRefreshToken({ userId: "u_1", ttl: "30d" });
 
 // Rotate on use (pseudocode)
 const rotator = new TokenRotator(store); // store implements persistence
@@ -116,3 +133,169 @@ import { validateJwtClaims, newAccessClaims } from "@keyloom/core/jwt";
 - Rotate keys regularly and keep an overlap window for old tokens
 - Never expose private keys
 
+---
+
+## Prerequisites
+
+- Node.js 18+ or 20+
+- WebCrypto available (Node 18+ provides global crypto)
+- If exposing JWKS: a public route like `/api/auth/jwks`
+- If rotating keys: persistent storage for private keys
+
+## API reference
+
+| Function                                        | Parameters                                                                 | Returns                                             | Throws                                                                        |
+| ----------------------------------------------- | -------------------------------------------------------------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------- | --------------------------------- |
+| `createSigner(privateKey, publicKey, kid, alg)` | `CryptoKey`, `CryptoKey`, `string`, `'EdDSA'                               | 'ES256'`                                            | `{ sign(claims): Promise<string> }`                                           | Errors from WebCrypto export/sign |
+| `sign(header, claims, privateKey)`              | `JwtHeader`, `JwtClaims`, `CryptoKey`                                      | `Promise<string>`                                   | JWT_ERRORS on invalid input                                                   |
+| `verify(token, jwks)`                           | `string`, `Jwk[]`                                                          | `Promise<{ header: JwtHeader; claims: JwtClaims }>` | `JWT_MALFORMED`, signature errors                                             |
+| `verifyFull(token, jwks, opts)`                 | `string`, `Jwk[]`, `{ clockSkewSec?, expectedIssuer?, expectedAudience? }` | same as above                                       | `JWT_EXPIRED`, `JWT_NOT_BEFORE`, `JWT_INVALID_ISSUER`, `JWT_INVALID_AUDIENCE` |
+| `newKeystore(opts)`                             | `{ alg: 'EdDSA'                                                            | 'ES256' }`                                          | `Promise<Keystore>`                                                           | WebCrypto errors                  |
+| `rotateKeys(keystore, policy)`                  | `Keystore`, `{ rotationDays: number; overlapDays: number }`                | `Promise<Keystore>`                                 | if keystore invalid                                                           |
+| `exportPublicKeys(keystore)`                    | `Keystore`                                                                 | `Jwk[]`                                             | -                                                                             |
+| `exportJwks(keystore)`                          | `Keystore`                                                                 | `{ keys: Jwk[] }`                                   | -                                                                             |
+| `genKeyPair(alg)`                               | `'EdDSA'                                                                   | 'ES256'`                                            | `Promise<{ privateKey: CryptoKey; publicKey: CryptoKey; kid: string }>`       | WebCrypto errors                  |
+| `newRefreshToken({ userId, ttl })`              | `{ userId: string; ttl: string }`                                          | `Promise<RefreshTokenRecord>`                       | -                                                                             |
+| `TokenRotator(store)`                           | `{ findByJti, save, revoke }` like interface                               | `{ rotate(rec): Promise<{ next, revoke }>} `        | -                                                                             |
+
+## Runnable example: key rotation and JWKS
+
+```ts title="app/api/auth/jwks/route.ts"
+import { newKeystore, rotateKeys, exportJwks } from "@keyloom/core/jwt";
+
+let keystorePromise: Promise<any> | null = null;
+
+async function getKeystore() {
+  if (!keystorePromise) {
+    // In production, load from secure storage (KMS/DB). This demo keeps it in memory.
+    keystorePromise = newKeystore({ alg: "EdDSA" });
+  }
+  return keystorePromise;
+}
+
+export async function GET() {
+  const ks = await getKeystore();
+  // Optional: rotate on schedule
+  // const next = await rotateKeys(ks, { rotationDays: 30, overlapDays: 7 });
+  // await save(next)
+  const jwks = exportJwks(ks);
+  return Response.json(jwks, {
+    headers: { "cache-control": "public, max-age=300" },
+  });
+}
+```
+
+## Runnable example: verify with issuer and audience
+
+```ts
+import { verifyFull, exportPublicKeys } from "@keyloom/core/jwt";
+
+async function check(token: string, keystore: any) {
+  const jwks = exportPublicKeys(keystore);
+  try {
+    const { claims } = await verifyFull(token, jwks, {
+      clockSkewSec: 60,
+      expectedIssuer: "https://app.example.com",
+      expectedAudience: ["web", "mobile"],
+    });
+    return claims;
+  } catch (err: any) {
+    if (err.code === "JWT_EXPIRED") return null;
+    throw err;
+  }
+}
+```
+
+## Runnable example: refresh rotation workflow
+
+```ts
+import { TokenRotator, newRefreshToken } from "@keyloom/core/jwt";
+
+type RefreshRow = {
+  jti: string;
+  userId: string;
+  tokenHash: string;
+  expiresAt: Date;
+  parentJti?: string | null;
+};
+const memory: Map<string, RefreshRow> = new Map();
+
+const store = {
+  async findByJti(jti: string) {
+    return memory.get(jti) ?? null;
+  },
+  async save(row: RefreshRow) {
+    memory.set(row.jti, row);
+  },
+  async revoke(jti: string) {
+    const r = memory.get(jti);
+    if (r) memory.delete(jti);
+  },
+};
+
+// Issue initial token
+const rec = await newRefreshToken({ userId: "usr_42", ttl: "30d" });
+await store.save({
+  jti: rec.jti,
+  userId: rec.userId,
+  tokenHash: rec.tokenHash,
+  expiresAt: rec.expiresAt,
+});
+
+// On refresh endpoint
+const rotator = new TokenRotator(store as any);
+const result = await rotator.rotate(rec);
+await store.save(result.next as any); // persist new row
+await store.revoke(rec.jti); // revoke old
+```
+
+## Error handling and troubleshooting
+
+```ts
+try {
+  await verifyFull(token, jwks, { expectedIssuer: env.JWT_ISSUER });
+} catch (err: any) {
+  switch (err.code) {
+    case "JWT_MALFORMED":
+    case "JWT_EXPIRED":
+    case "JWT_NOT_BEFORE":
+    case "JWT_INVALID_ISSUER":
+    case "JWT_INVALID_AUDIENCE":
+      // map to 401 / 403 as needed
+      break;
+    default:
+    // 500 or generic error
+  }
+}
+```
+
+Common issues:
+
+- Malformed tokens: ensure you pass `Authorization: Bearer <token>` or cookies set by your auth flow
+- Clock skew: increase `clockSkewSec` in distributed systems
+- Key not found: ensure JWKS contains the `kid` present in the token header
+- Rotation window: keep old public keys available during overlapDays
+
+## Performance considerations
+
+- Cache JWKS on the server for 5-10 minutes; avoid per-request network fetch
+- Limit keystore rotations to a daily or weekly job; keep overlap to tolerate in-flight tokens
+- Verify only once per request boundary; pass claims through downstream logic
+
+## Security notes
+
+- Store private keys in KMS or encrypted DB with strict access control
+- Never ship private keys to the client; expose only `/api/auth/jwks`
+- Prefer EdDSA for smaller keys and fast verification
+- Validate `iss` and `aud` when tokens can come from multiple issuers
+
+## See also
+
+- Configuration: [/docs/core/config](/docs/core/config)
+- Security: [/docs/security/overview](/docs/security/overview)
+- Server endpoints: [/docs/server/overview](/docs/server/overview)
+
+## Next steps
+
+- Integrate with Next.js handler: [/docs/nextjs/overview](/docs/nextjs/overview)
+- Use JWT on the server: [/docs/nextjs/jwt](/docs/nextjs/jwt)
