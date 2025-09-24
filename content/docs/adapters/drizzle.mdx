@@ -1,0 +1,194 @@
+---
+title: Drizzle Adapter
+description: Use Drizzle ORM with Keyloom. Complete schema definitions, setup, migrations with Drizzle Kit, performance, and troubleshooting.
+---
+
+# Drizzle Adapter
+
+Use Drizzle ORM to persist users, accounts, sessions, tokens, refresh tokens, and memberships.
+
+## Prerequisites
+
+- Database available (PostgreSQL, MySQL, or SQLite)
+- Drizzle ORM and driver installed
+- Drizzle Kit configured for migrations
+
+## Install
+
+```bash
+pnpm add drizzle-orm drizzle-kit
+# choose a driver
+pnpm add pg @vercel/postgres                # Postgres (example)
+# pnpm add mysql2                           # MySQL
+# pnpm add better-sqlite3                   # SQLite
+```
+
+## Drizzle config (example)
+
+```ts title="drizzle.config.ts"
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  schema: "./src/db/schema.ts",
+  dialect: "postgresql",
+  out: "./drizzle",
+  dbCredentials: {
+    url: process.env.DATABASE_URL!,
+  },
+});
+```
+
+## Schema (PostgreSQL)
+
+```ts title="src/db/schema.ts"
+import { pgTable, text, timestamp, integer, jsonb, primaryKey } from "drizzle-orm/pg-core";
+
+export const users = pgTable("users", {
+  id: text("id").primaryKey(),
+  email: text("email").unique(),
+  name: text("name"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const accounts = pgTable("accounts", {
+  id: text("id").primaryKey(),
+  provider: text("provider").notNull(),
+  providerAccountId: text("provider_account_id").notNull(),
+  userId: text("user_id").notNull(),
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token"),
+  tokenType: text("token_type"),
+  scope: text("scope"),
+  expiresAt: integer("expires_at"),
+});
+
+export const sessions = pgTable("sessions", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const verificationTokens = pgTable("verification_tokens", {
+  id: text("id").primaryKey(),
+  identifier: text("identifier").notNull(),
+  tokenHash: text("token_hash").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const refreshTokens = pgTable("refresh_tokens", {
+  jti: text("jti").primaryKey(),
+  userId: text("user_id").notNull(),
+  tokenHash: text("token_hash").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  parentJti: text("parent_jti"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const memberships = pgTable(
+  "memberships",
+  {
+    userId: text("user_id").notNull(),
+    orgId: text("org_id").notNull(),
+    role: text("role").notNull(),
+  },
+  (t) => ({ pk: primaryKey({ columns: [t.userId, t.orgId] }) })
+);
+
+export const auditEvents = pgTable("audit_events", {
+  id: text("id").primaryKey(),
+  type: text("type").notNull(),
+  userId: text("user_id"),
+  orgId: text("org_id"),
+  ip: text("ip"),
+  userAgent: text("user_agent"),
+  meta: jsonb("meta"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+```
+
+## Create database and run migrations
+
+```bash
+# Generate SQL from schema
+pnpm drizzle-kit generate
+# Apply to database
+pnpm drizzle-kit push
+```
+
+## DB connection
+
+```ts title="src/db/client.ts"
+import { drizzle } from "drizzle-orm/vercel-postgres"; // or drizzle-orm/node-postgres
+import { sql } from "@vercel/postgres";
+export const db = drizzle(sql);
+```
+
+## Using the adapter
+
+```ts title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { drizzleAdapter } from "@keyloom/adapter-drizzle";
+import { db } from "@/src/db/client";
+
+export default defineKeyloom({
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
+  session: { strategy: "database", ttlMinutes: 30 },
+  adapter: drizzleAdapter(db),
+  providers: [],
+  rbac: { enabled: true },
+  secrets: { authSecret: process.env.AUTH_SECRET! },
+});
+```
+
+## Migrations (examples)
+
+- Add column
+```ts
+export const users = pgTable("users", {
+  id: text("id").primaryKey(),
+  email: text("email").unique(),
+  name: text("name"),
+  plan: text("plan"), // new column
+});
+```
+```bash
+pnpm drizzle-kit generate --name add-user-plan
+pnpm drizzle-kit push
+```
+
+- Add index
+```sql
+CREATE INDEX IF NOT EXISTS idx_sessions_user_expires ON sessions (user_id, expires_at);
+```
+
+## Performance considerations
+
+- Add indexes on `accounts(provider, provider_account_id)` and `sessions(user_id, expires_at)`
+- Use connection pooling in serverful environments; HTTP drivers for serverless
+- Keep auth flows fast; avoid multi-statement transactions on login
+
+## Error handling & troubleshooting
+
+- Connection errors: check `DATABASE_URL` and driver compatibility
+- Migration drift: re-generate and `push` after schema changes
+- Session not found: confirm cookie domain/path and TTL; ensure adapter wired to config
+
+## Security notes
+
+- Store only hashed tokens (verification/refresh)
+- Minimal privileges for the DB user; avoid superuser in production
+
+## See also
+
+- Adapters overview: [/docs/adapters/overview](/docs/adapters/overview)
+- Installation: [/docs/getting-started/installation](/docs/getting-started/installation)
+- Security: [/docs/security/overview](/docs/security/overview)
+
+## Next steps
+
+- Run migrations and wire the adapter
+- Add indexes and validate query plans on hot paths
+

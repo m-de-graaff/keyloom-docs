@@ -22,13 +22,20 @@ import { github, google } from "@keyloom/providers";
 export default defineKeyloom({
   // ...
   providers: [
-    github({ clientId: process.env.GITHUB_CLIENT_ID!, clientSecret: process.env.GITHUB_CLIENT_SECRET! }),
-    google({ clientId: process.env.GOOGLE_CLIENT_ID!, clientSecret: process.env.GOOGLE_CLIENT_SECRET! }),
+    github({
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+    }),
+    google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
   ],
 });
 ```
 
 Routes handled by the Next.js handler:
+
 - `GET /api/auth/oauth/:provider/start`
 - `GET/POST /api/auth/oauth/:provider/callback`
 
@@ -38,7 +45,16 @@ Routes handled by the Next.js handler:
 - `dev` provider for local development
 
 ```ts
-import { github, google, apple, auth0, gitlab, microsoft, discord, x } from "@keyloom/providers";
+import {
+  github,
+  google,
+  apple,
+  auth0,
+  gitlab,
+  microsoft,
+  discord,
+  x,
+} from "@keyloom/providers";
 ```
 
 ## Custom Providers
@@ -50,7 +66,7 @@ import { createProvider } from "@keyloom/providers/factory";
 
 export default createProvider({
   id: "my-idp",
-  client: { 
+  client: {
     authorizeUrl: "https://idp.example.com/oauth/authorize",
     tokenUrl: "https://idp.example.com/oauth/token",
     userUrl: "https://idp.example.com/userinfo",
@@ -76,3 +92,121 @@ export default createProvider({
 - Mismatched redirect URI: ensure your callback path matches the configured one (e.g., `/api/auth/oauth/github/callback`)
 - Missing client credentials: set the provider ENV vars, rebuild, and retry
 
+---
+
+## Prerequisites
+
+- Create OAuth apps at your providers (GitHub, Google, etc.)
+- Set callback URL(s): `${APP_URL}/api/auth/oauth/<provider>/callback`
+- Store client ID/secret in your platform's secret manager
+
+## GitHub setup
+
+```ini title=".env"
+GITHUB_CLIENT_ID=...
+GITHUB_CLIENT_SECRET=...
+```
+
+```ts title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { github } from "@keyloom/providers";
+
+export default defineKeyloom({
+  // ...
+  providers: [
+    github({
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+      scopes: ["read:user", "user:email"],
+    }),
+  ],
+});
+```
+
+## Google setup
+
+```ini title=".env"
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+```
+
+```ts title="keyloom.config.ts"
+import { google } from "@keyloom/providers";
+
+export default defineKeyloom({
+  providers: [
+    google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      scopes: ["openid", "profile", "email"],
+    }),
+  ],
+});
+```
+
+## OAuth flow
+
+```mermaid
+flowchart TD
+  A[Start /oauth/:provider/start] --> B[Redirect to Provider]
+  B --> C[Provider Consent]
+  C --> D[/oauth/:provider/callback]
+  D --> E[Exchange code for tokens]
+  E --> F[Fetch user profile]
+  F --> G[Create/link account]
+  G --> H[Issue session/JWT]
+  H --> I[Redirect to callbackUrl]
+```
+
+## Scope recommendations
+
+- GitHub: `read:user`, `user:email` (avoid repo/org scopes unless needed)
+- Google: `openid profile email` (avoid Drive/Gmail scopes unless required)
+- Microsoft: `openid profile email` minimal; add Graph scopes as needed
+- Apple: `name email` via Sign in with Apple; use `form_post` callback if required
+
+## Custom provider (advanced)
+
+```ts
+import { createProvider } from "@keyloom/providers/factory";
+
+export const myIdp = createProvider({
+  id: "my-idp",
+  client: {
+    authorizeUrl: "https://idp.example.com/oauth/authorize",
+    tokenUrl: "https://idp.example.com/oauth/token",
+    userUrl: "https://idp.example.com/userinfo",
+  },
+  profile: (raw) => ({ id: raw.sub, email: raw.email, name: raw.name }),
+  scopes: ["openid", "profile", "email"],
+});
+```
+
+## Error handling
+
+- Unknown provider → 404/400: `{ error: "provider_not_found" }`
+- Callback error → 400: `{ error: "oauth_error", code, description? }`
+- Token exchange/network issues → 502/500 with minimal message in production
+
+## Performance and rate limiting
+
+- Apply rate limit to `/oauth/*/start` and `/oauth/*/callback`
+- Cache provider discovery/doc endpoints where applicable (OIDC discovery)
+- Keep provider profile fetch lightweight; avoid extra downstream calls during login
+
+## Troubleshooting
+
+- Mismatched redirect URI: the callback URL must exactly match provider settings
+- Invalid scope: reduce scopes to the minimum or request approval for sensitive scopes
+- CSR/Edge issues: rely on server handlers for OAuth flows; avoid running login in middleware
+
+## See also
+
+- Security: [/docs/security/overview](/docs/security/overview)
+- Handler endpoints: [/docs/nextjs/handler](/docs/nextjs/handler)
+- Installation: [/docs/getting-started/installation](/docs/getting-started/installation)
+
+## Next steps
+
+- Add at least one provider and test end-to-end sign-in
+- Add additional providers or a custom provider as needed

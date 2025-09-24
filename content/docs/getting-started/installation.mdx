@@ -90,12 +90,6 @@ bunx keyloom init
 
   </Tabs>
 
-The CLI will:
-
-- Detect your package manager and framework
-- Create `keyloom.config.ts` with sensible defaults
-- Optionally add Next.js middleware and provider/adapter templates
-
   </TabsContent>
 
   <TabsContent value="Manual">
@@ -313,6 +307,12 @@ That's it — your app now has session management and route protection via middl
 ## Minimal configuration (development)
 
 A minimal, copy-paste ready config to get you running locally with in-memory storage.
+
+The CLI will:
+
+- Detect your package manager and framework
+- Create `keyloom.config.ts` with sensible defaults
+- Optionally add Next.js middleware and provider/adapter templates
 
 ```ts title="keyloom.config.ts (minimal dev)"
 import { defineKeyloom, memoryAdapter } from "@keyloom/core";

@@ -1,0 +1,224 @@
+---
+title: Prisma Adapter
+description: Use Prisma with Keyloom. Complete schema, setup, migrations, configuration, performance, and troubleshooting.
+---
+
+# Prisma Adapter
+
+Use Prisma to persist users, accounts, sessions, tokens, refresh tokens, and memberships. This page provides a complete schema and production setup.
+
+## Prerequisites
+
+- Database available (PostgreSQL, MySQL, or SQLite)
+- Prisma CLI installed (added automatically by `prisma init`)
+- DATABASE_URL configured in env
+
+## Install
+
+```bash
+pnpm add @prisma/client
+pnpm dlx prisma init
+```
+
+## Prisma schema (PostgreSQL)
+
+```prisma title="prisma/schema.prisma"
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String       @id @default(cuid())
+  email        String?      @unique
+  name         String?
+  createdAt    DateTime     @default(now())
+  accounts     Account[]
+  sessions     Session[]
+  memberships  Membership[]
+  refreshTokens RefreshToken[]
+}
+
+model Account {
+  id                 String @id @default(cuid())
+  provider           String
+  providerAccountId  String
+  userId             String
+  user               User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken        String?
+  refreshToken       String?
+  tokenType          String?
+  scope              String?
+  expiresAt          Int?
+  createdAt          DateTime @default(now())
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model VerificationToken {
+  id         String   @id @default(cuid())
+  identifier String
+  tokenHash  String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  @@index([identifier])
+  @@index([expiresAt])
+}
+
+model RefreshToken {
+  jti        String   @id
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String
+  expiresAt  DateTime
+  parentJti  String?
+  createdAt  DateTime @default(now())
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Membership {
+  userId String
+  orgId  String
+  role   String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@id([userId, orgId])
+  @@index([orgId])
+}
+
+model AuditEvent {
+  id        String   @id @default(cuid())
+  type      String
+  userId    String?
+  orgId     String?
+  ip        String?
+  userAgent String?
+  meta      Json?
+  createdAt DateTime @default(now())
+  @@index([userId])
+  @@index([orgId])
+  @@index([createdAt])
+}
+```
+
+## Environment
+
+```ini title=".env"
+# PostgreSQL
+DATABASE_URL=postgresql://user:password@localhost:5432/keyloom?schema=public
+# MySQL
+# DATABASE_URL=mysql://user:password@localhost:3306/keyloom
+# SQLite
+# DATABASE_URL=file:./dev.db
+```
+
+## Setup and migrations
+
+```bash
+# Generate client
+pnpm prisma generate
+# Create initial migration
+pnpm prisma migrate dev --name init
+# Deploy prod migrations (CI/CD)
+pnpm prisma migrate deploy
+```
+
+## Using the adapter
+
+```ts title="lib/prisma.ts"
+import { PrismaClient } from "@prisma/client";
+export const prisma = new PrismaClient();
+```
+
+```ts title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { prismaAdapter } from "@keyloom/adapter-prisma";
+import { prisma } from "@/lib/prisma";
+
+export default defineKeyloom({
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
+  session: { strategy: "database", ttlMinutes: 30 },
+  adapter: prismaAdapter(prisma),
+  providers: [],
+  rbac: { enabled: true, roles: { member: { permissions: ["read"] } } },
+  secrets: { authSecret: process.env.AUTH_SECRET! },
+});
+```
+
+## Schema evolution examples
+
+- Add a new user field
+```prisma
+model User {
+  id      String  @id @default(cuid())
+  email   String? @unique
+  name    String?
+  plan    String? // new column
+}
+```
+```bash
+pnpm prisma migrate dev --name add-user-plan
+```
+
+- Add new index for performance
+```prisma
+model Session {
+  id         String   @id @default(cuid())
+  userId     String
+  expiresAt  DateTime
+  @@index([userId, expiresAt])
+}
+```
+
+## Configuration per database
+
+- PostgreSQL: default; supports JSON, indexes, cascades
+- MySQL: adjust provider to `mysql`; long text columns may need `@db.LongText`
+- SQLite: great for local dev; avoid in production unless requirements are minimal
+
+## Performance tips
+
+- Add indexes on `sessions(userId, expiresAt)`, `accounts(provider, providerAccountId)`
+- Use short session TTLs; rely on JWT strategy to reduce DB load
+- Use connection pooling (pgBouncer) in serverful; Data Proxy/HTTP in serverless
+- Avoid heavy queries in auth flows; keep sign-in path fast
+
+## Error handling & troubleshooting
+
+- `P2002 Unique constraint failed (email)`: allow `email` to be nullable and ensure uniqueness only when present
+- `P1001 Can’t reach database`: check `DATABASE_URL`, network, and auth
+- `migrate dev` prompts drift: run `prisma db pull` or align migrations
+- Session missing after login: check cookie domain/path and TTL; confirm `session.strategy: "database"`
+
+## Security notes
+
+- Store only hashed verification and refresh tokens
+- Use `onDelete: Cascade` to prevent orphaned rows when deleting users
+- Keep `AUTH_SECRET` in a secret manager; never commit `.env`
+
+## See also
+
+- Adapters overview: [/docs/adapters/overview](/docs/adapters/overview)
+- Installation: [/docs/getting-started/installation](/docs/getting-started/installation)
+- Security: [/docs/security/overview](/docs/security/overview)
+
+## Next steps
+
+- Run migrations, wire the adapter, test the sign-in flow
+- Add indices and tune queries with Prisma Client logs
+
