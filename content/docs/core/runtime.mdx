@@ -1,94 +1,46 @@
 ---
-title: Runtime Flows
-description: Register, login, logout, and current session helpers in @keyloom/core.
+title: Runtime Lifecycle
+description: Request lifecycle, verification, and runtime considerations for Node and Edge.
 ---
 
-# Runtime Flows
+# Runtime Lifecycle
 
-The core exposes minimal runtime flows for credential auth with database sessions. These compose with your adapter and hashing implementation.
+Understand how Keyloom processes requests and sessions across Node and Edge.
 
-> For OAuth, see the Next.js handler section; for JWT sessions, see the Next.js JWT docs or the `@keyloom/server` package.
+## High level flow
 
-## register(input, ctx)
+1) Incoming request hits middleware or route handler
+2) Token extracted from cookie or header
+3) Strategy branch
+   - JWT: verify signature and claims, optionally fetch JWKS
+   - Database: read session by id via adapter
+4) Optional RBAC evaluation based on user roles and permissions
+5) Response, with cookie refresh if rolling sessions are enabled
 
-```ts
-import { register } from "@keyloom/core/runtime/register";
+## Edge vs Node
 
-export type RegisterInput = {
-  email: string;
-  password: string;
-  requireEmailVerify?: boolean;
-}
-export type RegisterCtx = {
-  adapter: Adapter & { createCredential(userId: ID, hash: string): Promise<{ id: ID; userId: ID }> }
-  hasher: { hash(pw: string): Promise<string> }
-  audit?: (type: string, meta?: { userId?: ID } & Record<string, unknown>) => Promise<void>
-}
-```
+- Edge: prefer JWT strategy and edge-safe adapters. Avoid Node APIs and large dependencies.
+- Node: both strategies are fine. Database strategy enables server-side invalidation.
 
-- Purpose: create a user, store credentials, optionally require email verification
-- Returns: `{ user, requiresVerification }`
-- Errors: Throws `KeyloomError(ERR.EMAIL_EXISTS)` if duplicate email
-
-Example:
+## Session shape
 
 ```ts
-const out = await register({ email, password, requireEmailVerify: false }, {
-  adapter,
-  hasher: argon2idHasher,
-});
-```
-
-## login(input, ctx)
-
-```ts
-import { login } from "@keyloom/core/runtime/login";
-
-export type LoginInput = { email: string; password: string; ttlMinutes?: number };
-export type LoginCtx = {
-  adapter: Adapter & { getCredentialByUserId(userId: ID): Promise<{ hash: string } | null> }
-  hasher: { verify(hash: string, pw: string): Promise<boolean> }
+interface Session {
+  user: { id: string; name?: string; email?: string; image?: string };
+  org?: { id: string; role?: string };
+  expiresAt: string; // ISO timestamp
+  issuedAt: string; // ISO timestamp
 }
 ```
 
-- Purpose: verify credentials and create a session (database strategy)
-- Returns: `{ user, session }`
-- Errors: `ERR.USER_NOT_FOUND`, `CREDENTIAL_NOT_FOUND`, `INVALID_CREDENTIALS`
+## Errors and recovery
 
-Example:
+- Invalid token: redirect to sign in or return 401
+- Expired session: refresh if rolling or require re-authentication
+- Adapter errors: surface 500 with generic message, log details server side
 
-```ts
-const { session } = await login({ email, password, ttlMinutes: 60 }, { adapter, hasher });
-```
+## Observability
 
-## logout(sessionId, adapter)
-
-```ts
-import { logout } from "@keyloom/core/runtime/logout";
-await logout(session.id, adapter);
-```
-
-- Purpose: delete a session id
-- Returns: void
-
-## getCurrentSession(cookieValue, adapter)
-
-```ts
-import { getCurrentSession } from "@keyloom/core/runtime/current-session";
-const { session, user } = await getCurrentSession(sessionIdFromCookie, adapter);
-```
-
-- Purpose: look up session + user by cookie value
-- Returns: `{ session: Session | null, user: User | null }`
-
-## CSRF & Verification Tokens
-
-- `csrf.issueCsrfToken()` and `csrf.validateDoubleSubmit({ cookieToken, headerToken })`
-- `tokens.issueVerificationToken(identifier, ttlMinutes?)`  generate email/password-reset tokens (store hashed via adapter implementations)
-
-## Troubleshooting
-
-- Invalid login: ensure credentials were created on register; hash/verify functions must match
-- Session not found: confirm cookie is set and adapter persists sessions
-- CSRF 403: ensure you send `x-keyloom-csrf` header matching the `__keyloom_csrf` cookie
+- Add request ID headers and log auth events
+- Track sign-in, sign-out, and error codes to monitor health
 

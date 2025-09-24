@@ -1,0 +1,118 @@
+---
+title: Core JWT
+description: Core JWT utilities - claims, signing, verification, keystores, JWKS, and refresh token rotation.
+---
+
+# Core JWT
+
+Low-level JWT utilities from `@keyloom/core/jwt` for signing, verification, keystore management, and refresh rotation.
+
+## Types
+
+```ts
+import type { JwtHeader, JwtClaims, JwtConfig, Jwk, Keystore, RotationPolicy } from "@keyloom/core/jwt";
+```
+
+- `JwtHeader`: `{ alg: 'EdDSA' | 'ES256'; kid: string; typ: 'JWT' }`
+- `JwtClaims`:
+  - `iss: string` issuer
+  - `aud?: string | string[]` audience
+  - `sub: string` subject (user id)
+  - `iat: number` issued at (sec)
+  - `exp: number` expires at (sec)
+  - optional: `sid`, `org`, `role`, plus custom claims
+- `JwtConfig`:
+  - `alg`, `issuer`, `audience?`, `accessTTL`, `refreshTTL`, `clockSkewSec`, `includeOrgRoleInAccess`
+
+## Signing
+
+```ts
+import { createSigner, sign } from "@keyloom/core/jwt";
+
+// Using a signer (preferred)
+const signer = createSigner(privateKey, publicKey, 'kid123', 'EdDSA');
+const token = await signer.sign({ iss, sub: userId, iat, exp });
+
+// Direct sign
+const token2 = await sign({ alg: 'EdDSA', kid: 'kid123', typ: 'JWT' }, { iss, sub, iat, exp }, privateKey);
+```
+
+## Verification
+
+```ts
+import { verify, verifyFull } from "@keyloom/core/jwt";
+
+// JWKS array (public keys) is required
+const { header, claims } = await verify(token, jwks);
+
+// Full verification with timing and issuer/audience checks
+const out = await verifyFull(token, jwks, {
+  clockSkewSec: 60,
+  expectedIssuer: 'https://app.example.com',
+  expectedAudience: 'my-audience',
+});
+```
+
+## Keystore and JWKS
+
+```ts
+import { newKeystore, rotateKeys, exportPublicKeys, exportJwks, genKeyPair } from "@keyloom/core/jwt";
+
+// Create and rotate a keystore
+let ks = await newKeystore({ alg: 'EdDSA' });
+ks = await rotateKeys(ks, { rotationDays: 30, overlapDays: 7 });
+
+// Export public keys for verification
+const jwks = exportPublicKeys(ks); // JWK[]
+
+// Generate a standalone keypair
+const { privateKey, publicKey, kid } = await genKeyPair('EdDSA');
+```
+
+- Store private keys securely server side.
+- Expose only the public JWKS via a route like `/api/auth/jwks`.
+
+## Refresh tokens
+
+```ts
+import { newRefreshToken, TokenRotator } from "@keyloom/core/jwt";
+
+// Create a refresh token record for a user
+const rec = await newRefreshToken({ userId: 'u_1', ttl: '30d' });
+
+// Rotate on use (pseudocode)
+const rotator = new TokenRotator(store); // store implements persistence
+const { next, revoke } = await rotator.rotate(rec);
+```
+
+- Refresh tokens are opaque strings with hashed storage helpers available in tests/utilities.
+- Rotation prevents reuse attacks by invalidating the previous token.
+
+## Errors
+
+```ts
+import { JWT_ERRORS, JwtError } from "@keyloom/core/jwt";
+```
+
+Common codes include:
+
+- `JWT_MALFORMED`, `JWT_EXPIRED`, `JWT_INVALID_ISSUER`, `JWT_INVALID_AUDIENCE`
+
+Handle with try/catch and map to `401` or `403` depending on context.
+
+## Claims helpers
+
+```ts
+import { validateJwtClaims, newAccessClaims } from "@keyloom/core/jwt";
+```
+
+- `newAccessClaims` - helper to build standard claims
+- `validateJwtClaims` - validate issuer, audience, timing
+
+## Guidance
+
+- Prefer EdDSA where possible
+- Use short access TTLs and rolling sessions for UX
+- Rotate keys regularly and keep an overlap window for old tokens
+- Never expose private keys
+

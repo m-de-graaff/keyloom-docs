@@ -1,0 +1,78 @@
+---
+title: Server Schemas
+description: Request and response formats for Keyloom server endpoints and JWT verification options.
+---
+
+# Server Schemas
+
+This page documents the common request and response shapes used by the Keyloom server endpoints, plus verification options used during JWT checks.
+
+## Session response
+
+```json
+{
+  "session": {
+    "user": { "id": "u_123", "email": "jane@example.com", "name": "Jane" },
+    "org": { "id": "org_1", "role": "admin" },
+    "expiresAt": "2025-01-01T12:00:00.000Z",
+    "issuedAt": "2024-12-01T12:00:00.000Z"
+  },
+  "user": { "id": "u_123", "email": "jane@example.com", "name": "Jane" }
+}
+```
+
+- `session` is null when not authenticated
+- `user` may still be present for partially authenticated contexts
+
+## Error shape
+
+```json
+{ "code": "OAUTH_CALLBACK_ERROR", "message": "Provider returned an error" }
+```
+
+Common error codes: `unauthorized`, `forbidden`, `bad_request`, and JWT errors like `JWT_EXPIRED`.
+
+## JWT verification options
+
+When verifying JWTs server-side, these options may be applied:
+
+```ts
+{
+  clockSkewSec?: number;
+  expectedIssuer?: string;
+  expectedAudience?: string | string[];
+}
+```
+
+- `clockSkewSec` - allowed skew for `exp` and `nbf`
+- `expectedIssuer` - string match against `iss`
+- `expectedAudience` - match against `aud`
+
+## OAuth callback
+
+- On success: redirects to your app and sets cookies
+- On failure: redirects with an error parameter and logs server details
+
+Example failure query params:
+
+```
+?error=access_denied&provider=github
+```
+
+## Logout
+
+- `POST /api/auth/logout` - clears cookies and returns `204`
+
+## JWKS
+
+- `GET /api/auth/jwks` - returns a JWK Set containing only public keys
+
+```json
+{ "keys": [ { "kty": "OKP", "crv": "Ed25519", "kid": "kid123", "x": "...", "use": "sig", "alg": "EdDSA" } ] }
+```
+
+## Notes
+
+- All endpoints are CSRF-safe by design when called via the browser using same-site cookies. For cross-site API usage, add CSRF protection.
+- Treat responses as cacheable only when documented; session endpoints are not cacheable.
+

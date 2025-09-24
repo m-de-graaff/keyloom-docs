@@ -1,0 +1,88 @@
+---
+title: RBAC
+description: Role-based access control - configuration, permission mapping, and guards.
+---
+
+# RBAC
+
+Keyloom supports optional RBAC for multi-organization apps. Enable it in config and use helpers to protect routes and actions.
+
+## Config
+
+```ts title="keyloom.config.ts (RBAC)"
+export default defineKeyloom({
+  // ...
+  rbac: {
+    enabled: true,
+    roles: {
+      admin: { permissions: ['manage:org', 'manage:users', 'read'] },
+      member: { permissions: ['read'] },
+    },
+  },
+});
+```
+
+- `enabled`: when false, role/org checks are skipped
+- `roles`: structured mapping of roles to permissions
+
+Types (from `@keyloom/core`):
+
+- `RbacConfig`, `RbacRolesMapping`, `RbacRolePermissions`
+
+## Permission mapping
+
+```ts
+import { toPermissionMap } from '@keyloom/core/rbac/policy';
+
+const permMap = toPermissionMap(config.rbac); // { 'manage:org': ['admin'], 'read': ['admin','member'] }
+```
+
+## Core guard (generic)
+
+```ts
+import { withRole } from '@keyloom/core/rbac/with-role';
+
+const handler = withRole(async () => {
+  // protected logic
+  return 'ok'
+}, {
+  requiredRoles: ['admin','member'],
+  requiredPermission: 'manage:org',
+  getRole: async () => ({ role: 'admin' }),
+  permMap,
+});
+```
+
+- If `requiredRoles` is provided, the current role must be included
+- If `requiredPermission` is provided, role must be allowed in the map
+
+## Next.js helpers
+
+For app router ergonomics use `@keyloom/nextjs/rbac`:
+
+```ts
+import { withRole, getActiveOrgId, setActiveOrgCookie } from '@keyloom/nextjs/rbac';
+```
+
+- `getActiveOrgId()` - reads current org from cookie
+- `setActiveOrgCookie(orgId)` - returns a Set-Cookie string
+- `withRole(action, { getUser, adapter, requiredRoles, requiredPermission, config })` - server action wrapper enforcing RBAC
+
+## Adapter requirements
+
+When RBAC is enabled, your adapter should implement membership queries:
+
+```ts
+interface RbacAdapter {
+  getMembership(userId: string, orgId: string): Promise<{ role: string } | null>
+}
+```
+
+Use provided memory adapter implementation as a reference.
+
+## Patterns
+
+- Redirect users without an active org to an org selection page
+- Use middleware for coarse gating and `withRole` for server-side enforcement
+- Keep permissions small and composable (e.g., `read`, `write`, `manage:org`)
+

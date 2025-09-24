@@ -1,86 +1,63 @@
 ---
-title: Server (Fastify) Endpoints
-description: The @keyloom/server package 6 prebuilt Fastify server with credential auth endpoints and JWKS routes for JWT.
+title: Server Endpoints
+description: REST endpoints exposed by Keyloom handlers and their request and response formats.
 ---
 
-# @keyloom/server
+# Server Endpoints
 
-This package provides a Fastify server with production-ready endpoints for credential auth with either Database or JWT session strategies.
+Keyloom exposes a standard set of endpoints. Paths assume the base route `/api/auth`.
 
-- Endpoints: `/v1/auth/*`, JWKS under `/.well-known/jwks.json`
-- Dependencies: Prisma client (for the Prisma adapter), bcryptjs or @node-rs/argon2 for hashing
+## GET /api/auth/session
 
-## Install
+- Purpose: fetch the current session
+- Response: `200` with session JSON or `204` when not authenticated
 
-```bash
-pnpm add @keyloom/server @keyloom/adapters @keyloom/core fastify
+```json
+{
+  "user": { "id": "u_123", "name": "Jane" },
+  "expiresAt": "2025-01-01T12:00:00.000Z"
+}
 ```
 
-## Boot the server
+## POST /api/auth/signin/:provider
 
-```ts
-import { Env } from "@keyloom/server/env"; // parsed from process.env
-import { buildServer } from "@keyloom/server/routes/auth";
+- Purpose: start OAuth flow for a provider
+- Request: JSON body optional for custom params
+- Response: redirect to provider or `400` on invalid provider
 
-const env = Env.parse(process.env);
-const app = buildServer(env);
-app.listen({ port: Number(env.PORT), host: "0.0.0.0" });
+## GET /api/auth/callback/:provider
+
+- Purpose: finish OAuth flow and create a session
+- Response: redirect to your app, sets cookie
+- Errors: `OAUTH_CALLBACK_ERROR` with details in logs
+
+## POST /api/auth/logout
+
+- Purpose: destroy session
+- Response: `204` and clears cookie
+
+## GET /api/auth/jwks
+
+- Purpose: JWKS for JWT verification when using asymmetric signing
+- Response: JWKS JSON
+
+## Status codes
+
+- `200` - OK
+- `204` - No content
+- `302` - Redirect during OAuth
+- `400` - Bad request
+- `401` - Unauthorized
+- `500` - Internal error
+
+## Error shape
+
+```json
+{
+  "code": "OAUTH_CALLBACK_ERROR",
+  "message": "Provider returned an error"
+}
 ```
 
-## Endpoints
-
-### CSRF
-- `GET /v1/auth/csrf` → `{ csrfToken }` and sets `__keyloom_csrf`
-
-### Register
-- `POST /v1/auth/register` body: `{ email, password }`
-- CSRF required: header `x-keyloom-csrf` must match cookie `__keyloom_csrf`
-- Rate limit: token bucket (5 capacity, 0.2 refill/sec)
-- Response: `{ userId, requiresVerification }`
-
-### Login
-- `POST /v1/auth/login` body: `{ email, password }`
-- CSRF required; rate limit present
-- Database strategy: sets `__keyloom_session` cookie and returns `{ sessionId }`
-- JWT strategy: issues tokens and sets `__keyloom_access`, `__keyloom_refresh` cookies and returns `{ accessToken, userId }`
-
-### Token Refresh (JWT only)
-- `POST /v1/auth/token` body: `{ refreshToken? }` or via cookie `__keyloom_refresh`
-- Returns new tokens; sets cookies
-
-### Logout
-- `POST /v1/auth/logout` clears session or JWT cookies; `{ ok: true }`
-
-### Session
-- `GET /v1/auth/session` → `{ session, user }` (JWT verifies access token; DB strategy checks session cookie)
-
-### Organizations
-- `POST /v1/orgs` → create org (auth required; creator becomes owner)
-- `GET /v1/orgs` → list orgs for current user
-- `POST /v1/orgs/:id/members` → add member via `userId` or issue invite via `email`
-- `DELETE /v1/orgs/:id/members/:memberId` → remove member
-- `POST /v1/invites/accept` → accept invitation with `{ orgId, token }`
-
-### JWKS & Keystore (JWT)
-- `GET /.well-known/jwks.json` → public keys (with cache headers and CORS)
-- `GET /v1/auth/jwks` → same JWKS
-- `GET /v1/auth/keystore/stats` → keystore info
-- `POST /v1/auth/keystore/rotate` → force rotation (admin)
-
-## Environment
-
-Key variables (subset):
-- `SESSION_STRATEGY=database|jwt`
-- `JWT_ISSUER`, `JWT_AUDIENCE`, `JWT_CLOCK_SKEW_SEC`
-- `JWKS_PATH` (optional persistence), `KEY_ROTATION_DAYS`, `KEY_OVERLAP_DAYS`
-- `COOKIE_DOMAIN`, `COOKIE_SAMESITE`
-
-## Error Handling & Rate Limiting
-
-All endpoints consistently return JSON with `{ error: code }` on failure and appropriate HTTP status. Built-in token bucket limits sensitive endpoints; extend with your own limiter if needed.
-
-## Integration Patterns
-
-- Use this server standalone (e.g., as an auth service) together with `@keyloom/nextjs` frontend middleware
-- Or, embed similar handlers in your existing Fastify app using the same adapter and JWT service utilities
+See Next.js Handler for implementation specifics and examples.
 

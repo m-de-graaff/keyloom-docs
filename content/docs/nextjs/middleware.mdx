@@ -1,19 +1,20 @@
 ---
-title: Next.js Middleware
-description: Route-level visibility and edge checks with createAuthMiddleware.
+title: Middleware
+description: Protect routes and attach session context using Keyloom's Next.js middleware.
 ---
 
-# Middleware: createAuthMiddleware
+# Middleware
 
-The middleware enforces public/private/role-gated routes, optional org requirements, and can verify sessions at the edge.
+Use Keyloom's middleware to protect pages and APIs, attach session context, and optionally run verification at the edge.
 
 ```ts title="middleware.ts"
 import { createAuthMiddleware } from "@keyloom/nextjs/middleware";
 import config from "@/keyloom.config";
 
 export default createAuthMiddleware(config, {
-  publicRoutes: ["/", "/sign-in"],
-  // verifyAtEdge: true, // optional; fetches /api/auth/session
+  publicRoutes: ["/", "/sign-in", "/api/health"],
+  verifyAtEdge: false,
+  // routes: compiledManifest, // optional - for declarative gating
 });
 
 export const config = {
@@ -23,41 +24,26 @@ export const config = {
 
 ## Options
 
-```ts
-createAuthMiddleware(config, {
-  publicRoutes?: (string|RegExp)[],
-  routes?: KeyloomRoutesManifest, // declarative visibility
-  verifyAtEdge?: boolean, // slower, stricter
-  afterAuth?: ({ authed, req, next, redirect }) => NextResponse,
-  customValidate?: async ({ req, url, authed, userId }) => NextResponse | void,
-})
-```
+- `publicRoutes: string[]` - paths that do not require auth
+- `verifyAtEdge: boolean` - when true, verify JWT/session at the edge
+- `routes` - optional manifest to declare which routes require which roles
 
-- `publicRoutes`: simple allowlist paths
-- `routes`: rich manifest (pattern, roles, org requirement, redirect, API vs page handling)
-- `verifyAtEdge`: consults `/api/auth/session` to confirm session
-- `customValidate`: run your own edge checks; return `NextResponse` to short-circuit
+## Behavior
 
-## Visibility
+- Reads the incoming cookie token
+- Optionally verifies at edge and attaches lightweight auth hints
+- Redirects to your sign-in page if a protected page is accessed without a valid session
+- Works in both app and pages router
 
-- `public`: always allowed
-- `!public` or `private`: require session
-- `!authed`: pages only for unauthenticated users
-- `role:<name>` or `roles: ["admin", "member"]` d require RBAC membership/role
+## Patterns
 
-When RBAC is enabled, role/org checks try best-effort validation at the edge (org cookie + adapter membership). If validation is inconclusive at the edge, the middleware fails open and relies on server guards.
-
-## Org Requirement
-
-If a route requires an active organization and no org cookie is present, the middleware redirects to `/select-org`.
-
-## API Behavior
-
-For API routes, unauthorized access returns `401 { error: 'unauthorized' }` instead of a redirect.
+- Use `publicRoutes` to allow public marketing pages
+- Prefer server-side gating for sensitive APIs as an additional layer
+- Consider `verifyAtEdge: true` when you need early blocking and are using an edge-safe strategy (JWT + edge-safe adapter)
 
 ## Troubleshooting
 
-- Redirect loops: ensure that your `redirectTo` does not point to a path protected by the same rule
-- Edge verification fails: set `verifyAtEdge: false` and rely on server guards, or confirm your API route is reachable
-- RBAC disabled: role/org checks are skipped when `config.rbac?.enabled === false`
+- Ensure your `matcher` excludes Next.js internals and static assets
+- If redirects loop, verify `baseUrl` and cookie domain/path settings
+- In development, set `cookie.secure: false`
 

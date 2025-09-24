@@ -1,90 +1,79 @@
 ---
 title: Configuration
-description: Keyloom configuration, defaults, environment mapping, and helpers.
+description: Full configuration reference for defineKeyloom - sessions, cookies, providers, adapters, and RBAC.
 ---
 
 # Configuration
 
-Core exposes helpers to define, validate, and merge configuration.
+Keyloom is configured via `defineKeyloom`.
 
-## API
+```ts title="keyloom.config.ts"
+import { defineKeyloom, memoryAdapter } from "@keyloom/core";
 
-- `defineKeyloom<T extends KeyloomConfig>(config: T): T`
-- `createKeyloomConfig(userConfig: KeyloomConfig): KeyloomConfig`
-- `validateKeyloomConfig(config: KeyloomConfig): void`
-- `mergeWithDefaults(config: KeyloomConfig): KeyloomConfig`
-- `getConfigFromEnv(): Partial<KeyloomConfig>`
-- `createJwtConfigFromKeyloom(config: KeyloomConfig): JwtConfig`
-- `isJwtStrategy(config): boolean`
-- `isDatabaseStrategy(config): boolean`
+export default defineKeyloom({
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+  session: { strategy: "database", ttlMinutes: 60, rolling: true },
+  adapter: memoryAdapter(),
+  providers: [],
+  rbac: { enabled: false },
+  cookie: { name: "keyloom", sameSite: "lax", secure: true, path: "/" },
+  secrets: { authSecret: process.env.AUTH_SECRET ?? "dev-secret" },
+});
+```
 
-## KeyloomConfig
+## Options
+
+- `baseUrl: string`
+  - External URL of your app used for OAuth callbacks and links
+- `session`
+  - `strategy: "jwt" | "database"`
+  - `ttlMinutes: number` - session time to live
+  - `rolling: boolean` - refresh expiration on activity
+- `cookie`
+  - `name: string` - cookie name
+  - `path: string` - default "/"
+  - `sameSite: "lax" | "strict" | "none"`
+  - `secure: boolean` - set true in production HTTPS
+  - `domain?: string`
+- `providers: Provider[]` - OAuth/OpenID providers
+- `adapter: Adapter` - required for database sessions
+- `rbac`
+  - `enabled: boolean`
+  - `defaultRole?: string`
+  - `roles?: Record<string, string[]>` - role to permission keys
+- `secrets`
+  - `authSecret: string` - secret for encryption or signing
+
+## Environment variables
+
+Recommended:
+
+- `AUTH_SECRET`
+- `NEXT_PUBLIC_APP_URL`
+- Provider specific secrets such as `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`
+
+## Strategy selection
+
+- `jwt` - stateless, edge friendly, simple horizontal scaling
+- `database` - central revocation, introspection, server sided invalidation
+
+## Error handling
+
+Most methods throw typed errors with a `code` and `message`. Handle at integration boundaries:
 
 ```ts
-export type KeyloomConfig = {
-  adapter: unknown
-  cookie?: { sameSite?: 'lax'|'strict'|'none'; domain?: string; maxAgeSec?: number }
-  session?: { strategy?: 'database'|'jwt'; ttlMinutes?: number; rolling?: boolean }
-  jwt?: {
-    issuer?: string; audience?: string|string[]; accessTTL?: string; refreshTTL?: string;
-    algorithm?: 'EdDSA'|'ES256'; clockSkewSec?: number; includeOrgRoleInAccess?: boolean;
-    jwksPath?: string; keyRotationDays?: number; keyOverlapDays?: number;
+try {
+  // sign in
+} catch (err: any) {
+  if (err.code === "OAUTH_CALLBACK_ERROR") {
+    // show friendly message
   }
-  rbac?: { enabled?: boolean; roles?: string[] | Record<string, { permissions: string[] }>; permissions?: string[] }
-  secrets?: { authSecret?: string; jwtSecret?: string }
-  baseUrl?: string
 }
 ```
 
-## Defaults
+## Migration tips
 
-```ts
-DEFAULT_CONFIG = {
-  cookie: { sameSite: 'lax', maxAgeSec: 60*60*24*7 },
-  session: { strategy: 'database', ttlMinutes: 60, rolling: true },
-  jwt: { algorithm: 'EdDSA', accessTTL: '10m', refreshTTL: '30d', clockSkewSec: 60, includeOrgRoleInAccess: false, keyRotationDays: 90, keyOverlapDays: 7 },
-}
-```
-
-## Validation
-
-`validateKeyloomConfig` enforces:
-- `adapter` is required
-- When `session.strategy === 'jwt'`: `jwt` object and `secrets.authSecret` are required; `jwt.issuer` required; formats for TTL/algorithm are checked
-- Cookie sameSite must be `lax|strict|none`
-- Numeric invariants are positive/non-negative
-
-Errors are thrown as `Error` with humanreadable messages (use at boot).
-
-## Environment mapping
-
-`getConfigFromEnv()` maps common env vars into a partial config you can merge with your manual config:
-
-- Base URL: `KEYLOOM_BASE_URL` or `NEXT_PUBLIC_APP_URL`
-- Secrets: `AUTH_SECRET` or `KEYLOOM_AUTH_SECRET`
-- Session: `SESSION_STRATEGY` (`database`|`jwt`)
-- JWT: `JWT_ISSUER`, `JWT_AUDIENCE`, `JWT_ACCESS_TTL`, `JWT_REFRESH_TTL`, `JWT_ALGORITHM`, `JWT_CLOCK_SKEW_SEC`, `JWKS_PATH`, `KEY_ROTATION_DAYS`, `KEY_OVERLAP_DAYS`
-- Cookie: `COOKIE_DOMAIN`, `COOKIE_SAMESITE`
-
-```ts
-import { createKeyloomConfig } from "@keyloom/core";
-import userConfig from "./keyloom.config";
-
-const config = createKeyloomConfig(userConfig);
-```
-
-## JWT Config from Keyloom
-
-For JWT utilities you can derive the narrower `JwtConfig`:
-
-```ts
-import { createJwtConfigFromKeyloom } from "@keyloom/core";
-const jwtCfg = createJwtConfigFromKeyloom(config);
-```
-
-## Tips
-
-- Prefer keeping `keyloom.config.ts` small; override via env per environment
-- Use `defineKeyloom` to get strong inference in your config file
-- For Next.js middleware, avoid Nodeonly APIs in the config path (edge safe)
+- Start with `memoryAdapter` in development
+- Switch to your DB adapter before production
+- When moving from `jwt` to `database`, ensure middleware and server utilities are updated to read server sessions
 

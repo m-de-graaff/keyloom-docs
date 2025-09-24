@@ -1,78 +1,53 @@
 ---
-title: UI Components
-description: The @keyloom/ui component library d auth flows, org management, primitives, icons, and theme.
+title: UI Integration
+description: Build your own UI using Keyloom's React hooks and server utilities.
 ---
 
-# @keyloom/ui
+# UI Integration
 
-A headless-friendly, Tailwind-compatible UI kit for common auth and org flows.
+Keyloom does not force a UI. Compose your own using React components and the hooks provided by `@keyloom/nextjs`.
 
-## Install
-
-```bash
-pnpm add @keyloom/ui
-```
-
-Optional peers (ensure your app has): `react`, `react-dom`, `tailwindcss`, `@radix-ui/*`, `lucide-react`.
-
-## Exports
-
-```ts
-import * as theme from "@keyloom/ui";
-import { AuthUIProvider } from "@keyloom/ui";
-import * as auth from "@keyloom/ui/auth";
-import * as org from "@keyloom/ui/org";
-import * as rbac from "@keyloom/ui/rbac";
-import * as components from "@keyloom/ui/components";
-import * as primitives from "@keyloom/ui/primitives";
-import * as icons from "@keyloom/ui/icons";
-```
-
-## Provider
+## Read the session
 
 ```tsx
-import { AuthUIProvider } from "@keyloom/ui";
+import { getServerSession } from "@keyloom/nextjs";
+import config from "@/keyloom.config";
 
-<AuthUIProvider basePath="/api/auth">{children}</AuthUIProvider>
-```
-
-## Auth Components
-
-- Forms: `SignInForm`, `SignUpForm`, `ResetPasswordForm`, `ForgotPasswordForm`, `EmailVerificationForm`, `TwoFactorSetup`, `TwoFactorVerify`, `MagicLinkForm`
-- Buttons: `Providers`, `UserButton`
-- Layouts: `AuthLayout`
-
-## Org Components
-
-- `OrgSwitcher`, `CreateOrgDialog`, `InviteMemberDialog`, `MembersTable`, `RoleBadge`, `OrganizationCellView`
-
-## RBAC
-
-- `RoleGate` d render children only for allowed roles
-
-## Primitives & Components
-
-- Primitives: `provider-button`, `data-table`, `form`, `input-otp`
-- Components: typical UI parts (`button`, `card`, `input`, `dialog`, `dropdown-menu`, etc.)
-
-## Theme
-
-- Tokens: `@keyloom/ui/theme/tokens`
-- Tailwind preset: `@keyloom/ui/theme/tailwind-preset.cjs`
-- CSS vars: `@keyloom/ui/theme/css-vars.css`
-
-## Example
-
-```tsx
-import { SignInForm } from "@keyloom/ui/auth";
-
-export default function Page() {
-  return <SignInForm onSuccess={() => router.push("/dashboard")} />;
+export default async function Layout({ children }: { children: React.ReactNode }) {
+  const session = await getServerSession(config);
+  return (
+    <>
+      <NavBar user={session?.user} />
+      {children}
+    </>
+  );
 }
 ```
 
-## Troubleshooting
+## Sign in and out
 
-- Ensure CSS and Tailwind preset are wired in your app
-- Base path must match your Keyloom API route (`/api/auth` by default)
+Use simple links that hit the handler endpoints.
+
+```tsx
+<a href="/api/auth/signin/github">Continue with GitHub</a>
+<form method="post" action="/api/auth/logout">
+  <button type="submit">Sign out</button>
+</form>
+```
+
+## Guard components by role
+
+```tsx
+function AdminOnly({ children }: { children: React.ReactNode }) {
+  const { data: session } = useClientSession();
+  if (!session || session.org?.role !== "admin") return null;
+  return <>{children}</>;
+}
+```
+
+## Patterns
+
+- Use server components to read session and pass it down via props or context
+- Keep provider buttons as plain anchors to the signin endpoint
+- Build forms for username or magic-link flows against your own custom routes that call Keyloom server APIs
 

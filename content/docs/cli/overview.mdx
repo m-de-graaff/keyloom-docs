@@ -1,58 +1,50 @@
 ---
 title: CLI
-description: The @keyloom/cli s interactive toolchain for scaffolding, migrations, routes, and diagnostics.
+description: Keyloom CLI to initialize configuration, install dependencies, and scaffold middleware and templates.
 ---
 
-# @keyloom/cli
+# CLI
 
-Interactive CLI for installing, scaffolding, and maintaining Keyloom projects. Uses Commander + Inquirer with spinners and friendly prompts.
+The Keyloom CLI helps you get started quickly with sensible defaults and optional templates.
 
-## Install/Invoke
+## Install and run
+
+Run with your package manager:
 
 ```bash
-# npx (recommended)
 npx keyloom init
-
-# pnpm dlx
-dlx keyloom init
+# or
+pnpm dlx keyloom init
 ```
 
-## Commands
+## What it does
 
-### keyloom init
-- Detects package manager and framework
-- Creates `keyloom.config.ts` with sensible defaults
-- Optionally adds Next.js middleware and starter routes
-- Installs provider/adapter templates on request
+- Detects your package manager and framework
+- Creates `keyloom.config.ts`
+- Optionally adds Next.js middleware and an auth route handler
+- Optionally installs provider and adapter packages
 
-### keyloom migrate
-- Runs database migrations for supported adapters (e.g., Prisma)
-- Environment-aware; prompts for confirmation in non-dev
+## Flags
 
-### keyloom routes
-- Scans your Next.js app for routes and generates a visibility manifest
-- Useful with `@keyloom/nextjs` middleware `routes` option
+- `--no-install` - skip installing dependencies
+- `--force` - overwrite existing files
+- `--providers=github,google` - preconfigure providers
+- `--adapter=prisma|drizzle|memory` - choose adapter
 
-### keyloom doctor
-- Validates environment (Node, package manager)
-- Checks `AUTH_SECRET` properties and warns on insecure defaults
-- Verifies adapter/provider presence and compatible versions
+## Example session
 
-### keyloom generate
-- Scaffolds example pages and API routes (Next.js App/Pages Router)
-- Can add OAuth buttons and basic forms
+```text
+✔ Detected Next.js (App Router)
+✔ Created keyloom.config.ts
+✔ Added middleware.ts and app/api/auth/[...keyloom]/route.ts
+? Install @keyloom/core and @keyloom/nextjs (Y/n) › Yes
+? Add GitHub provider (Y/n) › Yes
+? Choose session strategy (Use arrow keys) › JWT
+```
 
-### keyloom ui
-- Adds `@keyloom/ui` and sample auth screens
-- Optional Tailwind preset wiring
+## Next steps
 
-## Configuration
-
-Most commands are interactive; advanced flags are available for CI usage.
-
-## Troubleshooting
-
-- If detection fails, re-run with `--verbose` to see checks
-- Ensure your Node version and package manager match the workspace root
-- If templates dont appear, check that your app paths conform to Next.js conventions
+- Set environment variables (client IDs, secrets)
+- Update `baseUrl` in `keyloom.config.ts`
+- Run your app and test the sign-in flow
 

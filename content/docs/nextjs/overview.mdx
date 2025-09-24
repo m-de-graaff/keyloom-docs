@@ -1,26 +1,24 @@
 ---
 title: Next.js Integration
-description: The @keyloom/nextjs package 7 handler, middleware, JWT helpers, and server utilities for App Router.
+description: Overview of the Keyloom Next.js integration - route handlers, middleware, sessions, and edge compatibility.
 ---
 
-# @keyloom/nextjs
+# Next.js Integration
 
-Next.js integration provides:
+This guide covers how to use Keyloom with Next.js, including route handlers, middleware, session reading on the server, and edge compatibility.
 
-- API handler: `createNextHandler(config)` to mount under `app/api/auth/[[...keyloom]]/route.ts`
-- Middleware: `createAuthMiddleware(config, options?)` for route visibility (public/private/role)
-- JWT utilities: server verification, cookie helpers, optional edge middleware mode
-- Server helpers: `getSession`, `getUser`, `guard` usable in Server Components and route handlers
+## Packages
 
-## Install
+- `@keyloom/nextjs` - framework bindings for Next.js
+- `@keyloom/core` - core engine and config
 
-```bash
-pnpm add @keyloom/core @keyloom/nextjs
-```
+## Quick start
 
-## Minimal Setup
+1) Install packages and create `keyloom.config.ts` (see Installation)
+2) Add an auth handler route under `app/api/auth/[...keyloom]/route.ts`
+3) Add middleware for route protection
 
-```ts title="app/api/auth/[[...keyloom]]/route.ts"
+```ts title="app/api/auth/[...keyloom]/route.ts"
 import { createNextHandler } from "@keyloom/nextjs";
 import config from "@/keyloom.config";
 
@@ -40,21 +38,58 @@ export const config = {
 };
 ```
 
-## Server Helpers
+## Built-in routes
 
-- `getSession(config?)` d return `{ session, user }` for DB or JWT strategy
-- `getUser(config?)` d convenience to read `user`
-- `guard(rule?, config?)` d enforce private/role/org routes server-side (App Router)
+When you export `{ GET, POST }` from `createNextHandler`, the following endpoints are available under your auth route (by default `/api/auth`):
 
-```ts
-import { getSession, guard } from "@keyloom/nextjs";
+- `GET /api/auth/session` - get current session
+- `POST /api/auth/signin/:provider` - start OAuth login
+- `GET /api/auth/callback/:provider` - OAuth callback
+- `POST /api/auth/logout` - end session
+- `GET /api/auth/jwks` - JWKS for JWT verification
+
+See the Handler reference for full schemas and examples.
+
+## App Router vs Pages Router
+
+- App Router is fully supported with Route Handlers.
+- Pages Router can use API routes: `pages/api/auth/[...keyloom].ts` exporting a default handler from `createNextApiHandler`.
+
+```ts title="pages/api/auth/[...keyloom].ts"
+import { createNextApiHandler } from "@keyloom/nextjs/pages";
+import config from "@/keyloom.config";
+
+export default createNextApiHandler(config);
+```
+
+## Edge compatibility
+
+- The middleware and session verification work on Edge runtime when your configuration and adapter are edge-safe. Use the memory adapter or a compatible KV/HTTP adapter on edge.
+
+## Reading the session on the server
+
+Use the server utilities to read the session in server components, actions, or route handlers.
+
+```ts title="app/dashboard/page.tsx"
+import { getServerSession } from "@keyloom/nextjs";
+import config from "@/keyloom.config";
 
 export default async function Page() {
-  await guard({ visibility: "private" });
-  const { user } = await getSession();
-  return <div>Hello {user?.id}</div>;
+  const session = await getServerSession(config);
+  if (!session) return <Redirect href="/sign-in" />;
+  return <div>Hello {session.user.name}</div>;
 }
 ```
 
-Continue to the Handler and Middleware pages for full API details.
+## Configuration overview
+
+Pass your `defineKeyloom` config to `createNextHandler` and the middleware. Common options:
+
+- `baseUrl` - external base URL for callbacks
+- `session.strategy` - `"jwt"` or `"database"`
+- `cookie` - name, path, sameSite, secure
+- `providers` - OAuth/OpenID providers
+- `adapter` - database adapter when using database sessions
+
+See Configuration for the full reference.
 
