@@ -1,53 +1,476 @@
 ---
 title: UI Integration
-description: Build your own UI using Keyloom's React hooks and server utilities.
+description: Complete UI integration guide for Keyloom - server-side session reading, client components, authentication flows, and design patterns.
 ---
 
 # UI Integration
 
-Keyloom does not force a UI. Compose your own using React components and the hooks provided by `@keyloom/nextjs`.
+Keyloom provides flexible UI integration options. Build your own authentication UI using server utilities, React hooks, and component patterns.
 
-## Read the session
+## Prerequisites
 
-```tsx
+- Keyloom handler configured at `/api/auth/[...keyloom]`
+- React components or Next.js pages
+- Optional: UI library (Tailwind CSS, Chakra UI, etc.)
+
+## Server-side session reading
+
+### Layout with session
+
+```tsx title="app/layout.tsx (Next.js App Router)"
 import { getServerSession } from "@keyloom/nextjs";
 import config from "@/keyloom.config";
+import { NavBar } from "@/components/NavBar";
 
-export default async function Layout({ children }: { children: React.ReactNode }) {
+export default async function Layout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const session = await getServerSession(config);
+
   return (
-    <>
-      <NavBar user={session?.user} />
-      {children}
-    </>
+    <html>
+      <body>
+        <NavBar user={session?.user} />
+        <main>{children}</main>
+      </body>
+    </html>
   );
 }
 ```
 
-## Sign in and out
+### Protected page
 
-Use simple links that hit the handler endpoints.
+```tsx title="app/dashboard/page.tsx"
+import { getServerSession } from "@keyloom/nextjs";
+import { redirect } from "next/navigation";
+import config from "@/keyloom.config";
 
-```tsx
-<a href="/api/auth/signin/github">Continue with GitHub</a>
-<form method="post" action="/api/auth/logout">
-  <button type="submit">Sign out</button>
-</form>
+export default async function DashboardPage() {
+  const session = await getServerSession(config);
+
+  if (!session) {
+    redirect("/auth/signin");
+  }
+
+  return (
+    <div>
+      <h1>Welcome, {session.user.name}!</h1>
+      <p>Email: {session.user.email}</p>
+    </div>
+  );
+}
 ```
 
-## Guard components by role
+### API route with session
 
-```tsx
-function AdminOnly({ children }: { children: React.ReactNode }) {
-  const { data: session } = useClientSession();
-  if (!session || session.org?.role !== "admin") return null;
+```tsx title="app/api/profile/route.ts"
+import { getServerSession } from "@keyloom/nextjs";
+import config from "@/keyloom.config";
+
+export async function GET() {
+  const session = await getServerSession(config);
+
+  if (!session) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  return Response.json({
+    user: session.user,
+    sessionId: session.id,
+  });
+}
+```
+
+## Authentication UI components
+
+### Sign-in page
+
+```tsx title="app/auth/signin/page.tsx"
+import { SignInForm } from "@/components/SignInForm";
+
+export default function SignInPage() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="max-w-md w-full space-y-8">
+        <div>
+          <h2 className="text-3xl font-bold text-center">
+            Sign in to your account
+          </h2>
+        </div>
+        <SignInForm />
+      </div>
+    </div>
+  );
+}
+```
+
+### Sign-in form component
+
+```tsx title="components/SignInForm.tsx"
+export function SignInForm() {
+  return (
+    <div className="space-y-4">
+      <a
+        href="/api/auth/oauth/github/start?callbackUrl=/dashboard"
+        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-900 hover:bg-gray-800"
+      >
+        Continue with GitHub
+      </a>
+
+      <a
+        href="/api/auth/oauth/google/start?callbackUrl=/dashboard"
+        className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+      >
+        Continue with Google
+      </a>
+
+      <a
+        href="/api/auth/oauth/microsoft/start?callbackUrl=/dashboard"
+        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+      >
+        Continue with Microsoft
+      </a>
+    </div>
+  );
+}
+```
+
+### Navigation bar
+
+```tsx title="components/NavBar.tsx"
+import type { User } from "@keyloom/core";
+
+interface NavBarProps {
+  user?: User | null;
+}
+
+export function NavBar({ user }: NavBarProps) {
+  return (
+    <nav className="bg-white shadow">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16">
+          <div className="flex items-center">
+            <h1 className="text-xl font-semibold">My App</h1>
+          </div>
+
+          <div className="flex items-center space-x-4">
+            {user ? (
+              <>
+                <span>Welcome, {user.name}</span>
+                <a
+                  href="/api/auth/signout?callbackUrl=/"
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  Sign out
+                </a>
+              </>
+            ) : (
+              <a
+                href="/auth/signin"
+                className="text-blue-600 hover:text-blue-800"
+              >
+                Sign in
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+}
+```
+
+## Client-side components
+
+### Profile component with hooks
+
+```tsx title="components/Profile.tsx"
+"use client";
+
+import { useSession } from "@keyloom/react";
+
+export function Profile() {
+  const { data: session, status } = useSession();
+
+  if (status === "loading") {
+    return <div className="animate-pulse">Loading...</div>;
+  }
+
+  if (status === "unauthenticated") {
+    return (
+      <div className="text-center">
+        <p>Please sign in to view your profile</p>
+        <a href="/auth/signin" className="text-blue-600 hover:underline">
+          Sign in
+        </a>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white shadow rounded-lg p-6">
+      <div className="flex items-center space-x-4">
+        {session.user.image && (
+          <img
+            src={session.user.image}
+            alt="Profile"
+            className="w-16 h-16 rounded-full"
+          />
+        )}
+        <div>
+          <h2 className="text-xl font-semibold">{session.user.name}</h2>
+          <p className="text-gray-600">{session.user.email}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+### Organization switcher (RBAC)
+
+```tsx title="components/OrgSwitcher.tsx"
+"use client";
+
+import { useRBAC } from "@keyloom/react";
+
+export function OrgSwitcher() {
+  const { activeOrg, organizations, switchOrg } = useRBAC();
+
+  if (!organizations?.length) return null;
+
+  return (
+    <div className="relative">
+      <select
+        value={activeOrg?.id || ""}
+        onChange={(e) => switchOrg(e.target.value)}
+        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+      >
+        {organizations.map((org) => (
+          <option key={org.id} value={org.id}>
+            {org.name}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+```
+
+## Design patterns
+
+### Loading states
+
+```tsx title="components/LoadingSpinner.tsx"
+export function LoadingSpinner() {
+  return (
+    <div className="flex justify-center items-center p-4">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+    </div>
+  );
+}
+```
+
+### Error boundaries
+
+```tsx title="components/AuthErrorBoundary.tsx"
+"use client";
+
+import { useEffect, useState } from "react";
+
+interface AuthErrorBoundaryProps {
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+}
+
+export function AuthErrorBoundary({
+  children,
+  fallback,
+}: AuthErrorBoundaryProps) {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      if (event.error?.code?.includes("AUTH")) {
+        setHasError(true);
+      }
+    };
+
+    window.addEventListener("error", handleError);
+    return () => window.removeEventListener("error", handleError);
+  }, []);
+
+  if (hasError) {
+    return (
+      fallback || (
+        <div className="text-center p-8">
+          <h2 className="text-xl font-semibold text-red-600">
+            Authentication Error
+          </h2>
+          <p className="mt-2 text-gray-600">
+            Please try refreshing the page or signing in again.
+          </p>
+          <button
+            onClick={() => setHasError(false)}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Retry
+          </button>
+        </div>
+      )
+    );
+  }
+
   return <>{children}</>;
 }
 ```
 
-## Patterns
+### Responsive navigation
 
-- Use server components to read session and pass it down via props or context
-- Keep provider buttons as plain anchors to the signin endpoint
-- Build forms for username or magic-link flows against your own custom routes that call Keyloom server APIs
+```tsx title="components/ResponsiveNav.tsx"
+"use client";
 
+import { useState } from "react";
+import type { User } from "@keyloom/core";
+
+interface ResponsiveNavProps {
+  user?: User | null;
+}
+
+export function ResponsiveNav({ user }: ResponsiveNavProps) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <nav className="bg-white shadow">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16">
+          <div className="flex items-center">
+            <h1 className="text-xl font-semibold">My App</h1>
+          </div>
+
+          {/* Desktop menu */}
+          <div className="hidden md:flex items-center space-x-4">
+            {user ? (
+              <>
+                <span>Welcome, {user.name}</span>
+                <a
+                  href="/api/auth/signout"
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  Sign out
+                </a>
+              </>
+            ) : (
+              <a
+                href="/auth/signin"
+                className="text-blue-600 hover:text-blue-800"
+              >
+                Sign in
+              </a>
+            )}
+          </div>
+
+          {/* Mobile menu button */}
+          <div className="md:hidden">
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="text-gray-500 hover:text-gray-700 focus:outline-none"
+            >
+              <svg
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile menu */}
+        {isOpen && (
+          <div className="md:hidden">
+            <div className="px-2 pt-2 pb-3 space-y-1">
+              {user ? (
+                <>
+                  <div className="px-3 py-2 text-gray-700">
+                    Welcome, {user.name}
+                  </div>
+                  <a
+                    href="/api/auth/signout"
+                    className="block px-3 py-2 text-gray-500 hover:text-gray-700"
+                  >
+                    Sign out
+                  </a>
+                </>
+              ) : (
+                <a
+                  href="/auth/signin"
+                  className="block px-3 py-2 text-blue-600 hover:text-blue-800"
+                >
+                  Sign in
+                </a>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </nav>
+  );
+}
+```
+
+## Styling considerations
+
+### Tailwind CSS classes
+
+Common utility classes for authentication UI:
+
+- Loading: `animate-pulse`, `animate-spin`
+- Buttons: `bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded`
+- Forms: `border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500`
+- Cards: `bg-white shadow rounded-lg p-6`
+
+### CSS-in-JS compatibility
+
+Keyloom works with any styling solution:
+
+- Styled Components
+- Emotion
+- Stitches
+- Vanilla CSS modules
+
+## Performance tips
+
+- Use server-side session reading for initial page loads
+- Implement proper loading states for better UX
+- Cache user profile data appropriately
+- Use React.memo for expensive components
+
+## Accessibility
+
+- Include proper ARIA labels on authentication buttons
+- Ensure keyboard navigation works
+- Provide screen reader friendly loading states
+- Use semantic HTML elements
+
+## See also
+
+- React Hooks: [/docs/react/hooks](/docs/react/hooks)
+- Next.js Integration: [/docs/nextjs/overview](/docs/nextjs/overview)
+- Security: [/docs/security/overview](/docs/security/overview)
+
+## Next steps
+
+- Build your authentication UI components
+- Implement proper error handling and loading states
+- Add responsive design for mobile users
+- Test accessibility with screen readers

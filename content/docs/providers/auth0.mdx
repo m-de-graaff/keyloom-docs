@@ -1,0 +1,259 @@
+---
+title: Auth0 Provider
+description: Configure Auth0 OAuth with Keyloom. Complete Auth0 application setup, custom domains, scopes, and troubleshooting.
+---
+
+# Auth0 Provider
+
+Add Auth0 OAuth to your Keyloom app. This guide covers Auth0 application setup, configuration, and best practices.
+
+## Prerequisites
+
+- Auth0 account (free tier available)
+- Keyloom app with `@keyloom/providers` installed
+- Public app URL for callback configuration
+
+## Auth0 application setup
+
+### 1. Create Application
+
+1. Go to [Auth0 Dashboard](https://manage.auth0.com/)
+2. Navigate to Applications → Applications
+3. Click "Create Application"
+4. Configure:
+   - **Name**: Your application name
+   - **Application Type**: "Regular Web Applications"
+5. Click "Create"
+
+### 2. Configure Application Settings
+
+In the application settings:
+
+**Basic Information:**
+- Note the **Domain** (e.g., `yourapp.auth0.com`)
+- Note the **Client ID**
+- Note the **Client Secret**
+
+**Application URIs:**
+- **Allowed Callback URLs**: `https://yourapp.com/api/auth/oauth/auth0/callback`
+- **Allowed Logout URLs**: `https://yourapp.com`
+- **Allowed Web Origins**: `https://yourapp.com`
+
+**Advanced Settings → Grant Types:**
+- Ensure "Authorization Code" is enabled
+- Ensure "Refresh Token" is enabled (if using refresh tokens)
+
+### 3. Configure Connections
+
+1. Go to Authentication → Social
+2. Enable desired social connections (Google, GitHub, etc.)
+3. Or go to Authentication → Database to use Auth0's user database
+
+### 4. Custom Domain (Optional)
+
+For production apps:
+1. Go to Branding → Custom Domains
+2. Configure your custom domain (e.g., `auth.yourapp.com`)
+3. This improves user experience and security
+
+## Environment variables
+
+```ini title=".env.local"
+AUTH0_CLIENT_ID=abcdefghijklmnopqrstuvwxyz123456
+AUTH0_CLIENT_SECRET=1234567890abcdef1234567890abcdef12345678901234567890abcdef1234567890abcdef
+AUTH0_DOMAIN=yourapp.auth0.com
+NEXT_PUBLIC_APP_URL=https://yourapp.com
+```
+
+## Provider configuration
+
+```ts title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { auth0 } from "@keyloom/providers";
+
+export default defineKeyloom({
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
+  providers: [
+    auth0({
+      clientId: process.env.AUTH0_CLIENT_ID!,
+      clientSecret: process.env.AUTH0_CLIENT_SECRET!,
+      domain: process.env.AUTH0_DOMAIN!,
+      scopes: ["openid", "profile", "email"],
+    }),
+  ],
+  // ... rest of config
+});
+```
+
+## Recommended scopes
+
+| Scope | Purpose | Required |
+| --- | --- | --- |
+| `openid` | OpenID Connect authentication | Yes |
+| `profile` | Basic profile info (name, picture) | Yes |
+| `email` | User's email address | Yes |
+| `offline_access` | Refresh tokens | Optional |
+
+**Minimal setup**: Use `openid`, `profile`, and `email` for basic authentication.
+
+## Sign-in UI example
+
+```tsx title="components/SignIn.tsx"
+export function SignInWithAuth0() {
+  return (
+    <a
+      href="/api/auth/oauth/auth0/start?callbackUrl=/dashboard"
+      className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded"
+    >
+      <Auth0Icon />
+      Continue with Auth0
+    </a>
+  );
+}
+```
+
+## User profile mapping
+
+Auth0 returns this profile data:
+
+```json
+{
+  "sub": "auth0|507f1f77bcf86cd799439011",
+  "name": "John Doe",
+  "given_name": "John",
+  "family_name": "Doe",
+  "email": "john.doe@example.com",
+  "email_verified": true,
+  "picture": "https://s.gravatar.com/avatar/..."
+}
+```
+
+Keyloom maps it to:
+```ts
+{
+  id: profile.sub,
+  email: profile.email,
+  name: profile.name,
+  image: profile.picture,
+  emailVerified: profile.email_verified,
+}
+```
+
+## Callback URL patterns
+
+- Development: `http://localhost:3000/api/auth/oauth/auth0/callback`
+- Production: `https://yourapp.com/api/auth/oauth/auth0/callback`
+- Must be added to "Allowed Callback URLs" in Auth0 application settings
+
+## Auth0 features
+
+### Universal Login
+
+Auth0's hosted login page provides:
+- Consistent branding
+- Built-in security features
+- Multi-factor authentication
+- Social connections
+- Passwordless authentication
+
+### Rules and Actions
+
+Customize authentication flow:
+- Add custom claims to tokens
+- Integrate with external services
+- Implement custom authorization logic
+- Send notifications
+
+### Organizations (Enterprise)
+
+For B2B applications:
+- Multi-tenant architecture
+- Organization-based access control
+- Custom branding per organization
+
+## Error handling
+
+Common Auth0 OAuth errors:
+
+- `access_denied`: User denied authorization
+- `invalid_client`: Client ID/secret mismatch
+- `invalid_grant`: Authorization code expired
+- `unauthorized`: Invalid credentials
+
+```ts title="Error handling example"
+// In your error boundary or callback handler
+if (error?.code === "oauth_error" && error?.provider === "auth0") {
+  switch (error?.details?.error) {
+    case "access_denied":
+      return "Sign-in was cancelled.";
+    case "invalid_client":
+      return "Auth0 configuration error. Check client credentials.";
+    case "invalid_grant":
+      return "Authorization expired. Please try signing in again.";
+    default:
+      return "Auth0 sign-in failed. Please try again.";
+  }
+}
+```
+
+## Security considerations
+
+- **Client Secret**: Store securely; rotate regularly
+- **Domain**: Use custom domain in production
+- **HTTPS**: Required for production callbacks
+- **CORS**: Configure allowed origins properly
+
+## Auth0 vs other providers
+
+**Advantages:**
+- Comprehensive identity platform
+- Built-in user management
+- Advanced security features
+- Extensive customization options
+
+**Considerations:**
+- Additional service dependency
+- Pricing based on monthly active users
+- Learning curve for advanced features
+
+## Performance tips
+
+- Auth0 is generally fast and reliable
+- Use custom domains to reduce redirects
+- Cache user profile data appropriately
+- Consider connection pooling for high-traffic apps
+
+## Troubleshooting
+
+**Callback URL mismatch**
+- Verify URL exactly matches Auth0 application settings
+- Check protocol, domain, and path
+- Ensure both development and production URLs are configured
+
+**Invalid client error**
+- Verify client ID and secret are correct
+- Check if credentials are from correct Auth0 application
+- Ensure application type is "Regular Web Applications"
+
+**Access denied errors**
+- Check if user has access to the application
+- Verify social connections are enabled if using social login
+- Check Auth0 rules/actions for custom restrictions
+
+**CORS issues**
+- Add your domain to "Allowed Web Origins"
+- Ensure proper CORS headers are configured
+- Check for mixed content issues (HTTP/HTTPS)
+
+## See also
+
+- Providers overview: [/docs/providers/overview](/docs/providers/overview)
+- Security: [/docs/security/overview](/docs/security/overview)
+- Installation: [/docs/getting-started/installation](/docs/getting-started/installation)
+
+## Next steps
+
+- Test the complete sign-in flow in development
+- Configure Auth0 rules/actions for custom logic
+- Set up custom domain for production
+- Configure social connections as needed

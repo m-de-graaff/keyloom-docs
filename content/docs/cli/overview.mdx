@@ -1,50 +1,308 @@
 ---
-title: CLI
-description: Keyloom CLI to initialize configuration, install dependencies, and scaffold middleware and templates.
+title: CLI Reference
+description: Complete Keyloom CLI command reference, interactive flow, package detection, file generation, and troubleshooting.
 ---
 
-# CLI
+# CLI Reference
 
-The Keyloom CLI helps you get started quickly with sensible defaults and optional templates.
+The Keyloom CLI provides an interactive setup wizard to initialize authentication in your app with sensible defaults.
 
-## Install and run
+## Prerequisites
 
-Run with your package manager:
+- Node.js 18+ with npm, pnpm, or yarn
+- Existing Next.js, React, or Node.js project
+- Terminal access for interactive prompts
+
+## Installation and usage
 
 ```bash
+# Run directly (recommended)
 npx keyloom init
-# or
 pnpm dlx keyloom init
+yarn dlx keyloom init
+
+# Or install globally
+npm install -g @keyloom/cli
+keyloom init
 ```
 
-## What it does
+## Command reference
 
-- Detects your package manager and framework
-- Creates `keyloom.config.ts`
-- Optionally adds Next.js middleware and an auth route handler
-- Optionally installs provider and adapter packages
+### `keyloom init`
 
-## Flags
+Initialize Keyloom in your project with interactive prompts.
 
-- `--no-install` - skip installing dependencies
-- `--force` - overwrite existing files
-- `--providers=github,google` - preconfigure providers
-- `--adapter=prisma|drizzle|memory` - choose adapter
+**Flags:**
 
-## Example session
+- `--no-install` - Skip installing dependencies
+- `--force` - Overwrite existing files without prompting
+- `--providers=<list>` - Preconfigure providers (comma-separated)
+- `--adapter=<type>` - Choose adapter: `prisma`, `drizzle`, `memory`
+- `--strategy=<type>` - Session strategy: `jwt`, `database`
+- `--help` - Show help information
+- `--version` - Show CLI version
+
+**Examples:**
+
+```bash
+# Interactive setup (recommended)
+npx keyloom init
+
+# Skip dependency installation
+npx keyloom init --no-install
+
+# Preconfigure with GitHub and Google
+npx keyloom init --providers=github,google --adapter=prisma
+
+# Force overwrite existing files
+npx keyloom init --force
+```
+
+## Interactive flow breakdown
+
+The CLI walks through these steps:
+
+### 1. Framework detection
 
 ```text
-✔ Detected Next.js (App Router)
-✔ Created keyloom.config.ts
-✔ Added middleware.ts and app/api/auth/[...keyloom]/route.ts
-? Install @keyloom/core and @keyloom/nextjs (Y/n) › Yes
-? Add GitHub provider (Y/n) › Yes
-? Choose session strategy (Use arrow keys) › JWT
+✔ Detected Next.js 15 (App Router)
+✔ Package manager: pnpm
 ```
+
+Supports:
+
+- Next.js (App Router, Pages Router)
+- React (Vite, Create React App)
+- Node.js (Express, Fastify)
+
+### 2. Configuration generation
+
+```text
+✔ Created keyloom.config.ts
+```
+
+Generates a base config with:
+
+- Detected framework settings
+- Memory adapter (development default)
+- JWT session strategy
+- Empty providers array
+
+### 3. Framework integration
+
+```text
+? Add Next.js middleware and route handler? (Y/n) › Yes
+✔ Created middleware.ts
+✔ Created app/api/auth/[...keyloom]/route.ts
+```
+
+For Next.js:
+
+- `middleware.ts` - Route protection
+- `app/api/auth/[...keyloom]/route.ts` - Auth endpoints
+
+### 4. Dependency installation
+
+```text
+? Install @keyloom/core and @keyloom/nextjs? (Y/n) › Yes
+✔ Installing dependencies...
+```
+
+Installs based on selections:
+
+- Core packages: `@keyloom/core`
+- Framework packages: `@keyloom/nextjs`, `@keyloom/react`
+- Providers: `@keyloom/providers` (if selected)
+- Adapters: `@keyloom/adapter-prisma`, `@keyloom/adapter-drizzle`
+
+### 5. Provider configuration
+
+```text
+? Add OAuth providers? (Y/n) › Yes
+? Select providers: (Use space to select)
+❯◉ GitHub
+ ◉ Google
+ ◯ Apple
+ ◯ Microsoft
+```
+
+Adds provider imports and configuration to `keyloom.config.ts`.
+
+### 6. Session strategy
+
+```text
+? Choose session strategy: (Use arrow keys)
+❯ JWT (stateless, edge-friendly)
+  Database (stateful, requires adapter)
+```
+
+Updates config with selected strategy and TTL settings.
+
+### 7. Adapter selection (if database strategy)
+
+```text
+? Choose database adapter: (Use arrow keys)
+❯ Prisma
+  Drizzle
+  Custom
+```
+
+Adds adapter configuration and optionally generates schema files.
+
+## Generated files
+
+### `keyloom.config.ts`
+
+```ts
+import { defineKeyloom } from "@keyloom/core";
+import { github, google } from "@keyloom/providers";
+
+export default defineKeyloom({
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
+  session: { strategy: "jwt", ttlMinutes: 60 },
+  providers: [
+    github({
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+    }),
+  ],
+  secrets: { authSecret: process.env.AUTH_SECRET! },
+});
+```
+
+### `middleware.ts` (Next.js)
+
+```ts
+import { withKeyloom } from "@keyloom/nextjs/middleware";
+
+export default withKeyloom({
+  publicRoutes: ["/", "/about"],
+});
+
+export const config = {
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+};
+```
+
+### `app/api/auth/[...keyloom]/route.ts` (Next.js App Router)
+
+```ts
+import { createHandler } from "@keyloom/nextjs";
+import config from "@/keyloom.config";
+
+const handler = createHandler(config);
+
+export { handler as GET, handler as POST };
+```
+
+## Package manager detection
+
+The CLI detects your package manager:
+
+1. **pnpm**: Looks for `pnpm-lock.yaml`
+2. **yarn**: Looks for `yarn.lock`
+3. **npm**: Default fallback
+
+Uses the detected manager for:
+
+- Installing dependencies
+- Running scripts
+- Lock file updates
+
+## Framework detection
+
+Detection logic:
+
+1. **Next.js**: Checks for `next` in dependencies
+
+   - App Router: `app/` directory exists
+   - Pages Router: `pages/` directory exists
+
+2. **React**: Checks for `react` in dependencies
+
+   - Vite: `vite.config.*` exists
+   - CRA: `react-scripts` in dependencies
+
+3. **Node.js**: Fallback for server-only projects
+
+## Error handling and troubleshooting
+
+### Common issues
+
+**Permission errors**
+
+```text
+Error: EACCES: permission denied
+```
+
+- Run with `sudo` on Unix systems
+- Check file permissions in project directory
+
+**Network errors**
+
+```text
+Error: Failed to install dependencies
+```
+
+- Check internet connection
+- Try different registry: `npm config set registry https://registry.npmjs.org/`
+
+**File conflicts**
+
+```text
+Error: keyloom.config.ts already exists
+```
+
+- Use `--force` flag to overwrite
+- Or manually remove existing files
+
+**Framework not detected**
+
+```text
+Warning: Could not detect framework
+```
+
+- Ensure dependencies are installed
+- Run `npm install` or equivalent first
+
+**TypeScript errors**
+
+```text
+Error: Cannot find module '@keyloom/core'
+```
+
+- Run `npm install` after CLI completes
+- Check `package.json` for added dependencies
+
+### Debug mode
+
+Enable verbose logging:
+
+```bash
+DEBUG=keyloom:* npx keyloom init
+```
+
+## Performance considerations
+
+- CLI operations are typically fast (< 30 seconds)
+- Network-dependent: dependency installation
+- File I/O: configuration generation
+
+## Security notes
+
+- Generated files contain placeholder environment variables
+- Never commit secrets to version control
+- Use `.env.local` for sensitive values
+
+## See also
+
+- Installation: [/docs/getting-started/installation](/docs/getting-started/installation)
+- Configuration: [/docs/core/jwt](/docs/core/jwt)
+- Next.js Integration: [/docs/nextjs/overview](/docs/nextjs/overview)
 
 ## Next steps
 
-- Set environment variables (client IDs, secrets)
-- Update `baseUrl` in `keyloom.config.ts`
-- Run your app and test the sign-in flow
-
+1. Set environment variables in `.env.local`
+2. Update `baseUrl` in `keyloom.config.ts`
+3. Configure OAuth providers with client IDs/secrets
+4. Test the sign-in flow in development

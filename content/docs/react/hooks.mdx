@@ -1,11 +1,17 @@
 ---
 title: React Hooks
-description: The @keyloom/react package — session state, auth actions, and utilities.
+description: Complete React hooks reference for Keyloom - session management, authentication actions, RBAC, and error handling patterns.
 ---
 
-# @keyloom/react
+# React Hooks
 
 React hooks and utilities for working with Keyloom sessions and auth flows from the client. Works with the Next.js handler routes under `/api/auth`.
+
+## Prerequisites
+
+- React 18+ or Next.js 13+
+- Keyloom handler configured at `/api/auth/[...keyloom]`
+- `@keyloom/react` package installed
 
 ## Install
 
@@ -13,39 +19,380 @@ React hooks and utilities for working with Keyloom sessions and auth flows from 
 pnpm add @keyloom/react
 ```
 
-## Provider
+## SessionProvider setup
 
-```tsx
+Wrap your app with the SessionProvider to enable session management:
+
+```tsx title="app/layout.tsx (Next.js App Router)"
 import { SessionProvider } from "@keyloom/react";
 
-export default function App({ children }) {
-  return <SessionProvider basePath="/api/auth">{children}</SessionProvider>;
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html>
+      <body>
+        <SessionProvider basePath="/api/auth">{children}</SessionProvider>
+      </body>
+    </html>
+  );
 }
 ```
 
-- `basePath` (default `/api/auth`): points to your Keyloom API route
+```tsx title="pages/_app.tsx (Next.js Pages Router)"
+import { SessionProvider } from "@keyloom/react";
+import type { AppProps } from "next/app";
+
+export default function App({ Component, pageProps }: AppProps) {
+  return (
+    <SessionProvider basePath="/api/auth">
+      <Component {...pageProps} />
+    </SessionProvider>
+  );
+}
+```
+
+**SessionProvider options:**
+
+- `basePath` (default `/api/auth`): Points to your Keyloom API route
+- `refetchInterval` (default `0`): Auto-refetch session every N seconds
+- `refetchOnWindowFocus` (default `true`): Refetch when window gains focus
 
 ## Core Hooks
 
 ### useSession()
 
-```ts
-const { data: { session, user }, status, error, refresh } = useSession();
+Get the current session state and user information.
+
+```tsx title="components/Profile.tsx"
+import { useSession } from "@keyloom/react";
+
+export function Profile() {
+  const { data: session, status } = useSession();
+
+  if (status === "loading") return <div>Loading...</div>;
+  if (status === "unauthenticated") return <div>Please sign in</div>;
+
+  return (
+    <div>
+      <h1>Welcome, {session.user.name}!</h1>
+      <p>Email: {session.user.email}</p>
+      {session.user.image && (
+        <img src={session.user.image} alt="Profile" width={40} height={40} />
+      )}
+    </div>
+  );
+}
 ```
+
+**Return values:**
+
+- `data`: Session object or `null`
+- `status`: `"loading"` | `"authenticated"` | `"unauthenticated"`
+- `update`: Function to refresh session data
+
+### useAuth()
+
+Authentication actions and utilities.
+
+```tsx title="components/AuthButtons.tsx"
+import { useAuth } from "@keyloom/react";
+
+export function AuthButtons() {
+  const { signIn, signOut, status } = useAuth();
+
+  if (status === "loading") return <div>Loading...</div>;
+
+  if (status === "authenticated") {
+    return <button onClick={() => signOut()}>Sign Out</button>;
+  }
+
+  return (
+    <div className="space-x-2">
+      <button onClick={() => signIn("github")}>Sign in with GitHub</button>
+      <button onClick={() => signIn("google")}>Sign in with Google</button>
+    </div>
+  );
+}
+```
+
+**Methods:**
+
+- `signIn(provider?, options?)`: Initiate sign-in flow
+- `signOut(options?)`: Sign out current user
+- `status`: Current authentication status
+
+### useRBAC()
+
+Role-based access control utilities for checking permissions.
+
+```tsx title="components/AdminPanel.tsx"
+import { useRBAC } from "@keyloom/react";
+
+export function AdminPanel() {
+  const { hasPermission, hasRole, activeOrg } = useRBAC();
+
+  if (!hasRole("admin")) {
+    return <div>Access denied. Admin role required.</div>;
+  }
+
+  return (
+    <div>
+      <h2>Admin Panel - {activeOrg?.name}</h2>
+      {hasPermission("users:write") && <button>Manage Users</button>}
+      {hasPermission("billing:read") && <button>View Billing</button>}
+    </div>
+  );
+}
+```
+
+**Methods:**
+
+- `hasRole(role)`: Check if user has specific role in active organization
+- `hasPermission(permission)`: Check if user has specific permission
+- `activeOrg`: Current active organization
+- `switchOrg(orgId)`: Switch to different organization
+
+## Advanced Patterns
+
+### Protected Routes
+
+```tsx title="components/ProtectedRoute.tsx"
+import { useSession } from "@keyloom/react";
+import { useRouter } from "next/router";
+import { useEffect } from "react";
+
+export function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/signin");
+    }
+  }, [status, router]);
+
+  if (status === "loading") {
+    return <div>Loading...</div>;
+  }
+
+  if (status === "unauthenticated") {
+    return null;
+  }
+
+  return <>{children}</>;
+}
+```
+
+### Conditional Rendering
+
+```tsx title="components/ConditionalContent.tsx"
+import { useSession, useRBAC } from "@keyloom/react";
+
+export function ConditionalContent() {
+  const { data: session, status } = useSession();
+  const { hasPermission } = useRBAC();
+
+  return (
+    <div>
+      {status === "authenticated" && <p>Welcome back, {session.user.name}!</p>}
+
+      {hasPermission("content:create") && <button>Create Content</button>}
+
+      {status === "unauthenticated" && <p>Please sign in to continue</p>}
+    </div>
+  );
+}
+```
+
+### Custom Sign-in Form
+
+```tsx title="components/SignInForm.tsx"
+import { useAuth } from "@keyloom/react";
+import { useState } from "react";
+
+export function SignInForm() {
+  const { signIn, status } = useAuth();
+  const [provider, setProvider] = useState<string>("github");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await signIn(provider, {
+      callbackUrl: "/dashboard",
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <select
+        value={provider}
+        onChange={(e) => setProvider(e.target.value)}
+        className="w-full p-2 border rounded"
+      >
+        <option value="github">GitHub</option>
+        <option value="google">Google</option>
+        <option value="microsoft">Microsoft</option>
+      </select>
+
+      <button
+        type="submit"
+        disabled={status === "loading"}
+        className="w-full p-2 bg-blue-600 text-white rounded disabled:opacity-50"
+      >
+        {status === "loading" ? "Signing in..." : "Sign In"}
+      </button>
+    </form>
+  );
+}
+```
+
+## Error Handling
+
+### Session Errors
+
+```tsx title="components/SessionErrorBoundary.tsx"
+import { useSession } from "@keyloom/react";
+import { useEffect, useState } from "react";
+
+export function SessionErrorBoundary({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const { data, status, error } = useSession();
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    if (error) {
+      setHasError(true);
+      console.error("Session error:", error);
+    }
+  }, [error]);
+
+  if (hasError) {
+    return (
+      <div className="p-4 bg-red-50 border border-red-200 rounded">
+        <h3>Authentication Error</h3>
+        <p>Please try refreshing the page or signing in again.</p>
+        <button
+          onClick={() => setHasError(false)}
+          className="mt-2 px-4 py-2 bg-red-600 text-white rounded"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
+```
+
+### Auth Action Errors
+
+```tsx title="components/AuthWithErrorHandling.tsx"
+import { useAuth } from "@keyloom/react";
+import { useState } from "react";
+
+export function AuthWithErrorHandling() {
+  const { signIn, signOut } = useAuth();
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSignIn = async (provider: string) => {
+    try {
+      setError(null);
+      await signIn(provider);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Sign-in failed");
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      setError(null);
+      await signOut();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Sign-out failed");
+    }
+  };
+
+  return (
+    <div>
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          {error}
+        </div>
+      )}
+
+      <button onClick={() => handleSignIn("github")}>
+        Sign in with GitHub
+      </button>
+      <button onClick={handleSignOut}>Sign Out</button>
+    </div>
+  );
+}
+```
+
+## Performance Considerations
+
+- **Session Caching**: Sessions are cached in memory and localStorage
+- **Refetch Strategy**: Configure `refetchInterval` based on your security needs
+- **Bundle Size**: Import only the hooks you need
+- **SSR Compatibility**: Hooks work with Next.js SSR and SSG
+
+## Troubleshooting
+
+**Session not loading**
+
+- Verify SessionProvider wraps your app
+- Check `basePath` matches your API route
+- Ensure Keyloom handler is configured correctly
+
+**Authentication redirects not working**
+
+- Check callback URLs in provider configuration
+- Verify `callbackUrl` parameter is valid
+- Ensure HTTPS in production
+
+**RBAC permissions not working**
+
+- Verify RBAC is enabled in Keyloom config
+- Check user has active organization membership
+- Ensure permissions are properly mapped
+
+## See also
+
+- Installation: [/docs/getting-started/installation](/docs/getting-started/installation)
+- Next.js Integration: [/docs/nextjs/overview](/docs/nextjs/overview)
+- RBAC: [/docs/core/rbac](/docs/core/rbac)
+
+## Next steps
+
+- Set up SessionProvider in your app
+- Implement authentication UI components
+- Add role-based access control to your routes
+
+````
+
 - `status`: `"loading" | "authenticated" | "unauthenticated"`
 - `refresh()`: refetch `/session`
 
 ### useUser()
+
 ```ts
 const { user, loading, error } = useUser();
-```
+````
 
 ### useSessionStatus()
+
 ```ts
 const status = useSessionStatus();
 ```
 
 ### useSessionRefresh()
+
 ```ts
 const { refresh } = useSessionRefresh();
 ```
@@ -62,24 +409,28 @@ await login({ provider: "github", callbackUrl: "/dashboard" });
 ```
 
 ### useLogout()
+
 ```ts
 const { logout } = useLogout();
 await logout();
 ```
 
 ### useRegister()
+
 ```ts
 const { register } = useRegister();
 await register({ email, password });
 ```
 
 ### useOAuth()
+
 ```ts
 const { login } = useOAuth();
 await login({ provider: "google", callbackUrl: "/" });
 ```
 
 ### usePasswordReset()
+
 ```ts
 const { request, reset } = usePasswordReset();
 await request({ email });
@@ -87,6 +438,7 @@ await reset({ identifier: email, token, newPassword });
 ```
 
 ### useEmailVerification()
+
 ```ts
 const { verify } = useEmailVerification();
 await verify({ identifier: email, token });
@@ -95,30 +447,41 @@ await verify({ identifier: email, token });
 ## Utilities
 
 ### Forms
+
 ```ts
-const { values, setValue, submit, submitting, error, reset } = useAuthForm({ email: "", password: "" });
+const { values, setValue, submit, submitting, error, reset } = useAuthForm({
+  email: "",
+  password: "",
+});
 await submit(async ({ email, password }) => {
   await login({ email, password });
 });
 ```
 
 ### Redirect
+
 ```ts
 const { redirect } = useAuthRedirect();
 redirect("/dashboard");
 ```
 
 ### Errors
+
 ```ts
 const { error, setError } = useAuthError();
 ```
 
 ### Guards
+
 ```ts
-const { allowed, status } = useAuthGuard({ requireAuth: true, redirectTo: "/login" });
+const { allowed, status } = useAuthGuard({
+  requireAuth: true,
+  redirectTo: "/login",
+});
 ```
 
 ### Permissions (RBAC)
+
 ```ts
 const { hasRole, roles } = usePermissions();
 ```
@@ -138,4 +501,3 @@ await signOut("/api/auth");
 - Ensure your app includes a `<SessionProvider>` at the root
 - CSRF errors: fetch the `/csrf` endpoint once before POSTing, and send `x-keyloom-csrf` header
 - OAuth flows navigate the browser to the provider; call from user-initiated events
-
