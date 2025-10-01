@@ -1,0 +1,180 @@
+---
+title: GitHub Provider
+description: Configure GitHub OAuth with Keyloom. Complete setup, scopes, callback URLs, troubleshooting, and security considerations.
+---
+
+# GitHub Provider
+
+Add GitHub OAuth to your Keyloom app. This guide covers GitHub OAuth app creation, configuration, and troubleshooting.
+
+## Prerequisites
+
+- GitHub account (personal or organization)
+- Keyloom app with `@keyloom/providers` installed
+- Public app URL for callback configuration
+
+## GitHub OAuth app setup
+
+1. **Navigate to GitHub Settings**
+   - Personal account: Settings → Developer settings → OAuth Apps
+   - Organization: Settings → Developer settings → OAuth Apps
+   - Click "New OAuth App"
+
+2. **Configure OAuth App**
+   - **Application name**: Your app name (e.g., "My App")
+   - **Homepage URL**: `https://yourapp.com` (your public app URL)
+   - **Authorization callback URL**: `https://yourapp.com/api/auth/oauth/github/callback`
+   - **Application description**: Optional description
+
+3. **Get credentials**
+   - After creation, note the **Client ID**
+   - Generate a **Client Secret** and store securely
+
+## Environment variables
+
+```ini title=".env.local"
+GITHUB_CLIENT_ID=Ov23liABC123DEF456
+GITHUB_CLIENT_SECRET=1234567890abcdef1234567890abcdef12345678
+NEXT_PUBLIC_APP_URL=https://yourapp.com
+```
+
+## Provider configuration
+
+```ts title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { github } from "@keyloom/providers";
+
+export default defineKeyloom({
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
+  providers: [
+    github({
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+      scopes: ["read:user", "user:email"],
+    }),
+  ],
+  // ... rest of config
+});
+```
+
+## Recommended scopes
+
+| Scope | Purpose | Required |
+| --- | --- | --- |
+| `read:user` | Read basic profile info (id, login, name, avatar) | Yes |
+| `user:email` | Read user's email addresses | Yes |
+| `read:org` | Read organization membership | Optional |
+| `repo` | Access repositories | Only if needed |
+
+**Minimal setup**: Use only `read:user` and `user:email` for basic authentication.
+
+## Sign-in UI example
+
+```tsx title="components/SignIn.tsx"
+export function SignInWithGitHub() {
+  return (
+    <a
+      href="/api/auth/oauth/github/start?callbackUrl=/dashboard"
+      className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded"
+    >
+      <GitHubIcon />
+      Continue with GitHub
+    </a>
+  );
+}
+```
+
+## User profile mapping
+
+GitHub returns this profile data:
+
+```json
+{
+  "id": 12345678,
+  "login": "username",
+  "name": "Full Name",
+  "email": "user@example.com",
+  "avatar_url": "https://avatars.githubusercontent.com/u/12345678"
+}
+```
+
+Keyloom maps it to:
+```ts
+{
+  id: profile.id.toString(),
+  email: profile.email,
+  name: profile.name || profile.login,
+  image: profile.avatar_url,
+}
+```
+
+## Callback URL patterns
+
+- Development: `http://localhost:3000/api/auth/oauth/github/callback`
+- Production: `https://yourapp.com/api/auth/oauth/github/callback`
+- Multiple environments: Add each callback URL in GitHub app settings
+
+## Error handling
+
+Common GitHub OAuth errors:
+
+- `redirect_uri_mismatch`: Callback URL doesn't match GitHub app settings exactly
+- `bad_verification_code`: Authorization code expired or invalid
+- `incorrect_client_credentials`: Client ID/secret mismatch
+
+```ts title="Error handling example"
+// In your error boundary or callback handler
+if (error?.code === "oauth_error" && error?.provider === "github") {
+  switch (error?.details?.error) {
+    case "redirect_uri_mismatch":
+      return "Callback URL configuration error. Check GitHub app settings.";
+    case "bad_verification_code":
+      return "Authorization expired. Please try signing in again.";
+    default:
+      return "GitHub sign-in failed. Please try again.";
+  }
+}
+```
+
+## Security considerations
+
+- **Client Secret**: Store in environment variables or secret manager; never commit to code
+- **Scopes**: Request minimal scopes needed; avoid `repo` unless required
+- **Callback URL**: Use HTTPS in production; ensure exact match with GitHub settings
+- **State parameter**: Keyloom handles CSRF protection automatically
+
+## Performance tips
+
+- GitHub OAuth is fast; typical flow takes 2-3 seconds
+- Cache user profile data after sign-in to avoid repeated API calls
+- Consider webhook integration for real-time profile updates
+
+## Troubleshooting
+
+**Redirect URI mismatch**
+- Verify callback URL exactly matches GitHub app settings
+- Check for trailing slashes, HTTP vs HTTPS, port numbers
+
+**Missing email**
+- User may have private email settings
+- Request `user:email` scope and handle null email gracefully
+
+**Organization access**
+- For organization-owned apps, ensure proper permissions
+- Users may need to grant organization access during OAuth flow
+
+**Development vs Production**
+- Use separate GitHub OAuth apps for different environments
+- Ensure `NEXT_PUBLIC_APP_URL` matches the environment
+
+## See also
+
+- Providers overview: [/docs/providers/overview](/docs/providers/overview)
+- Security: [/docs/security/overview](/docs/security/overview)
+- Installation: [/docs/getting-started/installation](/docs/getting-started/installation)
+
+## Next steps
+
+- Test the complete sign-in flow in development
+- Configure production GitHub OAuth app with HTTPS callback URL
+- Add error handling for GitHub-specific OAuth errors

@@ -1,0 +1,211 @@
+---
+title: Google Provider
+description: Configure Google OAuth with Keyloom. Complete Google Cloud Console setup, scopes, callback URLs, troubleshooting, and security.
+---
+
+# Google Provider
+
+Add Google OAuth to your Keyloom app using Google Cloud Console OAuth 2.0 client credentials.
+
+## Prerequisites
+
+- Google account with access to Google Cloud Console
+- Keyloom app with `@keyloom/providers` installed
+- Public app URL for callback configuration
+
+## Google Cloud Console setup
+
+1. **Create or select a project**
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Create a new project or select existing one
+
+2. **Enable Google+ API (if needed)**
+   - Navigate to APIs & Services → Library
+   - Search for "Google+ API" and enable it
+
+3. **Configure OAuth consent screen**
+   - Go to APIs & Services → OAuth consent screen
+   - Choose "External" for public apps
+   - Fill required fields:
+     - App name: Your application name
+     - User support email: Your email
+     - Developer contact information: Your email
+   - Add scopes: `openid`, `profile`, `email`
+   - Add test users (for development)
+
+4. **Create OAuth 2.0 credentials**
+   - Go to APIs & Services → Credentials
+   - Click "Create Credentials" → "OAuth 2.0 Client IDs"
+   - Application type: "Web application"
+   - Name: Your app name
+   - Authorized redirect URIs: `https://yourapp.com/api/auth/oauth/google/callback`
+
+5. **Get credentials**
+   - Note the **Client ID** and **Client Secret**
+
+## Environment variables
+
+```ini title=".env.local"
+GOOGLE_CLIENT_ID=123456789012-abcdefghijklmnopqrstuvwxyz123456.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-abcdefghijklmnopqrstuvwxyz123456
+NEXT_PUBLIC_APP_URL=https://yourapp.com
+```
+
+## Provider configuration
+
+```ts title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { google } from "@keyloom/providers";
+
+export default defineKeyloom({
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
+  providers: [
+    google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      scopes: ["openid", "profile", "email"],
+    }),
+  ],
+  // ... rest of config
+});
+```
+
+## Recommended scopes
+
+| Scope | Purpose | Required |
+| --- | --- | --- |
+| `openid` | OpenID Connect authentication | Yes |
+| `profile` | Basic profile info (name, picture) | Yes |
+| `email` | User's email address | Yes |
+| `https://www.googleapis.com/auth/drive.readonly` | Read Google Drive files | Optional |
+| `https://www.googleapis.com/auth/gmail.readonly` | Read Gmail | Optional |
+
+**Minimal setup**: Use `openid`, `profile`, and `email` for basic authentication.
+
+## Sign-in UI example
+
+```tsx title="components/SignIn.tsx"
+export function SignInWithGoogle() {
+  return (
+    <a
+      href="/api/auth/oauth/google/start?callbackUrl=/dashboard"
+      className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded shadow-sm"
+    >
+      <GoogleIcon />
+      Continue with Google
+    </a>
+  );
+}
+```
+
+## User profile mapping
+
+Google returns this profile data:
+
+```json
+{
+  "sub": "123456789012345678901",
+  "name": "Full Name",
+  "given_name": "First",
+  "family_name": "Last",
+  "email": "user@example.com",
+  "email_verified": true,
+  "picture": "https://lh3.googleusercontent.com/a/..."
+}
+```
+
+Keyloom maps it to:
+```ts
+{
+  id: profile.sub,
+  email: profile.email,
+  name: profile.name,
+  image: profile.picture,
+}
+```
+
+## Callback URL patterns
+
+- Development: `http://localhost:3000/api/auth/oauth/google/callback`
+- Production: `https://yourapp.com/api/auth/oauth/google/callback`
+- Multiple environments: Add each callback URL in Google Cloud Console
+
+## Error handling
+
+Common Google OAuth errors:
+
+- `redirect_uri_mismatch`: Callback URL not in authorized redirect URIs
+- `invalid_client`: Client ID/secret incorrect
+- `access_denied`: User denied permission
+- `invalid_grant`: Authorization code expired
+
+```ts title="Error handling example"
+// In your error boundary or callback handler
+if (error?.code === "oauth_error" && error?.provider === "google") {
+  switch (error?.details?.error) {
+    case "redirect_uri_mismatch":
+      return "Callback URL not authorized. Check Google Cloud Console settings.";
+    case "access_denied":
+      return "Google sign-in was cancelled.";
+    case "invalid_grant":
+      return "Authorization expired. Please try signing in again.";
+    default:
+      return "Google sign-in failed. Please try again.";
+  }
+}
+```
+
+## Security considerations
+
+- **Client Secret**: Store securely; never expose in client-side code
+- **Scopes**: Request minimal scopes; avoid sensitive APIs unless required
+- **Consent screen**: Configure properly for production apps
+- **Domain verification**: Verify domain ownership for production apps
+
+## OAuth consent screen states
+
+- **Testing**: Limited to test users; no verification required
+- **In production**: Requires Google verification for sensitive scopes
+- **Internal**: For Google Workspace domains only
+
+## Performance tips
+
+- Google OAuth is reliable and fast
+- Cache user profile data to avoid repeated API calls
+- Consider using Google's JavaScript SDK for client-side integration
+
+## Troubleshooting
+
+**Redirect URI mismatch**
+- Ensure exact match in Google Cloud Console authorized redirect URIs
+- Check protocol (HTTP vs HTTPS), domain, and path
+
+**App not verified warning**
+- Normal for apps in testing phase
+- Submit for verification if using sensitive scopes in production
+
+**Consent screen issues**
+- Ensure all required fields are filled
+- Add your domain to authorized domains if needed
+
+**Scopes not working**
+- Verify scopes are added to OAuth consent screen
+- Some scopes require app verification
+
+## Development vs Production
+
+- Use separate Google Cloud projects for different environments
+- Configure appropriate OAuth consent screen for each environment
+- Ensure callback URLs match the environment's base URL
+
+## See also
+
+- Providers overview: [/docs/providers/overview](/docs/providers/overview)
+- Security: [/docs/security/overview](/docs/security/overview)
+- Installation: [/docs/getting-started/installation](/docs/getting-started/installation)
+
+## Next steps
+
+- Test the complete sign-in flow in development
+- Configure OAuth consent screen for production
+- Submit for Google verification if using sensitive scopes
