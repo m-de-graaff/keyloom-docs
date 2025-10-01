@@ -1,10 +1,6 @@
-import { InlineTOC } from "fumadocs-ui/components/inline-toc";
-
 ---
-
 title: Adapters
 description: Use or implement adapters to connect Keyloom to your database. Prisma/Drizzle and SQL/NoSQL backends supported.
-
 ---
 
 # Adapters
@@ -153,145 +149,94 @@ export const memberships = pgTable(
 );
 ```
 
-## Adapter API
+## Adapter API (reference)
 
-<InlineTOC
-  items={[
-    {
-      title: "User Management",
-      url: "#user-management",
-      items: [
-        { title: "createUser", url: "#createuser" },
-        { title: "getUser", url: "#getuser" },
-        { title: "getUserByEmail", url: "#getuserbyemail" },
-        { title: "updateUser", url: "#updateuser" },
-      ],
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+<TypeTable
+  type={{
+    createUser: {
+      description: 'Create a new user with optional email and name',
+      type: '(data: { email?: string, name?: string }) => Promise<{ id: string, email?: string, name?: string }>',
+      parameters: '{ email?, name? }',
+      returns: 'Promise<{ id, email?, name? }>'
     },
-    {
-      title: "Account Management",
-      url: "#account-management",
-      items: [
-        { title: "linkAccount", url: "#linkaccount" },
-        { title: "getAccountByProvider", url: "#getaccountbyprovider" },
-      ],
+    getUser: {
+      description: 'Get a user by their ID',
+      type: '(id: string) => Promise<User | null>',
+      parameters: 'string',
+      returns: 'Promise<User | null>'
     },
-    {
-      title: "Session Management",
-      url: "#session-management",
-      items: [
-        { title: "createSession", url: "#createsession" },
-        { title: "getSession", url: "#getsession" },
-        { title: "deleteSession", url: "#deletesession" },
-      ],
+    getUserByEmail: {
+      description: 'Get a user by their email address',
+      type: '(email: string) => Promise<User | null>',
+      parameters: 'string',
+      returns: 'Promise<User | null>'
     },
-    {
-      title: "Token Management",
-      url: "#token-management",
-      items: [
-        { title: "createVerificationToken", url: "#createverificationtoken" },
-        { title: "useVerificationToken", url: "#useverificationtoken" },
-      ],
+    updateUser: {
+      description: 'Update user data',
+      type: '(id: string, data: Partial<User>) => Promise<User>',
+      parameters: 'string, Partial<User>',
+      returns: 'Promise<User>'
     },
-    {
-      title: "Organization & Audit",
-      url: "#organization-audit",
-      items: [
-        { title: "getMembership", url: "#getmembership" },
-        { title: "appendAudit", url: "#appendaudit" },
-      ],
+    linkAccount: {
+      description: 'Link an OAuth account to a user',
+      type: '(userId: string, account: Account) => Promise<void>',
+      parameters: 'string, Account',
+      returns: 'Promise<void>'
     },
-  ]}
+    getAccountByProvider: {
+      description: 'Get account by provider and provider account ID',
+      type: '(provider: string, providerAccountId: string) => Promise<Account | null>',
+      parameters: 'string, string',
+      returns: 'Promise<Account | null>'
+    },
+    createSession: {
+      description: 'Create a new user session',
+      type: '(session: Session) => Promise<Session>',
+      parameters: 'Session',
+      returns: 'Promise<Session>'
+    },
+    getSession: {
+      description: 'Get a session by ID',
+      type: '(id: string) => Promise<Session | null>',
+      parameters: 'string',
+      returns: 'Promise<Session | null>'
+    },
+    deleteSession: {
+      description: 'Delete a session',
+      type: '(id: string) => Promise<void>',
+      parameters: 'string',
+      returns: 'Promise<void>'
+    },
+    createVerificationToken: {
+      description: 'Create a verification token',
+      type: '(token: VerificationToken) => Promise<void>',
+      parameters: 'VerificationToken',
+      returns: 'Promise<void>'
+    },
+    useVerificationToken: {
+      description: 'Use and consume a verification token',
+      type: '(identifier: string, tokenHash: string) => Promise<boolean>',
+      parameters: 'string, string',
+      returns: 'Promise<boolean>'
+    },
+    getMembership: {
+      description: 'Get user membership in an organization',
+      type: '(userId: string, orgId: string) => Promise<{ role: string } | null>',
+      parameters: 'string, string',
+      returns: 'Promise<{ role } | null>'
+    },
+    appendAudit: {
+      description: 'Append an audit event',
+      type: '(event: AuditEvent) => Promise<void>',
+      parameters: '{ type, userId?, orgId?, meta? }',
+      returns: 'Promise<void>'
+    }
+  }}
 />
 
-### User Management
-
-#### createUser
-
-- **Params**: `{ email?, name? }`
-- **Returns**: `Promise<{ id, email?, name? }>`
-- Creates a new user in the database
-
-#### getUser
-
-- **Params**: `string` (user ID)
-- **Returns**: `Promise<User | null>`
-- Retrieves a user by their ID
-
-#### getUserByEmail
-
-- **Params**: `string` (email address)
-- **Returns**: `Promise<User | null>`
-- Retrieves a user by their email address
-
-#### updateUser
-
-- **Params**: `string` (user ID), `Partial<User>` (update data)
-- **Returns**: `Promise<User>`
-- Updates user information
-
-### Account Management
-
-#### linkAccount
-
-- **Params**: `string` (user ID), `Account` (account data)
-- **Returns**: `Promise<void>`
-- Links an OAuth account to a user
-
-#### getAccountByProvider
-
-- **Params**: `string` (provider), `string` (provider account ID)
-- **Returns**: `Promise<Account | null>`
-- Retrieves an account by provider and provider account ID
-
-### Session Management
-
-#### createSession
-
-- **Params**: `Session` (session data with userId and expiresAt)
-- **Returns**: `Promise<Session>`
-- Creates a new user session
-
-#### getSession
-
-- **Params**: `string` (session ID)
-- **Returns**: `Promise<Session | null>`
-- Retrieves a session by ID
-
-#### deleteSession
-
-- **Params**: `string` (session ID)
-- **Returns**: `Promise<void>`
-- Deletes a session
-
-### Token Management
-
-#### createVerificationToken
-
-- **Params**: `VerificationToken` (token data with identifier, tokenHash, expiresAt)
-- **Returns**: `Promise<void>`
-- Creates a verification token
-
-#### useVerificationToken
-
-- **Params**: `string` (identifier), `string` (token hash)
-- **Returns**: `Promise<boolean>`
-- Uses and removes a verification token, returns success status
-
-### Organization & Audit
-
-#### getMembership
-
-- **Params**: `string` (user ID), `string` (organization ID)
-- **Returns**: `Promise<{ role } | null>`
-- Retrieves user's membership role in an organization
-
-#### appendAudit
-
-- **Params**: `{ type, userId?, orgId?, meta? }` (audit event)
-- **Returns**: `Promise<void>`
-- Appends an audit event to the log
-
-> **Note**: Real interfaces include additional fields. See `@keyloom/*adapter*/readme` for exact signatures.
+Note: Real interfaces include additional fields. See `@keyloom/*adapter*/readme` for exact signatures.
 
 ## Runnable: custom adapter skeleton
 
