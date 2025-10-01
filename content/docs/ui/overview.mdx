@@ -1,235 +1,671 @@
 ---
-title: UI Integration
-description: Complete UI integration guide for Keyloom - server-side session reading, client components, authentication flows, and design patterns.
+title: UI Components
+description: Complete @keyloom/ui component library reference - authentication forms, organization management, primitives, theming, and customization.
 ---
 
-# UI Integration
+# @keyloom/ui
 
-Keyloom provides flexible UI integration options. Build your own authentication UI using server utilities, React hooks, and component patterns.
+Keyloom's comprehensive UI component library for authentication flows, organization management, and reusable primitives. Built with Tailwind CSS and Radix UI.
 
 ## Prerequisites
 
+- React 18+ or Next.js 13+
+- Tailwind CSS 3.4+
 - Keyloom handler configured at `/api/auth/[...keyloom]`
-- React components or Next.js pages
-- Optional: UI library (Tailwind CSS, Chakra UI, etc.)
 
-## Server-side session reading
+## Installation
 
-### Layout with session
+```bash
+pnpm add @keyloom/ui clsx lucide-react tailwindcss @radix-ui/react-dialog @radix-ui/react-dropdown-menu @radix-ui/react-checkbox @radix-ui/react-avatar
+```
 
-```tsx title="app/layout.tsx (Next.js App Router)"
-import { getServerSession } from "@keyloom/nextjs";
-import config from "@/keyloom.config";
-import { NavBar } from "@/components/NavBar";
+## Setup
 
-export default async function Layout({
+### 1. Tailwind configuration
+
+```js title="tailwind.config.cjs"
+const keyloom = require("@keyloom/ui/theme/tailwind-preset.cjs");
+
+module.exports = {
+  presets: [keyloom],
+  content: [
+    "./app/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./node_modules/@keyloom/ui/dist/**/*.{js,ts,jsx,tsx}",
+  ],
+};
+```
+
+### 2. CSS variables
+
+```css title="app/globals.css"
+@import "@keyloom/ui/theme/css-vars.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+```
+
+### 3. AuthUIProvider (optional)
+
+```tsx title="app/layout.tsx"
+import { AuthUIProvider } from "@keyloom/ui";
+
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getServerSession(config);
-
   return (
     <html>
       <body>
-        <NavBar user={session?.user} />
-        <main>{children}</main>
+        <AuthUIProvider>{children}</AuthUIProvider>
       </body>
     </html>
   );
 }
 ```
 
-### Protected page
+## Authentication Components
 
-```tsx title="app/dashboard/page.tsx"
-import { getServerSession } from "@keyloom/nextjs";
-import { redirect } from "next/navigation";
-import config from "@/keyloom.config";
+### SignInForm
 
-export default async function DashboardPage() {
-  const session = await getServerSession(config);
-
-  if (!session) {
-    redirect("/auth/signin");
-  }
-
-  return (
-    <div>
-      <h1>Welcome, {session.user.name}!</h1>
-      <p>Email: {session.user.email}</p>
-    </div>
-  );
-}
-```
-
-### API route with session
-
-```tsx title="app/api/profile/route.ts"
-import { getServerSession } from "@keyloom/nextjs";
-import config from "@/keyloom.config";
-
-export async function GET() {
-  const session = await getServerSession(config);
-
-  if (!session) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  return Response.json({
-    user: session.user,
-    sessionId: session.id,
-  });
-}
-```
-
-## Authentication UI components
-
-### Sign-in page
+Email/password sign-in form with validation and error handling.
 
 ```tsx title="app/auth/signin/page.tsx"
-import { SignInForm } from "@/components/SignInForm";
+import { SignInForm } from "@keyloom/ui/auth";
+import { Card } from "@keyloom/ui/components/card";
 
 export default function SignInPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="text-3xl font-bold text-center">
-            Sign in to your account
-          </h2>
-        </div>
-        <SignInForm />
-      </div>
+    <div className="min-h-screen grid place-items-center p-6">
+      <Card className="w-full max-w-md p-6">
+        <h1 className="text-2xl font-semibold mb-6">Welcome back</h1>
+        <SignInForm
+          redirectTo="/dashboard"
+          endpoint="/api/auth/login"
+          onSuccess={(res) => console.log("Signed in:", res)}
+        />
+      </Card>
     </div>
   );
 }
 ```
 
-### Sign-in form component
+**Props:**
 
-```tsx title="components/SignInForm.tsx"
-export function SignInForm() {
+- `redirectTo?: string` - Redirect URL after successful sign-in (default: "/")
+- `endpoint?: string` - API endpoint for sign-in (default: "/api/auth/login")
+- `onSuccess?: (res: any) => void` - Success callback
+
+### SignUpForm
+
+User registration form with email/password and validation.
+
+```tsx title="app/auth/signup/page.tsx"
+import { SignUpForm } from "@keyloom/ui/auth";
+import { Card } from "@keyloom/ui/components/card";
+
+export default function SignUpPage() {
   return (
-    <div className="space-y-4">
-      <a
-        href="/api/auth/oauth/github/start?callbackUrl=/dashboard"
-        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-900 hover:bg-gray-800"
-      >
-        Continue with GitHub
-      </a>
-
-      <a
-        href="/api/auth/oauth/google/start?callbackUrl=/dashboard"
-        className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-      >
-        Continue with Google
-      </a>
-
-      <a
-        href="/api/auth/oauth/microsoft/start?callbackUrl=/dashboard"
-        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-      >
-        Continue with Microsoft
-      </a>
+    <div className="min-h-screen grid place-items-center p-6">
+      <Card className="w-full max-w-md p-6">
+        <h1 className="text-2xl font-semibold mb-6">Create account</h1>
+        <SignUpForm redirectTo="/dashboard" endpoint="/api/auth/register" />
+      </Card>
     </div>
   );
 }
 ```
 
-### Navigation bar
+**Props:**
+
+- `redirectTo?: string` - Redirect URL after successful sign-up
+- `endpoint?: string` - API endpoint for registration
+- `onSuccess?: (res: any) => void` - Success callback
+
+### Providers
+
+OAuth provider buttons with automatic provider detection.
+
+```tsx title="components/AuthProviders.tsx"
+import { Providers } from "@keyloom/ui/auth";
+
+export function AuthProviders() {
+  return (
+    <Providers
+      callbackUrl="/dashboard"
+      providers={[
+        { id: "github", name: "GitHub" },
+        { id: "google", name: "Google" },
+        { id: "microsoft", name: "Microsoft" },
+      ]}
+    />
+  );
+}
+```
+
+**Props:**
+
+- `callbackUrl?: string` - Redirect URL after OAuth callback
+- `providers?: Provider[]` - Array of provider configurations
+
+### UserButton
+
+User profile dropdown with sign-out functionality.
 
 ```tsx title="components/NavBar.tsx"
-import type { User } from "@keyloom/core";
+import { UserButton } from "@keyloom/ui/auth";
 
-interface NavBarProps {
-  user?: User | null;
-}
-
-export function NavBar({ user }: NavBarProps) {
+export function NavBar() {
   return (
-    <nav className="bg-white shadow">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <h1 className="text-xl font-semibold">My App</h1>
-          </div>
-
-          <div className="flex items-center space-x-4">
-            {user ? (
-              <>
-                <span>Welcome, {user.name}</span>
-                <a
-                  href="/api/auth/signout?callbackUrl=/"
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  Sign out
-                </a>
-              </>
-            ) : (
-              <a
-                href="/auth/signin"
-                className="text-blue-600 hover:text-blue-800"
-              >
-                Sign in
-              </a>
-            )}
-          </div>
-        </div>
-      </div>
+    <nav className="flex justify-between items-center p-4">
+      <h1>My App</h1>
+      <UserButton />
     </nav>
   );
 }
 ```
 
-## Client-side components
+### MagicLinkForm
 
-### Profile component with hooks
+Passwordless authentication via email magic links.
 
-```tsx title="components/Profile.tsx"
-"use client";
+```tsx title="app/auth/magic/page.tsx"
+import { MagicLinkForm } from "@keyloom/ui/auth";
+import { Card } from "@keyloom/ui/components/card";
 
-import { useSession } from "@keyloom/react";
-
-export function Profile() {
-  const { data: session, status } = useSession();
-
-  if (status === "loading") {
-    return <div className="animate-pulse">Loading...</div>;
-  }
-
-  if (status === "unauthenticated") {
-    return (
-      <div className="text-center">
-        <p>Please sign in to view your profile</p>
-        <a href="/auth/signin" className="text-blue-600 hover:underline">
-          Sign in
-        </a>
-      </div>
-    );
-  }
-
+export default function MagicLinkPage() {
   return (
-    <div className="bg-white shadow rounded-lg p-6">
-      <div className="flex items-center space-x-4">
-        {session.user.image && (
-          <img
-            src={session.user.image}
-            alt="Profile"
-            className="w-16 h-16 rounded-full"
-          />
-        )}
-        <div>
-          <h2 className="text-xl font-semibold">{session.user.name}</h2>
-          <p className="text-gray-600">{session.user.email}</p>
-        </div>
-      </div>
+    <div className="min-h-screen grid place-items-center p-6">
+      <Card className="w-full max-w-md p-6">
+        <h1 className="text-2xl font-semibold mb-6">Sign in with email</h1>
+        <MagicLinkForm endpoint="/api/auth/magic-link" />
+      </Card>
     </div>
   );
 }
 ```
 
-### Organization switcher (RBAC)
+### TwoFactorSetup & TwoFactorVerify
+
+Two-factor authentication setup and verification components.
+
+```tsx title="app/auth/2fa/setup/page.tsx"
+import { TwoFactorSetup } from "@keyloom/ui/auth";
+
+export default function TwoFactorSetupPage() {
+  return (
+    <div className="min-h-screen grid place-items-center p-6">
+      <TwoFactorSetup
+        onComplete={() => (window.location.href = "/dashboard")}
+      />
+    </div>
+  );
+}
+```
+
+## Organization Components
+
+### OrgSwitcher
+
+Organization switcher dropdown for multi-tenant applications.
+
+```tsx title="components/OrgSwitcher.tsx"
+import { OrgSwitcher } from "@keyloom/ui/org";
+
+export function AppHeader() {
+  return (
+    <header className="flex justify-between items-center p-4">
+      <h1>My App</h1>
+      <div className="flex items-center gap-4">
+        <OrgSwitcher />
+        <UserButton />
+      </div>
+    </header>
+  );
+}
+```
+
+### MembersTable
+
+Data table for organization member management with roles and actions.
+
+```tsx title="app/org/members/page.tsx"
+import { MembersTable } from "@keyloom/ui/org";
+
+export default function MembersPage() {
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-semibold mb-6">Team Members</h1>
+      <MembersTable
+        orgId="org_123"
+        onInvite={() => console.log("Invite member")}
+        onRemove={(memberId) => console.log("Remove:", memberId)}
+      />
+    </div>
+  );
+}
+```
+
+### CreateOrgDialog
+
+Modal dialog for creating new organizations.
+
+```tsx title="components/CreateOrgButton.tsx"
+import { CreateOrgDialog } from "@keyloom/ui/org";
+import { Button } from "@keyloom/ui/components/button";
+
+export function CreateOrgButton() {
+  return (
+    <CreateOrgDialog
+      trigger={<Button>Create Organization</Button>}
+      onSuccess={(org) => console.log("Created:", org)}
+    />
+  );
+}
+```
+
+### InviteMemberDialog
+
+Modal dialog for inviting new team members.
+
+```tsx title="components/InviteMemberButton.tsx"
+import { InviteMemberDialog } from "@keyloom/ui/org";
+import { Button } from "@keyloom/ui/components/button";
+
+export function InviteMemberButton() {
+  return (
+    <InviteMemberDialog
+      trigger={<Button>Invite Member</Button>}
+      orgId="org_123"
+      onSuccess={(invitation) => console.log("Invited:", invitation)}
+    />
+  );
+}
+```
+
+## RBAC Components
+
+### RoleGate
+
+Conditional rendering based on user roles and permissions.
+
+```tsx title="components/AdminPanel.tsx"
+import { RoleGate } from "@keyloom/ui/rbac";
+
+export function AdminPanel() {
+  return (
+    <div>
+      <h2>Dashboard</h2>
+
+      <RoleGate roles={["admin", "owner"]}>
+        <div className="bg-red-50 p-4 rounded">
+          <h3>Admin Only Content</h3>
+          <p>This is only visible to admins and owners.</p>
+        </div>
+      </RoleGate>
+
+      <RoleGate permissions={["users:write"]}>
+        <button>Manage Users</button>
+      </RoleGate>
+    </div>
+  );
+}
+```
+
+**Props:**
+
+- `roles?: string[]` - Required roles for access
+- `permissions?: string[]` - Required permissions for access
+- `fallback?: React.ReactNode` - Content to show when access denied
+
+## Primitive Components
+
+### Button
+
+Styled button component with variants and sizes.
+
+```tsx title="components/ActionButtons.tsx"
+import { Button } from "@keyloom/ui/components/button";
+
+export function ActionButtons() {
+  return (
+    <div className="flex gap-2">
+      <Button variant="primary" size="md">
+        Primary Action
+      </Button>
+      <Button variant="outline" size="md">
+        Secondary
+      </Button>
+      <Button variant="danger" size="sm">
+        Delete
+      </Button>
+    </div>
+  );
+}
+```
+
+**Props:**
+
+- `variant?: 'default' | 'primary' | 'ghost' | 'outline' | 'danger'`
+- `size?: 'sm' | 'md' | 'lg'`
+
+### Card
+
+Container component with consistent styling.
+
+```tsx title="components/StatsCard.tsx"
+import { Card } from "@keyloom/ui/components/card";
+
+export function StatsCard({ title, value }: { title: string; value: string }) {
+  return (
+    <Card className="p-6">
+      <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
+      <p className="text-2xl font-bold">{value}</p>
+    </Card>
+  );
+}
+```
+
+### Input
+
+Form input component with validation states.
+
+```tsx title="components/ContactForm.tsx"
+import { Input } from "@keyloom/ui/components/input";
+import { Label } from "@keyloom/ui/components/label";
+
+export function ContactForm() {
+  return (
+    <form className="space-y-4">
+      <div>
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          type="email"
+          placeholder="Enter your email"
+          required
+        />
+      </div>
+      <div>
+        <Label htmlFor="message">Message</Label>
+        <Input id="message" as="textarea" placeholder="Your message" rows={4} />
+      </div>
+    </form>
+  );
+}
+```
+
+### Dialog
+
+Modal dialog component built on Radix UI.
+
+```tsx title="components/ConfirmDialog.tsx"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@keyloom/ui/components/dialog";
+import { Button } from "@keyloom/ui/components/button";
+
+export function ConfirmDialog({ onConfirm }: { onConfirm: () => void }) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="danger">Delete Account</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Are you sure?</DialogTitle>
+        </DialogHeader>
+        <p>This action cannot be undone.</p>
+        <div className="flex justify-end gap-2 mt-4">
+          <Button variant="outline">Cancel</Button>
+          <Button variant="danger" onClick={onConfirm}>
+            Delete
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+```
+
+## Theming and Customization
+
+### Design Tokens
+
+Access design tokens programmatically:
+
+```tsx title="components/CustomComponent.tsx"
+import { theme } from "@keyloom/ui";
+
+export function CustomComponent() {
+  return (
+    <div
+      style={{
+        backgroundColor: theme.colors.primary[500],
+        borderRadius: theme.radii.md,
+        padding: theme.spacing[4],
+      }}
+    >
+      Custom styled component
+    </div>
+  );
+}
+```
+
+### CSS Variables
+
+Use CSS variables for dynamic theming:
+
+```css title="components/custom.module.css"
+.custom-button {
+  background-color: var(--kl-primary);
+  color: var(--kl-primary-fg);
+  border-radius: var(--kl-radius);
+  box-shadow: var(--kl-shadow-sm);
+}
+
+.dark .custom-button {
+  /* Dark mode automatically handled by CSS variables */
+}
+```
+
+### Tailwind Classes
+
+Use Keyloom's Tailwind preset classes:
+
+```tsx title="components/ThemedCard.tsx"
+export function ThemedCard() {
+  return (
+    <div className="bg-background text-foreground border border-border rounded-lg p-6 shadow-sm">
+      <h3 className="text-primary font-semibold">Themed Card</h3>
+      <p className="text-muted-foreground">Using Keyloom design tokens</p>
+    </div>
+  );
+}
+```
+
+### Dark Mode
+
+Dark mode is handled automatically via CSS variables:
+
+```tsx title="components/ThemeToggle.tsx"
+"use client";
+
+import { useEffect, useState } from "react";
+import { Button } from "@keyloom/ui/components/button";
+
+export function ThemeToggle() {
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const isDarkMode = document.documentElement.classList.contains("dark");
+    setIsDark(isDarkMode);
+  }, []);
+
+  const toggleTheme = () => {
+    document.documentElement.classList.toggle("dark");
+    setIsDark(!isDark);
+  };
+
+  return (
+    <Button variant="ghost" onClick={toggleTheme}>
+      {isDark ? "☀️" : "🌙"}
+    </Button>
+  );
+}
+```
+
+## Advanced Usage
+
+### Complete Authentication Flow
+
+```tsx title="app/auth/page.tsx"
+import { SignInForm, SignUpForm, Providers } from "@keyloom/ui/auth";
+import { Card } from "@keyloom/ui/components/card";
+import { Button } from "@keyloom/ui/components/button";
+import { useState } from "react";
+
+export default function AuthPage() {
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
+
+  return (
+    <div className="min-h-screen grid place-items-center p-6">
+      <Card className="w-full max-w-md p-6 space-y-6">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold">
+            {mode === "signin" ? "Welcome back" : "Create account"}
+          </h1>
+        </div>
+
+        <Providers callbackUrl="/dashboard" />
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">
+              Or continue with
+            </span>
+          </div>
+        </div>
+
+        {mode === "signin" ? (
+          <SignInForm redirectTo="/dashboard" />
+        ) : (
+          <SignUpForm redirectTo="/dashboard" />
+        )}
+
+        <div className="text-center">
+          <Button
+            variant="ghost"
+            onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+          >
+            {mode === "signin"
+              ? "Don't have an account? Sign up"
+              : "Already have an account? Sign in"}
+          </Button>
+        </div>
+      </Card>
+    </div>
+  );
+}
+```
+
+### Organization Dashboard
+
+```tsx title="app/org/dashboard/page.tsx"
+import { OrgSwitcher, MembersTable, CreateOrgDialog } from "@keyloom/ui/org";
+import { RoleGate } from "@keyloom/ui/rbac";
+import { UserButton } from "@keyloom/ui/auth";
+import { Card } from "@keyloom/ui/components/card";
+import { Button } from "@keyloom/ui/components/button";
+
+export default function OrgDashboard() {
+  return (
+    <div className="min-h-screen bg-muted/50">
+      <header className="bg-background border-b px-6 py-4">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <h1 className="text-xl font-semibold">Dashboard</h1>
+            <OrgSwitcher />
+          </div>
+          <div className="flex items-center gap-2">
+            <RoleGate roles={["owner", "admin"]}>
+              <CreateOrgDialog
+                trigger={<Button size="sm">New Organization</Button>}
+              />
+            </RoleGate>
+            <UserButton />
+          </div>
+        </div>
+      </header>
+
+      <main className="p-6">
+        <div className="grid gap-6">
+          <Card className="p-6">
+            <h2 className="text-lg font-semibold mb-4">Team Members</h2>
+            <MembersTable orgId="current-org" />
+          </Card>
+        </div>
+      </main>
+    </div>
+  );
+}
+```
+
+## Performance Considerations
+
+- **Tree Shaking**: Import only the components you need
+- **Bundle Size**: Core components are lightweight (~15KB gzipped)
+- **SSR Compatible**: All components work with Next.js SSR/SSG
+- **Lazy Loading**: Use dynamic imports for large components
+
+## Accessibility
+
+- **ARIA Labels**: All interactive components include proper ARIA attributes
+- **Keyboard Navigation**: Full keyboard support for all components
+- **Screen Readers**: Semantic HTML and proper labeling
+- **Focus Management**: Logical focus order and visible focus indicators
+
+## Troubleshooting
+
+**Styles not applying**
+
+- Ensure Tailwind preset is configured correctly
+- Import CSS variables in your global CSS file
+- Check content paths include `@keyloom/ui` dist files
+
+**Components not rendering**
+
+- Verify all peer dependencies are installed
+- Check React version compatibility (18+)
+- Ensure proper import paths
+
+**TypeScript errors**
+
+- Update to latest TypeScript version (5.0+)
+- Check component prop types match expected interface
+- Verify proper generic type usage
+
+## See also
+
+- UI Patterns: [/docs/getting-started/ui-patterns](/docs/getting-started/ui-patterns)
+- React Hooks: [/docs/react/hooks](/docs/react/hooks)
+- Installation: [/docs/getting-started/installation](/docs/getting-started/installation)
+- RBAC: [/docs/core/rbac](/docs/core/rbac)
+
+## Next steps
+
+- Set up Tailwind configuration with Keyloom preset
+- Import CSS variables and configure theming
+- Build your authentication flow with provided components
+- Customize components to match your brand
 
 ```tsx title="components/OrgSwitcher.tsx"
 "use client";
