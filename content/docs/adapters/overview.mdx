@@ -151,88 +151,88 @@ export const memberships = pgTable(
 
 ## Adapter API (reference)
 
-import { TypeTable } from 'fumadocs-ui/components/type-table';
+import { TypeTable } from "fumadocs-ui/components/type-table";
 
 <TypeTable
   type={{
     createUser: {
-      description: 'Create a new user with optional email and name',
-      type: '(data: { email?: string, name?: string }) => Promise<{ id: string, email?: string, name?: string }>',
-      parameters: '{ email?, name? }',
-      returns: 'Promise<{ id, email?, name? }>'
+      description: "Create a new user with optional email and name",
+      type: "(data: { email?: string, name?: string }) => Promise<{ id: string, email?: string, name?: string }>",
+      parameters: "{ email?, name? }",
+      returns: "Promise<{ id, email?, name? }>",
     },
     getUser: {
-      description: 'Get a user by their ID',
-      type: '(id: string) => Promise<User | null>',
-      parameters: 'string',
-      returns: 'Promise<User | null>'
+      description: "Get a user by their ID",
+      type: "(id: string) => Promise<User | null>",
+      parameters: "string",
+      returns: "Promise<User | null>",
     },
     getUserByEmail: {
-      description: 'Get a user by their email address',
-      type: '(email: string) => Promise<User | null>',
-      parameters: 'string',
-      returns: 'Promise<User | null>'
+      description: "Get a user by their email address",
+      type: "(email: string) => Promise<User | null>",
+      parameters: "string",
+      returns: "Promise<User | null>",
     },
     updateUser: {
-      description: 'Update user data',
-      type: '(id: string, data: Partial<User>) => Promise<User>',
-      parameters: 'string, Partial<User>',
-      returns: 'Promise<User>'
+      description: "Update user data",
+      type: "(id: string, data: Partial<User>) => Promise<User>",
+      parameters: "string, Partial<User>",
+      returns: "Promise<User>",
     },
     linkAccount: {
-      description: 'Link an OAuth account to a user',
-      type: '(userId: string, account: Account) => Promise<void>',
-      parameters: 'string, Account',
-      returns: 'Promise<void>'
+      description: "Link an OAuth account to a user",
+      type: "(userId: string, account: Account) => Promise<void>",
+      parameters: "string, Account",
+      returns: "Promise<void>",
     },
     getAccountByProvider: {
-      description: 'Get account by provider and provider account ID',
-      type: '(provider: string, providerAccountId: string) => Promise<Account | null>',
-      parameters: 'string, string',
-      returns: 'Promise<Account | null>'
+      description: "Get account by provider and provider account ID",
+      type: "(provider: string, providerAccountId: string) => Promise<Account | null>",
+      parameters: "string, string",
+      returns: "Promise<Account | null>",
     },
     createSession: {
-      description: 'Create a new user session',
-      type: '(session: Session) => Promise<Session>',
-      parameters: 'Session',
-      returns: 'Promise<Session>'
+      description: "Create a new user session",
+      type: "(session: Session) => Promise<Session>",
+      parameters: "Session",
+      returns: "Promise<Session>",
     },
     getSession: {
-      description: 'Get a session by ID',
-      type: '(id: string) => Promise<Session | null>',
-      parameters: 'string',
-      returns: 'Promise<Session | null>'
+      description: "Get a session by ID",
+      type: "(id: string) => Promise<Session | null>",
+      parameters: "string",
+      returns: "Promise<Session | null>",
     },
     deleteSession: {
-      description: 'Delete a session',
-      type: '(id: string) => Promise<void>',
-      parameters: 'string',
-      returns: 'Promise<void>'
+      description: "Delete a session",
+      type: "(id: string) => Promise<void>",
+      parameters: "string",
+      returns: "Promise<void>",
     },
     createVerificationToken: {
-      description: 'Create a verification token',
-      type: '(token: VerificationToken) => Promise<void>',
-      parameters: 'VerificationToken',
-      returns: 'Promise<void>'
+      description: "Create a verification token",
+      type: "(token: VerificationToken) => Promise<void>",
+      parameters: "VerificationToken",
+      returns: "Promise<void>",
     },
     useVerificationToken: {
-      description: 'Use and consume a verification token',
-      type: '(identifier: string, tokenHash: string) => Promise<boolean>',
-      parameters: 'string, string',
-      returns: 'Promise<boolean>'
+      description: "Use and consume a verification token",
+      type: "(identifier: string, tokenHash: string) => Promise<boolean>",
+      parameters: "string, string",
+      returns: "Promise<boolean>",
     },
     getMembership: {
-      description: 'Get user membership in an organization',
-      type: '(userId: string, orgId: string) => Promise<{ role: string } | null>',
-      parameters: 'string, string',
-      returns: 'Promise<{ role } | null>'
+      description: "Get user membership in an organization",
+      type: "(userId: string, orgId: string) => Promise<{ role: string } | null>",
+      parameters: "string, string",
+      returns: "Promise<{ role } | null>",
     },
     appendAudit: {
-      description: 'Append an audit event',
-      type: '(event: AuditEvent) => Promise<void>',
-      parameters: '{ type, userId?, orgId?, meta? }',
-      returns: 'Promise<void>'
-    }
+      description: "Append an audit event",
+      type: "(event: AuditEvent) => Promise<void>",
+      parameters: "{ type, userId?, orgId?, meta? }",
+      returns: "Promise<void>",
+    },
   }}
 />
 
