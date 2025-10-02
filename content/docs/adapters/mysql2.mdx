@@ -1,0 +1,387 @@
+---
+title: MySQL2 Adapter
+description: Use MySQL with Keyloom via mysql2 driver. Complete setup, schema, migrations, performance optimization, and troubleshooting.
+---
+
+# MySQL2 Adapter
+
+Use MySQL database with Keyloom via the mysql2 driver for high-performance authentication data persistence.
+
+## Prerequisites
+
+- MySQL server running and accessible
+- mysql2 driver installed
+- Basic understanding of MySQL and SQL
+
+## Install
+
+```bash
+pnpm add @keyloom/adapters-mysql2 mysql2
+# or
+npm install @keyloom/adapters-mysql2 mysql2
+```
+
+## Database Connection
+
+```ts title="src/db/mysql.ts"
+import mysql from "mysql2/promise";
+
+// Create connection pool
+export const pool = mysql.createPool({
+  host: process.env.MYSQL_HOST || "localhost",
+  port: parseInt(process.env.MYSQL_PORT || "3306"),
+  user: process.env.MYSQL_USER || "root",
+  password: process.env.MYSQL_PASSWORD,
+  database: process.env.MYSQL_DATABASE || "keyloom",
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  acquireTimeout: 60000,
+  timeout: 60000,
+});
+```
+
+## Using the Adapter
+
+```ts title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { mysql2Adapter } from "@keyloom/adapters-mysql2";
+import { pool } from "@/src/db/mysql";
+
+export default defineKeyloom({
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
+  session: { strategy: "database", ttlMinutes: 30 },
+  adapter: mysql2Adapter(pool),
+  providers: [],
+  rbac: { enabled: true },
+  secrets: { authSecret: process.env.AUTH_SECRET! },
+});
+```
+
+## Configuration Options
+
+```ts
+mysql2Adapter(pool, {
+  tableNames?: {
+    users?: string;           // Default: "users"
+    accounts?: string;        // Default: "accounts"
+    sessions?: string;        // Default: "sessions"
+    verificationTokens?: string; // Default: "verification_tokens"
+    organizations?: string;   // Default: "organizations"
+    memberships?: string;     // Default: "memberships"
+    refreshTokens?: string;   // Default: "refresh_tokens"
+  };
+  enableQueryLogging?: boolean; // Default: false
+})
+```
+
+## Database Schema
+
+Create the required tables with this SQL schema:
+
+```sql title="schema.sql"
+-- Users table
+CREATE TABLE users (
+  id VARCHAR(191) PRIMARY KEY,
+  email VARCHAR(191) UNIQUE,
+  email_verified TIMESTAMP NULL,
+  name VARCHAR(191),
+  image TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  INDEX idx_users_email (email)
+);
+
+-- Accounts table
+CREATE TABLE accounts (
+  id VARCHAR(191) PRIMARY KEY,
+  user_id VARCHAR(191) NOT NULL,
+  type VARCHAR(50) NOT NULL,
+  provider VARCHAR(50) NOT NULL,
+  provider_account_id VARCHAR(191) NOT NULL,
+  refresh_token TEXT,
+  access_token TEXT,
+  expires_at BIGINT,
+  token_type VARCHAR(50),
+  scope TEXT,
+  id_token TEXT,
+  session_state TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_provider_account (provider, provider_account_id),
+  INDEX idx_accounts_user_id (user_id)
+);
+
+-- Sessions table
+CREATE TABLE sessions (
+  id VARCHAR(191) PRIMARY KEY,
+  session_token VARCHAR(191) UNIQUE NOT NULL,
+  user_id VARCHAR(191) NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_sessions_user_id (user_id),
+  INDEX idx_sessions_expires_at (expires_at)
+);
+
+-- Verification tokens table
+CREATE TABLE verification_tokens (
+  identifier VARCHAR(191) NOT NULL,
+  token VARCHAR(191) NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  
+  PRIMARY KEY (identifier, token),
+  INDEX idx_verification_tokens_expires_at (expires_at)
+);
+
+-- Organizations table (for RBAC)
+CREATE TABLE organizations (
+  id VARCHAR(191) PRIMARY KEY,
+  name VARCHAR(191) NOT NULL,
+  slug VARCHAR(191) UNIQUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  INDEX idx_organizations_slug (slug)
+);
+
+-- Memberships table (for RBAC)
+CREATE TABLE memberships (
+  id VARCHAR(191) PRIMARY KEY,
+  user_id VARCHAR(191) NOT NULL,
+  organization_id VARCHAR(191) NOT NULL,
+  role VARCHAR(50) NOT NULL DEFAULT 'member',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_user_organization (user_id, organization_id),
+  INDEX idx_memberships_organization_id (organization_id)
+);
+
+-- Refresh tokens table
+CREATE TABLE refresh_tokens (
+  id VARCHAR(191) PRIMARY KEY,
+  user_id VARCHAR(191) NOT NULL,
+  token VARCHAR(191) UNIQUE NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_refresh_tokens_user_id (user_id),
+  INDEX idx_refresh_tokens_expires_at (expires_at)
+);
+```
+
+## Environment Variables
+
+```ini title=".env.local"
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_USER=keyloom_user
+MYSQL_PASSWORD=your_secure_password
+MYSQL_DATABASE=keyloom
+AUTH_SECRET=your-auth-secret-here
+```
+
+## Connection Pool Configuration
+
+For production applications, optimize connection pooling:
+
+```ts title="src/db/mysql.ts"
+import mysql from "mysql2/promise";
+
+export const pool = mysql.createPool({
+  host: process.env.MYSQL_HOST,
+  port: parseInt(process.env.MYSQL_PORT || "3306"),
+  user: process.env.MYSQL_USER,
+  password: process.env.MYSQL_PASSWORD,
+  database: process.env.MYSQL_DATABASE,
+  
+  // Connection pool settings
+  waitForConnections: true,
+  connectionLimit: 20,          // Maximum connections
+  queueLimit: 0,               // No limit on queued requests
+  acquireTimeout: 60000,       // 60 seconds to get connection
+  timeout: 60000,              // 60 seconds query timeout
+  reconnect: true,             // Auto-reconnect
+  
+  // Performance settings
+  multipleStatements: false,   // Security: disable multiple statements
+  dateStrings: false,          // Return dates as Date objects
+  supportBigNumbers: true,     // Handle big numbers
+  bigNumberStrings: false,     // Return big numbers as numbers
+  
+  // SSL configuration (for production)
+  ssl: process.env.NODE_ENV === "production" ? {
+    rejectUnauthorized: true,
+  } : false,
+});
+
+// Graceful shutdown
+process.on("SIGINT", async () => {
+  await pool.end();
+  process.exit(0);
+});
+```
+
+## Migrations
+
+Create a migration system for schema updates:
+
+```ts title="src/db/migrations.ts"
+import { pool } from "./mysql";
+
+export async function runMigrations() {
+  const connection = await pool.getConnection();
+  
+  try {
+    // Create migrations table
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS migrations (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL UNIQUE,
+        executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    
+    // Add your migrations here
+    const migrations = [
+      {
+        name: "001_initial_schema",
+        sql: `-- Your initial schema SQL here`,
+      },
+      {
+        name: "002_add_refresh_tokens",
+        sql: `-- Add refresh tokens table`,
+      },
+    ];
+    
+    for (const migration of migrations) {
+      const [rows] = await connection.execute(
+        "SELECT COUNT(*) as count FROM migrations WHERE name = ?",
+        [migration.name]
+      );
+      
+      if ((rows as any)[0].count === 0) {
+        await connection.execute(migration.sql);
+        await connection.execute(
+          "INSERT INTO migrations (name) VALUES (?)",
+          [migration.name]
+        );
+        console.log(`Migration ${migration.name} executed`);
+      }
+    }
+  } finally {
+    connection.release();
+  }
+}
+```
+
+## Performance Optimization
+
+### 1. Indexing Strategy
+- Create indexes on frequently queried columns
+- Use composite indexes for multi-column queries
+- Monitor slow query log
+
+### 2. Connection Management
+- Use connection pooling
+- Monitor connection pool metrics
+- Implement proper error handling
+
+### 3. Query Optimization
+- Use prepared statements (automatically handled by mysql2)
+- Avoid SELECT * queries
+- Implement pagination for large result sets
+
+### 4. Caching
+- Implement query result caching
+- Use Redis for session caching
+- Cache frequently accessed user data
+
+## Troubleshooting
+
+**Connection refused**
+- Verify MySQL server is running
+- Check host, port, and credentials
+- Verify network connectivity
+
+**Too many connections**
+- Adjust connection pool limits
+- Monitor connection usage
+- Check for connection leaks
+
+**Slow queries**
+- Enable slow query log
+- Add appropriate indexes
+- Optimize query structure
+
+**Deadlocks**
+- Implement retry logic
+- Optimize transaction scope
+- Use consistent lock ordering
+
+## Security Considerations
+
+- Use SSL/TLS for connections in production
+- Implement proper user privileges (least privilege principle)
+- Regular security updates
+- Monitor access logs
+- Use parameterized queries (handled by adapter)
+- Secure database server configuration
+
+## High Availability Setup
+
+For production environments:
+
+### Master-Slave Replication
+```ts
+const masterPool = mysql.createPool({
+  host: process.env.MYSQL_MASTER_HOST,
+  // ... other config
+});
+
+const slavePool = mysql.createPool({
+  host: process.env.MYSQL_SLAVE_HOST,
+  // ... other config
+});
+
+// Use master for writes, slave for reads
+```
+
+### Load Balancing
+- Use MySQL Router or ProxySQL
+- Implement read/write splitting
+- Monitor replication lag
+
+## Backup and Recovery
+
+- Set up automated backups with mysqldump
+- Test backup restoration procedures
+- Consider point-in-time recovery
+- Document recovery procedures
+
+## Migration from Other Databases
+
+When migrating from other databases:
+
+1. **Schema Conversion**: Convert existing schema to MySQL format
+2. **Data Migration**: Use appropriate migration tools
+3. **Index Optimization**: Create MySQL-specific indexes
+4. **Testing**: Thoroughly test all authentication flows
+5. **Performance Tuning**: Optimize for MySQL-specific features
+
+## See also
+
+- [MySQL Documentation](https://dev.mysql.com/doc/)
+- [mysql2 Driver Documentation](https://github.com/sidorares/node-mysql2)
+- [Adapter Overview](/docs/adapters/overview)
+- [Core Configuration](/docs/core/config)

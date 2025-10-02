@@ -1,0 +1,177 @@
+---
+title: LinkedIn Provider
+description: Configure LinkedIn OAuth for Keyloom authentication - setup, scopes, and professional profile access.
+---
+
+# LinkedIn Provider
+
+Enable LinkedIn OAuth authentication in your Keyloom application for professional networking integration.
+
+## Prerequisites
+
+- LinkedIn app created at [LinkedIn Developer Portal](https://www.linkedin.com/developers/)
+- Keyloom handler configured at `/api/auth/[...keyloom]`
+
+## Setup
+
+### 1. Create LinkedIn App
+
+1. Go to [LinkedIn Developer Portal](https://www.linkedin.com/developers/)
+2. Click "Create App"
+3. Fill in required information:
+   - App name
+   - LinkedIn Page (create a company page if needed)
+   - App logo and description
+
+### 2. Configure OAuth Settings
+
+1. In your LinkedIn app, go to "Auth" tab
+2. Add redirect URL: `${YOUR_APP_URL}/api/auth/oauth/linkedin/callback`
+3. Request access to required scopes (see Available Scopes below)
+
+### 3. Get Credentials
+
+From your LinkedIn app's Auth tab:
+
+- **Client ID**: Your LinkedIn app's Client ID
+- **Client Secret**: Your LinkedIn app's Client Secret
+
+### 4. Environment Variables
+
+```ini title=".env.local"
+LINKEDIN_CLIENT_ID=your_linkedin_client_id
+LINKEDIN_CLIENT_SECRET=your_linkedin_client_secret
+```
+
+### 5. Configure Provider
+
+```ts title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { linkedin } from "@keyloom/providers";
+
+export default defineKeyloom({
+  providers: [
+    linkedin({
+      clientId: process.env.LINKEDIN_CLIENT_ID!,
+      clientSecret: process.env.LINKEDIN_CLIENT_SECRET!,
+      scopes: ["openid", "profile", "email"], // Optional: customize scopes
+    }),
+  ],
+  // ... other config
+});
+```
+
+## Configuration Options
+
+```ts
+linkedin({
+  clientId: string;
+  clientSecret: string;
+  scopes?: string[]; // Default: ["openid", "profile", "email"]
+})
+```
+
+## Available Scopes
+
+### Basic Scopes (No Review Required)
+- `openid` - OpenID Connect authentication
+- `profile` - Basic profile information
+- `email` - Email address
+
+### Advanced Scopes (Require Review)
+- `w_member_social` - Share content on behalf of user
+- `r_organization_social` - Read organization content
+- `rw_organization_admin` - Manage organization pages
+
+**Recommended**: Start with basic scopes for authentication purposes.
+
+## User Profile
+
+LinkedIn returns the following user information:
+
+```ts
+{
+  id: string;           // LinkedIn member ID
+  email: string;        // User's email address
+  name: string;         // Full name
+  image?: string;       // Profile picture URL
+  // Additional LinkedIn profile data available
+}
+```
+
+## Usage Example
+
+```tsx title="components/LinkedInSignIn.tsx"
+import { useLogin } from "@keyloom/react";
+
+export function LinkedInSignIn() {
+  const { login, loading } = useLogin();
+
+  const handleLinkedInLogin = async () => {
+    await login({
+      provider: "linkedin",
+      callbackUrl: "/dashboard",
+    });
+  };
+
+  return (
+    <button onClick={handleLinkedInLogin} disabled={loading}>
+      {loading ? "Connecting..." : "Sign in with LinkedIn"}
+    </button>
+  );
+}
+```
+
+## Professional Use Cases
+
+LinkedIn integration is ideal for:
+
+- **B2B Applications**: Professional networking features
+- **Recruitment Platforms**: Access to professional profiles
+- **Business Tools**: Company page management
+- **Professional Services**: Industry-specific applications
+
+## App Review Process
+
+For advanced scopes, LinkedIn requires app review:
+
+1. Complete app verification process
+2. Provide detailed use case documentation
+3. Include privacy policy and terms of service
+4. Demonstrate compliance with LinkedIn API Terms
+
+## Troubleshooting
+
+**Invalid redirect URI**
+- Ensure redirect URI matches exactly in LinkedIn app settings
+- Use HTTPS for production applications
+
+**Scope access denied**
+- Verify requested scopes are approved for your app
+- Check if scopes require LinkedIn review process
+
+**Rate limiting**
+- LinkedIn has rate limits on API calls
+- Implement proper retry logic with exponential backoff
+
+## Security Considerations
+
+- Store client secret securely (environment variables)
+- Use HTTPS in production
+- Follow LinkedIn's API Terms of Use
+- Respect user privacy and data usage policies
+- Regularly audit app permissions
+
+## Migration Notes
+
+LinkedIn has deprecated some older API versions:
+
+- Use Sign In with LinkedIn v2 API
+- Migrate from v1 profile fields to v2 format
+- Update scope names to current standards
+
+## See also
+
+- [LinkedIn OAuth Documentation](https://docs.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow)
+- [Provider Overview](/docs/providers/overview)
+- [React Hooks](/docs/react/hooks)

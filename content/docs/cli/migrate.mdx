@@ -1,0 +1,410 @@
+---
+title: keyloom migrate
+description: Manage database migrations for Keyloom authentication tables with rollback support and migration history tracking.
+---
+
+# keyloom migrate
+
+Manage database migrations for Keyloom authentication tables with rollback support, migration history tracking, and cross-adapter compatibility.
+
+## Overview
+
+The `keyloom migrate` command provides a unified interface for managing database migrations across different adapters. It handles schema changes, data migrations, and maintains migration history for reliable database evolution.
+
+## Usage
+
+```bash
+# Run pending migrations
+npx keyloom migrate up
+
+# Rollback last migration
+npx keyloom migrate down
+
+# Check migration status
+npx keyloom migrate status
+
+# Create new migration
+npx keyloom migrate create <name>
+```
+
+## Commands
+
+### `migrate up`
+
+Apply all pending migrations to the database.
+
+```bash
+npx keyloom migrate up
+
+# Apply specific number of migrations
+npx keyloom migrate up --steps 2
+
+# Dry run (show what would be executed)
+npx keyloom migrate up --dry-run
+```
+
+**Flags:**
+- `--steps <number>` - Apply only specified number of migrations
+- `--dry-run` - Show migration SQL without executing
+- `--force` - Skip confirmation prompts
+- `--verbose` - Show detailed execution logs
+
+### `migrate down`
+
+Rollback migrations from the database.
+
+```bash
+npx keyloom migrate down
+
+# Rollback specific number of migrations
+npx keyloom migrate down --steps 2
+
+# Rollback to specific migration
+npx keyloom migrate down --to 20240101000000
+```
+
+**Flags:**
+- `--steps <number>` - Rollback specified number of migrations
+- `--to <migration>` - Rollback to specific migration ID
+- `--dry-run` - Show rollback SQL without executing
+- `--force` - Skip confirmation prompts
+
+### `migrate status`
+
+Show current migration status and history.
+
+```bash
+npx keyloom migrate status
+
+# Show detailed migration info
+npx keyloom migrate status --verbose
+```
+
+**Sample Output:**
+```text
+Migration Status
+
+Database: postgresql://localhost:5432/myapp
+Adapter: Prisma
+
+Applied Migrations:
+✓ 20240101000000_initial_schema
+✓ 20240102000000_add_rbac
+✓ 20240103000000_add_refresh_tokens
+
+Pending Migrations:
+○ 20240104000000_add_audit_log
+○ 20240105000000_add_mfa_support
+
+Status: 2 pending migrations
+```
+
+### `migrate create`
+
+Create a new migration file.
+
+```bash
+npx keyloom migrate create add_user_preferences
+
+# Create with specific adapter
+npx keyloom migrate create add_user_preferences --adapter prisma
+```
+
+**Generated Files:**
+```text
+migrations/
+└── 20240106120000_add_user_preferences/
+    ├── migration.sql
+    └── rollback.sql
+```
+
+## Migration File Structure
+
+### Prisma Migrations
+
+```text
+prisma/migrations/
+└── 20240101000000_initial_schema/
+    └── migration.sql
+```
+
+```sql title="migration.sql"
+-- CreateTable
+CREATE TABLE "users" (
+    "id" TEXT NOT NULL,
+    "email" TEXT,
+    "name" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
+```
+
+### Drizzle Migrations
+
+```text
+drizzle/migrations/
+├── 0001_initial_schema.sql
+└── meta/
+    └── _journal.json
+```
+
+```sql title="0001_initial_schema.sql"
+CREATE TABLE IF NOT EXISTS "users" (
+	"id" varchar(191) PRIMARY KEY NOT NULL,
+	"email" varchar(191),
+	"name" varchar(191),
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "users_email_idx" ON "users" ("email");
+```
+
+### Raw SQL Migrations
+
+```text
+migrations/
+├── 001_initial_schema.up.sql
+├── 001_initial_schema.down.sql
+├── 002_add_rbac.up.sql
+└── 002_add_rbac.down.sql
+```
+
+```sql title="001_initial_schema.up.sql"
+-- Up migration
+CREATE TABLE users (
+  id VARCHAR(191) PRIMARY KEY,
+  email VARCHAR(191) UNIQUE,
+  name VARCHAR(191),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+```sql title="001_initial_schema.down.sql"
+-- Down migration
+DROP TABLE IF EXISTS users;
+```
+
+## Migration Execution Process
+
+### 1. Pre-migration Checks
+
+```text
+🔍 Pre-migration checks...
+✓ Database connection successful
+✓ Migration table exists
+✓ No conflicting migrations
+✓ Backup recommended for production
+```
+
+### 2. Migration Execution
+
+```text
+📝 Applying migrations...
+
+→ 20240104000000_add_audit_log
+  ✓ CREATE TABLE audit_events
+  ✓ CREATE INDEX idx_audit_events_user_id
+  ✓ Migration completed in 0.12s
+
+→ 20240105000000_add_mfa_support  
+  ✓ ALTER TABLE users ADD COLUMN mfa_enabled
+  ✓ CREATE TABLE mfa_secrets
+  ✓ Migration completed in 0.08s
+
+✅ Applied 2 migrations successfully
+```
+
+### 3. Post-migration Validation
+
+```text
+🔍 Post-migration validation...
+✓ All tables created successfully
+✓ Indexes applied correctly
+✓ Foreign key constraints valid
+✓ Migration history updated
+```
+
+## Rollback Process
+
+### Safe Rollback
+
+```bash
+npx keyloom migrate down --steps 1
+```
+
+```text
+⚠️  Rolling back migration: 20240105000000_add_mfa_support
+
+This will:
+- DROP TABLE mfa_secrets
+- DROP COLUMN users.mfa_enabled
+
+? Continue with rollback? (y/N) › y
+
+📝 Rolling back...
+✓ Rollback completed successfully
+```
+
+### Rollback with Data Loss Warning
+
+```text
+⚠️  WARNING: This rollback may cause data loss!
+
+The following data will be permanently deleted:
+- Table: mfa_secrets (contains 150 records)
+- Column: users.mfa_enabled (contains data for 45 users)
+
+? Type 'CONFIRM' to proceed: › CONFIRM
+```
+
+## Adapter-Specific Features
+
+### Prisma Integration
+
+```bash
+# Use Prisma's migration system
+npx keyloom migrate up
+# Equivalent to: npx prisma db push
+```
+
+### Drizzle Integration
+
+```bash
+# Use Drizzle Kit for migrations
+npx keyloom migrate up
+# Equivalent to: npx drizzle-kit push
+```
+
+### Raw SQL Support
+
+```bash
+# Execute raw SQL migrations
+npx keyloom migrate up --adapter postgres
+```
+
+## Production Considerations
+
+### Backup Before Migration
+
+```bash
+# Automatic backup prompt
+npx keyloom migrate up
+```
+
+```text
+⚠️  Production database detected!
+
+Recommended: Create backup before migration
+? Create backup now? (Y/n) › Y
+
+📦 Creating backup...
+✓ Backup saved: backup_20240106_120000.sql
+```
+
+### Zero-Downtime Migrations
+
+```bash
+# Check for breaking changes
+npx keyloom migrate up --check-breaking
+
+# Apply non-breaking migrations first
+npx keyloom migrate up --safe-only
+```
+
+### Migration Locking
+
+```text
+🔒 Acquiring migration lock...
+✓ Lock acquired (expires in 30 minutes)
+
+📝 Applying migrations...
+✓ Migrations completed
+✓ Lock released
+```
+
+## Troubleshooting
+
+**Migration failed mid-execution**
+```text
+Error: Migration failed at step 3/5
+```
+- Check database logs for specific error
+- Verify database permissions
+- Use `--dry-run` to test migration SQL
+- Consider manual intervention for partial state
+
+**Migration lock timeout**
+```text
+Error: Could not acquire migration lock
+```
+- Another migration process may be running
+- Check for stale locks: `keyloom migrate unlock`
+- Wait for current migration to complete
+
+**Rollback not possible**
+```text
+Error: Cannot rollback - no down migration found
+```
+- Not all migrations support rollback
+- Create manual rollback script
+- Restore from backup if necessary
+
+**Schema drift detected**
+```text
+Warning: Database schema differs from migration history
+```
+- Run `keyloom migrate status` to check state
+- Use `keyloom migrate reset` to rebuild from scratch
+- Manually align schema with migration files
+
+## Advanced Usage
+
+### Custom Migration Directory
+
+```bash
+npx keyloom migrate up --migrations-dir ./custom/migrations
+```
+
+### Multiple Environments
+
+```bash
+# Development
+npx keyloom migrate up --env development
+
+# Staging
+npx keyloom migrate up --env staging
+
+# Production
+npx keyloom migrate up --env production --require-backup
+```
+
+### Migration Hooks
+
+```ts title="keyloom.config.ts"
+export default defineKeyloom({
+  migrations: {
+    hooks: {
+      beforeMigration: async (migration) => {
+        console.log(`Starting migration: ${migration.name}`);
+      },
+      afterMigration: async (migration) => {
+        console.log(`Completed migration: ${migration.name}`);
+      },
+    },
+  },
+});
+```
+
+## See also
+
+- [CLI Overview](/docs/cli/overview)
+- [Generate Command](/docs/cli/generate)
+- [Adapters Overview](/docs/adapters/overview)
+- [Database Configuration](/docs/core/config)

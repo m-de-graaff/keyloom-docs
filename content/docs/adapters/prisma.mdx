@@ -147,13 +147,13 @@ export const prisma = new PrismaClient();
 
 ```ts title="keyloom.config.ts"
 import { defineKeyloom } from "@keyloom/core";
-import { prismaAdapter } from "@keyloom/adapter-prisma";
+import { PrismaAdapter } from "@keyloom/adapters";
 import { prisma } from "@/lib/prisma";
 
 export default defineKeyloom({
   baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
   session: { strategy: "database", ttlMinutes: 30 },
-  adapter: prismaAdapter(prisma),
+  adapter: PrismaAdapter(prisma),
   providers: [],
   rbac: { enabled: true, roles: { member: { permissions: ["read"] } } },
   secrets: { authSecret: process.env.AUTH_SECRET! },

@@ -1,0 +1,253 @@
+---
+title: GitLab Provider
+description: Configure GitLab OAuth for Keyloom authentication - setup, scopes, and DevOps platform integration for GitLab.com and self-hosted instances.
+---
+
+# GitLab Provider
+
+Enable GitLab OAuth authentication in your Keyloom application for DevOps platform integration with both GitLab.com and self-hosted GitLab instances.
+
+## Prerequisites
+
+- GitLab application created (GitLab.com or self-hosted instance)
+- Keyloom handler configured at `/api/auth/[...keyloom]`
+
+## Setup
+
+### 1. Create GitLab Application
+
+#### For GitLab.com:
+1. Go to [GitLab.com](https://gitlab.com/)
+2. Navigate to **User Settings** → **Applications**
+3. Click **New Application**
+
+#### For Self-hosted GitLab:
+1. Go to your GitLab instance
+2. Navigate to **User Settings** → **Applications** (or **Admin Area** → **Applications** for instance-wide apps)
+3. Click **New Application**
+
+### 2. Configure Application
+
+Fill in the application details:
+- **Name**: Your application name
+- **Redirect URI**: `${YOUR_APP_URL}/api/auth/oauth/gitlab/callback`
+- **Scopes**: Select appropriate scopes (see Available Scopes below)
+- **Confidential**: Check this box for web applications
+
+### 3. Get Credentials
+
+After creating the application, note:
+- **Application ID**: Your GitLab application ID
+- **Secret**: Your GitLab application secret
+- **GitLab URL**: For self-hosted instances (e.g., `https://gitlab.example.com`)
+
+### 4. Environment Variables
+
+```ini title=".env.local"
+GITLAB_CLIENT_ID=your_gitlab_application_id
+GITLAB_CLIENT_SECRET=your_gitlab_application_secret
+# For self-hosted GitLab instances:
+GITLAB_BASE_URL=https://your-gitlab-instance.com
+```
+
+### 5. Configure Provider
+
+#### For GitLab.com:
+```ts title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { gitlab } from "@keyloom/providers";
+
+export default defineKeyloom({
+  providers: [
+    gitlab({
+      clientId: process.env.GITLAB_CLIENT_ID!,
+      clientSecret: process.env.GITLAB_CLIENT_SECRET!,
+    }),
+  ],
+  // ... other config
+});
+```
+
+#### For Self-hosted GitLab:
+```ts title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { gitlab } from "@keyloom/providers";
+
+export default defineKeyloom({
+  providers: [
+    gitlab({
+      clientId: process.env.GITLAB_CLIENT_ID!,
+      clientSecret: process.env.GITLAB_CLIENT_SECRET!,
+      baseUrl: process.env.GITLAB_BASE_URL!, // e.g., "https://gitlab.example.com"
+    }),
+  ],
+  // ... other config
+});
+```
+
+## Configuration Options
+
+```ts
+gitlab({
+  clientId: string;
+  clientSecret: string;
+  baseUrl?: string; // For self-hosted instances, defaults to "https://gitlab.com"
+  scopes?: string[]; // Default: ["read_user"]
+})
+```
+
+## Available Scopes
+
+GitLab provides comprehensive scopes for different functionalities:
+
+### User Scopes
+- `read_user` - Read user profile information
+- `read_user_email` - Read user email addresses
+- `profile` - Read user profile (OpenID Connect)
+- `email` - Read user email (OpenID Connect)
+- `openid` - OpenID Connect authentication
+
+### Repository Scopes
+- `read_repository` - Read repository content
+- `write_repository` - Write to repositories
+- `read_registry` - Read container registry
+- `write_registry` - Write to container registry
+
+### API Scopes
+- `api` - Full API access (use with caution)
+- `read_api` - Read-only API access
+- `sudo` - Admin-level access (requires admin privileges)
+
+### CI/CD Scopes
+- `read_runner` - Read CI/CD runner information
+- `manage_runner` - Manage CI/CD runners
+
+**Default Scope**: `read_user`
+
+**Recommended**: Start with minimal scopes (`read_user`) and add more as needed.
+
+## User Profile
+
+GitLab returns the following user information:
+
+```ts
+{
+  id: string;           // GitLab user ID
+  name: string | null;  // Full name
+  email: string | null; // Email address (if read_user_email scope granted)
+  image: string | null; // Avatar URL
+  // Raw GitLab data available in profile
+}
+```
+
+## Usage Example
+
+```tsx title="components/GitLabSignIn.tsx"
+import { useLogin } from "@keyloom/react";
+
+export function GitLabSignIn() {
+  const { login, loading } = useLogin();
+
+  const handleGitLabLogin = async () => {
+    await login({
+      provider: "gitlab",
+      callbackUrl: "/dashboard",
+    });
+  };
+
+  return (
+    <button onClick={handleGitLabLogin} disabled={loading}>
+      {loading ? "Connecting..." : "Sign in with GitLab"}
+    </button>
+  );
+}
+```
+
+## DevOps Integration Use Cases
+
+GitLab integration is perfect for:
+
+- **Developer Tools**: Build tools for developers
+- **CI/CD Integration**: Integrate with GitLab CI/CD pipelines
+- **Project Management**: Access GitLab projects and issues
+- **Code Review**: Build code review tools
+- **Repository Management**: Manage GitLab repositories
+- **Team Collaboration**: Connect development teams
+- **Analytics**: Analyze development metrics
+
+## Self-hosted GitLab Benefits
+
+- **Data Control**: Complete control over your GitLab instance
+- **Customization**: Extensive customization options
+- **Compliance**: Meet specific regulatory requirements
+- **Integration**: Deep integration with existing infrastructure
+- **Security**: Enhanced security and access controls
+
+## Troubleshooting
+
+**Connection refused (self-hosted)**
+- Verify GitLab base URL is correct and accessible
+- Check network connectivity between your app and GitLab
+- Ensure GitLab instance is running and healthy
+
+**Invalid redirect URI**
+- Ensure redirect URI matches exactly in GitLab application settings
+- Check protocol (http vs https) and domain
+- Verify no trailing slashes unless specified
+
+**Scope access denied**
+- Check if requested scopes are appropriate for your use case
+- Some scopes require admin privileges
+- Verify user has permissions for requested scopes
+
+**SSL certificate errors (self-hosted)**
+- Ensure proper SSL certificate configuration
+- Check certificate chain and validity
+- Consider certificate authority trust issues
+
+## Security Considerations
+
+- Store client secret securely (environment variables)
+- Use HTTPS in production
+- Follow GitLab's Terms of Service
+- Implement proper token refresh logic
+- Respect user privacy and data usage policies
+- Monitor for suspicious OAuth activity
+- Use appropriate scopes for your use case
+- Regular security updates for self-hosted instances
+
+## GitLab API Best Practices
+
+- **Token Management**: Implement proper access token refresh
+- **Rate Limiting**: Respect API rate limits and implement backoff
+- **Caching**: Cache API responses to reduce API calls
+- **Error Handling**: Handle API errors gracefully
+- **Pagination**: Handle paginated responses properly
+- **Webhooks**: Use GitLab webhooks for real-time updates
+
+## Enterprise Features
+
+GitLab Enterprise offers additional features:
+
+- **SAML/LDAP Integration**: Enterprise authentication
+- **Advanced Security**: Security scanning and compliance
+- **Geo Replication**: Multi-region deployment
+- **Advanced CI/CD**: Enhanced pipeline features
+- **Support**: Enterprise support options
+
+## Migration Considerations
+
+When migrating to GitLab OAuth:
+
+- **Scope Mapping**: Map existing permissions to GitLab scopes
+- **User Migration**: Plan user account migration strategy
+- **API Changes**: Update API calls to GitLab API format
+- **Webhook Updates**: Update webhook configurations
+- **Testing**: Thoroughly test OAuth flow
+
+## See also
+
+- [GitLab OAuth Documentation](https://docs.gitlab.com/ee/api/oauth2.html)
+- [GitLab API Documentation](https://docs.gitlab.com/ee/api/)
+- [Provider Overview](/docs/providers/overview)
+- [React Hooks](/docs/react/hooks)

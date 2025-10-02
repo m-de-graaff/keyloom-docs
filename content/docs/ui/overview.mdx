@@ -166,59 +166,143 @@ export function NavBar() {
 }
 ```
 
-### MagicLinkForm
+### ForgotPasswordForm
 
-Passwordless authentication via email magic links.
+Password reset request form for users who forgot their password.
 
-```tsx title="app/auth/magic/page.tsx"
-import { MagicLinkForm } from "@keyloom/ui/auth";
+```tsx title="app/auth/forgot-password/page.tsx"
+import { ForgotPasswordForm } from "@keyloom/ui/auth";
 import { Card } from "@keyloom/ui/components/card";
 
-export default function MagicLinkPage() {
+export default function ForgotPasswordPage() {
   return (
     <div className="min-h-screen grid place-items-center p-6">
       <Card className="w-full max-w-md p-6">
-        <h1 className="text-2xl font-semibold mb-6">Sign in with email</h1>
-        <MagicLinkForm endpoint="/api/auth/magic-link" />
+        <h1 className="text-2xl font-semibold mb-6">Reset your password</h1>
+        <ForgotPasswordForm endpoint="/api/auth/forgot-password" />
       </Card>
     </div>
   );
 }
 ```
 
-### TwoFactorSetup & TwoFactorVerify
+### ResetPasswordForm
 
-Two-factor authentication setup and verification components.
+Password reset form for users with a valid reset token.
 
-```tsx title="app/auth/2fa/setup/page.tsx"
-import { TwoFactorSetup } from "@keyloom/ui/auth";
+```tsx title="app/auth/reset-password/page.tsx"
+import { ResetPasswordForm } from "@keyloom/ui/auth";
+import { Card } from "@keyloom/ui/components/card";
 
-export default function TwoFactorSetupPage() {
+export default function ResetPasswordPage() {
   return (
     <div className="min-h-screen grid place-items-center p-6">
-      <TwoFactorSetup
-        onComplete={() => (window.location.href = "/dashboard")}
-      />
+      <Card className="w-full max-w-md p-6">
+        <h1 className="text-2xl font-semibold mb-6">Set new password</h1>
+        <ResetPasswordForm endpoint="/api/auth/reset-password" />
+      </Card>
     </div>
   );
 }
 ```
 
+### EmailVerificationForm
+
+Email verification form for confirming user email addresses.
+
+```tsx title="app/auth/verify-email/page.tsx"
+import { EmailVerificationForm } from "@keyloom/ui/auth";
+import { Card } from "@keyloom/ui/components/card";
+
+export default function VerifyEmailPage() {
+  return (
+    <div className="min-h-screen grid place-items-center p-6">
+      <Card className="w-full max-w-md p-6">
+        <h1 className="text-2xl font-semibold mb-6">Verify your email</h1>
+        <EmailVerificationForm endpoint="/api/auth/verify-email" />
+      </Card>
+    </div>
+  );
+}
+```
+
+### AuthLayout Components
+
+Pre-built layout components for authentication pages with consistent styling.
+
+```tsx title="app/(auth)/layout.tsx"
+import { AuthLayout } from "@keyloom/ui/auth";
+
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthLayout
+      title="Welcome to My App"
+      subtitle="Secure authentication platform"
+    >
+      {children}
+    </AuthLayout>
+  );
+}
+```
+
+**Available Layout Components:**
+- `AuthLayout` - General authentication layout
+- `SignInLayout` - Optimized for sign-in pages
+- `SignUpLayout` - Optimized for registration pages
+- `ForgotPasswordLayout` - For password reset flows
+- `ResetPasswordLayout` - For password reset forms
+- `VerifyEmailLayout` - For email verification
+
+### RedirectToSignIn & Authentication Guards
+
+Components and utilities for protecting routes and redirecting unauthenticated users.
+
+```tsx title="components/ProtectedPage.tsx"
+import { RedirectToSignIn, withAuth } from "@keyloom/ui/auth";
+import { useSession } from "@keyloom/react";
+
+function ProtectedContent() {
+  return <div>This content is protected</div>;
+}
+
+// Option 1: Using RedirectToSignIn component
+export function ProtectedPage() {
+  const { data: session, status } = useSession();
+
+  if (status === "loading") return <div>Loading...</div>;
+  if (!session) return <RedirectToSignIn />;
+
+  return <ProtectedContent />;
+}
+
+// Option 2: Using withAuth HOC
+export default withAuth(ProtectedContent);
+
+// Option 3: Using useRequireAuth hook
+import { useRequireAuth } from "@keyloom/ui/auth";
+
+export function AnotherProtectedPage() {
+  useRequireAuth(); // Automatically redirects if not authenticated
+
+  return <ProtectedContent />;
+}
+```
+
 ## Organization Components
 
-### OrgSwitcher
+### OrganizationSwitcher
 
 Organization switcher dropdown for multi-tenant applications.
 
-```tsx title="components/OrgSwitcher.tsx"
-import { OrgSwitcher } from "@keyloom/ui/org";
+```tsx title="components/OrganizationSwitcher.tsx"
+import { OrganizationSwitcher } from "@keyloom/ui/auth";
 
 export function AppHeader() {
   return (
     <header className="flex justify-between items-center p-4">
       <h1>My App</h1>
       <div className="flex items-center gap-4">
-        <OrgSwitcher />
+        <OrganizationSwitcher />
         <UserButton />
       </div>
     </header>
@@ -280,6 +364,158 @@ export function InviteMemberButton() {
       orgId="org_123"
       onSuccess={(invitation) => console.log("Invited:", invitation)}
     />
+  );
+}
+```
+
+### OrganizationView
+
+Complete organization management interface with settings and member overview.
+
+```tsx title="app/org/[id]/page.tsx"
+import { OrganizationView } from "@keyloom/ui/auth";
+
+export default function OrganizationPage({ params }: { params: { id: string } }) {
+  return (
+    <OrganizationView
+      organizationId={params.id}
+      onUpdateSettings={(settings) => console.log("Updated:", settings)}
+      onManageMembers={() => console.log("Manage members")}
+    />
+  );
+}
+```
+
+### OrganizationMemberCard
+
+Individual member card component for displaying member information and actions.
+
+```tsx title="components/MemberCard.tsx"
+import { OrganizationMemberCard } from "@keyloom/ui/auth";
+
+export function MemberCard({ member }: { member: OrganizationMember }) {
+  return (
+    <OrganizationMemberCard
+      member={member}
+      onUpdateRole={(role) => console.log("Update role:", role)}
+      onRemove={() => console.log("Remove member")}
+      showActions={true}
+    />
+  );
+}
+```
+
+## Account Management Components
+
+### AccountView
+
+Complete account management interface with profile editing and settings.
+
+```tsx title="app/account/page.tsx"
+import { AccountView } from "@keyloom/ui/auth";
+
+export default function AccountPage() {
+  return (
+    <AccountView
+      onUpdateProfile={(profile) => console.log("Updated:", profile)}
+      onDeleteAccount={() => console.log("Delete account")}
+      showDangerZone={true}
+    />
+  );
+}
+```
+
+### AccountSettingsCard
+
+Account settings management card with form controls.
+
+```tsx title="components/AccountSettings.tsx"
+import { AccountSettingsCard } from "@keyloom/ui/auth";
+
+export function AccountSettings() {
+  return (
+    <AccountSettingsCard
+      onUpdateEmail={(email) => console.log("Update email:", email)}
+      onUpdatePassword={(password) => console.log("Update password")}
+      onUpdateProfile={(profile) => console.log("Update profile:", profile)}
+    />
+  );
+}
+```
+
+### SecuritySettingsCard
+
+Security settings management including password, 2FA, and session management.
+
+```tsx title="components/SecuritySettings.tsx"
+import { SecuritySettingsCard } from "@keyloom/ui/auth";
+
+export function SecuritySettings() {
+  return (
+    <SecuritySettingsCard
+      onChangePassword={() => console.log("Change password")}
+      onEnable2FA={() => console.log("Enable 2FA")}
+      onManageSessions={() => console.log("Manage sessions")}
+    />
+  );
+}
+```
+
+### ApiKeysCard
+
+API key management interface for developers and integrations.
+
+```tsx title="components/ApiKeys.tsx"
+import { ApiKeysCard } from "@keyloom/ui/auth";
+
+export function ApiKeys() {
+  return (
+    <ApiKeysCard
+      onCreateKey={(name) => console.log("Create key:", name)}
+      onRevokeKey={(keyId) => console.log("Revoke key:", keyId)}
+      onRegenerateKey={(keyId) => console.log("Regenerate key:", keyId)}
+    />
+  );
+}
+```
+
+## User Profile Components
+
+### UserProfile
+
+Complete user profile display with avatar, information, and actions.
+
+```tsx title="components/UserProfile.tsx"
+import { UserProfile } from "@keyloom/ui/auth";
+
+export function ProfilePage() {
+  return (
+    <UserProfile
+      user={user}
+      onEdit={() => console.log("Edit profile")}
+      onChangeAvatar={(file) => console.log("Change avatar:", file)}
+      showEditButton={true}
+    />
+  );
+}
+```
+
+### UserProfileCompact
+
+Compact user profile variant for sidebars and small spaces.
+
+```tsx title="components/Sidebar.tsx"
+import { UserProfileCompact } from "@keyloom/ui/auth";
+
+export function Sidebar() {
+  return (
+    <div className="w-64 bg-background border-r">
+      <UserProfileCompact
+        user={user}
+        showStatus={true}
+        onClick={() => console.log("Profile clicked")}
+      />
+    </div>
   );
 }
 ```
@@ -580,7 +816,7 @@ export default function AuthPage() {
 ### Organization Dashboard
 
 ```tsx title="app/org/dashboard/page.tsx"
-import { OrgSwitcher, MembersTable, CreateOrgDialog } from "@keyloom/ui/org";
+import { OrganizationSwitcher, MembersTable, CreateOrgDialog } from "@keyloom/ui/auth";
 import { RoleGate } from "@keyloom/ui/rbac";
 import { UserButton } from "@keyloom/ui/auth";
 import { Card } from "@keyloom/ui/components/card";
@@ -593,7 +829,7 @@ export default function OrgDashboard() {
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-4">
             <h1 className="text-xl font-semibold">Dashboard</h1>
-            <OrgSwitcher />
+            <OrganizationSwitcher />
           </div>
           <div className="flex items-center gap-2">
             <RoleGate roles={["owner", "admin"]}>

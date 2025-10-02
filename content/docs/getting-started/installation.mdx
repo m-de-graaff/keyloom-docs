@@ -239,12 +239,12 @@ Example: Prisma adapter
 
 ```ts title="keyloom.config.ts (Prisma)"
 import { defineKeyloom } from "@keyloom/core";
-import { prismaAdapter } from "@keyloom/adapter-prisma";
+import { PrismaAdapter } from "@keyloom/adapters";
 import { prisma } from "@/lib/prisma"; // your Prisma instance
 
 export default defineKeyloom({
   // ...
-  adapter: prismaAdapter(prisma),
+  adapter: PrismaAdapter(prisma),
 });
 ```
 
@@ -257,7 +257,7 @@ import { db } from "@/db"; // your Drizzle instance
 
 export default defineKeyloom({
   // ...
-  adapter: drizzleAdapter(db, { provider: "pg" }),
+  adapter: drizzleAdapter(db, { dialect: "postgresql" }), // or "mysql", "sqlite"
 });
 ```
 

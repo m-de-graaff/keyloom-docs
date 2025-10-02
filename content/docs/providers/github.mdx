@@ -3,6 +3,8 @@ title: GitHub Provider
 description: Configure GitHub OAuth with Keyloom. Complete setup, scopes, callback URLs, troubleshooting, and security considerations.
 ---
 
+import { Table } from '@/components/Table';
+
 # GitHub Provider
 
 Add GitHub OAuth to your Keyloom app. This guide covers GitHub OAuth app creation, configuration, and troubleshooting.
@@ -59,12 +61,15 @@ export default defineKeyloom({
 
 ## Recommended scopes
 
-| Scope | Purpose | Required |
-| --- | --- | --- |
-| `read:user` | Read basic profile info (id, login, name, avatar) | Yes |
-| `user:email` | Read user's email addresses | Yes |
-| `read:org` | Read organization membership | Optional |
-| `repo` | Access repositories | Only if needed |
+<Table
+  headers={['Scope', 'Purpose', 'Required']}
+  rows={[
+    ['<code>read:user</code>', 'Read basic profile info (id, login, name, avatar)', 'Yes'],
+    ['<code>user:email</code>', 'Read user\'s email addresses', 'Yes'],
+    ['<code>read:org</code>', 'Read organization membership', 'Optional'],
+    ['<code>repo</code>', 'Access repositories', 'Only if needed'],
+  ]}
+/>
 
 **Minimal setup**: Use only `read:user` and `user:email` for basic authentication.
 

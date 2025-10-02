@@ -3,6 +3,8 @@ title: RBAC
 description: Role-based access control - configuration, permission mapping, and guards.
 ---
 
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
 # RBAC
 
 Keyloom supports optional RBAC for multi-organization apps. Enable it in config and use helpers to protect routes and actions.
@@ -163,13 +165,35 @@ export async function adminOnly(action: () => Promise<Response>) {
 
 ## API reference
 
-| API                         | From                           | Signature                                                                                                             | Returns                 |
-| --------------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------------------------- | ----------------------- | --------------------- |
-| `toPermissionMap(rbac)`     | `@keyloom/core/rbac/policy`    | `(RbacConfig) => Record<permission, role[]>`                                                                          | permission to roles map |
-| `withRole(handler, opts)`   | `@keyloom/core/rbac/with-role` | `opts: { requiredRoles?, requiredPermission?, getRole, permMap?, onDenied? }`                                         | wrapper enforcing RBAC  |
-| `withRole(action, opts)`    | `@keyloom/nextjs/rbac`         | `opts: { getUser, adapter, orgId?, requiredRoles?, requiredPermission?, permMap?, onDenied?, rbacEnabled?, config? }` | Response or redirect    |
-| `getActiveOrgId()`          | `@keyloom/nextjs/rbac`         | `() => string                                                                                                         | null`                   | reads `__keyloom_org` |
-| `setActiveOrgCookie(orgId)` | `@keyloom/nextjs/rbac`         | `(string) => string`                                                                                                  | Set-Cookie header value |
+<TypeTable
+  type={{
+    'toPermissionMap(rbac)': {
+      description: 'Convert RBAC config to permission-to-roles mapping',
+      type: '(RbacConfig) => Record<permission, role[]>',
+      default: 'from @keyloom/core/rbac/policy',
+    },
+    'withRole(handler, opts)': {
+      description: 'Wrapper enforcing RBAC for handlers',
+      type: 'opts: { requiredRoles?, requiredPermission?, getRole, permMap?, onDenied? }',
+      default: 'from @keyloom/core/rbac/with-role',
+    },
+    'withRole(action, opts)': {
+      description: 'Next.js RBAC wrapper with full options',
+      type: 'opts: { getUser, adapter, orgId?, requiredRoles?, requiredPermission?, permMap?, onDenied?, rbacEnabled?, config? }',
+      default: 'from @keyloom/nextjs/rbac',
+    },
+    'getActiveOrgId()': {
+      description: 'Get active organization ID from cookie',
+      type: '() => string | null',
+      default: 'from @keyloom/nextjs/rbac',
+    },
+    'setActiveOrgCookie(orgId)': {
+      description: 'Set active organization cookie',
+      type: '(string) => string',
+      default: 'from @keyloom/nextjs/rbac',
+    },
+  }}
+/>
 
 Types (core): `RbacConfig`, `RbacRolesMapping`, `Role`, `Permission`, `Membership`.
 

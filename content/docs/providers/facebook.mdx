@@ -1,0 +1,153 @@
+---
+title: Facebook Provider
+description: Configure Facebook OAuth for Keyloom authentication - setup, permissions, and best practices.
+---
+
+# Facebook Provider
+
+Enable Facebook OAuth authentication in your Keyloom application.
+
+## Prerequisites
+
+- Facebook app created at [Facebook for Developers](https://developers.facebook.com/)
+- Keyloom handler configured at `/api/auth/[...keyloom]`
+
+## Setup
+
+### 1. Create Facebook App
+
+1. Go to [Facebook for Developers](https://developers.facebook.com/)
+2. Click "Create App" and choose "Consumer" type
+3. Fill in app details and create the app
+4. Add "Facebook Login" product to your app
+
+### 2. Configure Facebook Login
+
+1. In Facebook Login settings, add redirect URI:
+   `${YOUR_APP_URL}/api/auth/oauth/facebook/callback`
+2. Enable "Client OAuth Login" and "Web OAuth Login"
+
+### 3. Get Credentials
+
+From your Facebook app's Basic Settings:
+
+- **App ID**: Your Facebook App ID
+- **App Secret**: Your Facebook App Secret
+
+### 4. Environment Variables
+
+```ini title=".env.local"
+FACEBOOK_CLIENT_ID=your_facebook_app_id
+FACEBOOK_CLIENT_SECRET=your_facebook_app_secret
+```
+
+### 5. Configure Provider
+
+```ts title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { facebook } from "@keyloom/providers";
+
+export default defineKeyloom({
+  providers: [
+    facebook({
+      clientId: process.env.FACEBOOK_CLIENT_ID!,
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET!,
+      scopes: ["email", "public_profile"], // Optional: customize scopes
+    }),
+  ],
+  // ... other config
+});
+```
+
+## Configuration Options
+
+```ts
+facebook({
+  clientId: string;
+  clientSecret: string;
+  scopes?: string[]; // Default: ["email", "public_profile"]
+})
+```
+
+## Available Scopes
+
+- `public_profile` - Basic profile information (name, profile picture)
+- `email` - User's email address
+- `user_friends` - Friends list (requires app review)
+- `user_posts` - User's posts (requires app review)
+
+**Note**: Many scopes require Facebook app review for production use.
+
+## User Profile
+
+Facebook returns the following user information:
+
+```ts
+{
+  id: string;           // Facebook user ID
+  email: string;        // User's email
+  name: string;         // Full name
+  image?: string;       // Profile picture URL
+  // Raw Facebook data available in profile
+}
+```
+
+## Usage Example
+
+```tsx title="components/FacebookSignIn.tsx"
+import { useLogin } from "@keyloom/react";
+
+export function FacebookSignIn() {
+  const { login, loading } = useLogin();
+
+  const handleFacebookLogin = async () => {
+    await login({
+      provider: "facebook",
+      callbackUrl: "/dashboard",
+    });
+  };
+
+  return (
+    <button onClick={handleFacebookLogin} disabled={loading}>
+      {loading ? "Connecting..." : "Sign in with Facebook"}
+    </button>
+  );
+}
+```
+
+## App Review Process
+
+For production apps, Facebook requires review for most permissions:
+
+1. Submit your app for review in Facebook Developer Console
+2. Provide detailed use case for each permission
+3. Include privacy policy and terms of service
+4. Test your integration thoroughly before submission
+
+## Troubleshooting
+
+**Invalid redirect URI**
+- Ensure redirect URI matches exactly in Facebook app settings
+- Check protocol (http vs https) and domain
+
+**App not live**
+- Make your Facebook app "Live" in App Review section
+- Ensure all required information is provided
+
+**Permission denied**
+- Check if requested scopes require app review
+- Verify scopes are enabled in your Facebook app
+
+## Security Considerations
+
+- Store app secret securely (environment variables)
+- Use HTTPS in production
+- Regularly review app permissions and access
+- Monitor for suspicious OAuth activity
+- Follow Facebook's Platform Policy
+
+## See also
+
+- [Facebook Login Documentation](https://developers.facebook.com/docs/facebook-login/)
+- [Provider Overview](/docs/providers/overview)
+- [React Hooks](/docs/react/hooks)

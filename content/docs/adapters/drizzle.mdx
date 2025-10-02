@@ -126,6 +126,12 @@ import { sql } from "@vercel/postgres";
 export const db = drizzle(sql);
 ```
 
+## Install Drizzle Adapter
+
+```bash
+pnpm add @keyloom/adapter-drizzle
+```
+
 ## Using the adapter
 
 ```ts title="keyloom.config.ts"
@@ -136,7 +142,7 @@ import { db } from "@/src/db/client";
 export default defineKeyloom({
   baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
   session: { strategy: "database", ttlMinutes: 30 },
-  adapter: drizzleAdapter(db),
+  adapter: drizzleAdapter(db, { dialect: "postgresql" }), // specify your database dialect
   providers: [],
   rbac: { enabled: true },
   secrets: { authSecret: process.env.AUTH_SECRET! },

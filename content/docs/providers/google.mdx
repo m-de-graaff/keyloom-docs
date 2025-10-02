@@ -3,6 +3,8 @@ title: Google Provider
 description: Configure Google OAuth with Keyloom. Complete Google Cloud Console setup, scopes, callback URLs, troubleshooting, and security.
 ---
 
+import { Table } from '@/components/Table';
+
 # Google Provider
 
 Add Google OAuth to your Keyloom app using Google Cloud Console OAuth 2.0 client credentials.
@@ -72,13 +74,16 @@ export default defineKeyloom({
 
 ## Recommended scopes
 
-| Scope | Purpose | Required |
-| --- | --- | --- |
-| `openid` | OpenID Connect authentication | Yes |
-| `profile` | Basic profile info (name, picture) | Yes |
-| `email` | User's email address | Yes |
-| `https://www.googleapis.com/auth/drive.readonly` | Read Google Drive files | Optional |
-| `https://www.googleapis.com/auth/gmail.readonly` | Read Gmail | Optional |
+<Table
+  headers={['Scope', 'Purpose', 'Required']}
+  rows={[
+    ['<code>openid</code>', 'OpenID Connect authentication', 'Yes'],
+    ['<code>profile</code>', 'Basic profile info (name, picture)', 'Yes'],
+    ['<code>email</code>', 'User\'s email address', 'Yes'],
+    ['<code>https://www.googleapis.com/auth/drive.readonly</code>', 'Read Google Drive files', 'Optional'],
+    ['<code>https://www.googleapis.com/auth/gmail.readonly</code>', 'Read Gmail', 'Optional'],
+  ]}
+/>
 
 **Minimal setup**: Use `openid`, `profile`, and `email` for basic authentication.
 

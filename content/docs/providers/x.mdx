@@ -1,0 +1,253 @@
+---
+title: X (Twitter) Provider
+description: Configure X (formerly Twitter) OAuth for Keyloom authentication - setup, scopes, and social media platform integration.
+---
+
+# X (Twitter) Provider
+
+Enable X (formerly Twitter) OAuth authentication in your Keyloom application for social media integration.
+
+## Prerequisites
+
+- X Developer account and app created at [X Developer Portal](https://developer.twitter.com/)
+- App configured for OAuth 2.0
+- Keyloom handler configured at `/api/auth/[...keyloom]`
+
+## Setup
+
+### 1. Create X Developer Account
+
+1. Go to [X Developer Portal](https://developer.twitter.com/)
+2. Apply for a developer account
+3. Complete the application process (may require approval)
+
+### 2. Create X Application
+
+1. In the X Developer Portal, click "Create App"
+2. Fill in required information:
+   - **App Name**: Your application name
+   - **App Description**: Detailed description of your app
+   - **Website URL**: Your app's homepage
+   - **Callback URLs**: `${YOUR_APP_URL}/api/auth/oauth/x/callback`
+3. Review and create the app
+
+### 3. Configure OAuth 2.0
+
+1. Go to your app settings
+2. Navigate to "Authentication settings"
+3. Enable "OAuth 2.0"
+4. Set callback URL: `${YOUR_APP_URL}/api/auth/oauth/x/callback`
+5. Configure scopes (see Available Scopes below)
+
+### 4. Get Credentials
+
+From your X app settings:
+
+- **Client ID**: Your X app's Client ID (OAuth 2.0)
+- **Client Secret**: Your X app's Client Secret (OAuth 2.0)
+
+### 5. Environment Variables
+
+```ini title=".env.local"
+X_CLIENT_ID=your_x_client_id
+X_CLIENT_SECRET=your_x_client_secret
+```
+
+### 6. Configure Provider
+
+```ts title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { x } from "@keyloom/providers";
+
+export default defineKeyloom({
+  providers: [
+    x({
+      clientId: process.env.X_CLIENT_ID!,
+      clientSecret: process.env.X_CLIENT_SECRET!,
+    }),
+  ],
+  // ... other config
+});
+```
+
+## Configuration Options
+
+```ts
+x({
+  clientId: string;
+  clientSecret: string;
+  scopes?: string[]; // Default: ["tweet.read", "users.read"]
+})
+```
+
+## Available Scopes
+
+X API v2 provides granular scopes:
+
+### User Scopes
+- `users.read` - Read user profile information
+- `tweet.read` - Read tweets
+- `tweet.write` - Create tweets
+- `tweet.moderate.write` - Hide and unhide replies
+- `follows.read` - Read follows, followers, and following lists
+- `follows.write` - Follow and unfollow accounts
+- `offline.access` - Maintain access when user is offline
+- `space.read` - Read Spaces information
+- `mute.read` - Read muted accounts
+- `mute.write` - Mute and unmute accounts
+- `like.read` - Read liked tweets
+- `like.write` - Like and unlike tweets
+- `list.read` - Read lists
+- `list.write` - Create and manage lists
+- `bookmark.read` - Read bookmarked tweets
+- `bookmark.write` - Bookmark and unbookmark tweets
+
+### Default Scopes
+The provider uses `tweet.read users.read` by default for basic functionality.
+
+**Note**: X has strict approval processes for certain scopes. Basic read access is typically approved quickly.
+
+## User Profile
+
+X returns the following user information:
+
+```ts
+{
+  id: string;           // X user ID
+  name: string | null;  // Display name
+  email: string | null; // Email (if available and approved)
+  image: string | null; // Profile image URL
+  // Raw X data available in profile
+}
+```
+
+**Note**: Email access requires special approval from X and may not be available for all applications.
+
+## Usage Example
+
+```tsx title="components/XSignIn.tsx"
+import { useLogin } from "@keyloom/react";
+
+export function XSignIn() {
+  const { login, loading } = useLogin();
+
+  const handleXLogin = async () => {
+    await login({
+      provider: "x",
+      callbackUrl: "/dashboard",
+    });
+  };
+
+  return (
+    <button onClick={handleXLogin} disabled={loading}>
+      {loading ? "Connecting..." : "Sign in with X"}
+    </button>
+  );
+}
+```
+
+## X API Access Levels
+
+X has different API access levels:
+
+### Free Tier
+- **Tweet Cap**: 1,500 tweets per month
+- **Rate Limits**: Restrictive rate limits
+- **Features**: Basic read access
+
+### Basic Tier ($100/month)
+- **Tweet Cap**: 50,000 tweets per month
+- **Rate Limits**: Higher rate limits
+- **Features**: Read and write access
+
+### Pro Tier ($5,000/month)
+- **Tweet Cap**: 300,000 tweets per month
+- **Rate Limits**: Professional rate limits
+- **Features**: Full API access
+
+### Enterprise
+- **Custom Pricing**: Based on usage
+- **Rate Limits**: Highest rate limits
+- **Features**: Full API access with premium support
+
+## App Review Process
+
+X requires app review for production use:
+
+### Development Phase
+1. Create app with basic information
+2. Test with limited functionality
+3. Prepare detailed app documentation
+
+### Review Submission
+1. Submit app for review with detailed use case
+2. Provide privacy policy and terms of service
+3. Explain data usage and user benefits
+4. Include screenshots and app flow documentation
+
+### Review Criteria
+- **Authentic Identity**: Clear app purpose and developer identity
+- **Policy Compliance**: Compliance with X Developer Policy
+- **User Value**: Clear value proposition for users
+- **Data Usage**: Appropriate data usage and storage
+
+## Use Cases
+
+X integration is ideal for:
+
+- **Social Media Management**: Cross-platform content management
+- **Analytics Tools**: X engagement analytics
+- **Content Creation**: Tools for content creators
+- **Social Login**: Alternative authentication method
+- **Community Building**: Connect X users
+- **News and Media**: Real-time content aggregation
+
+## Troubleshooting
+
+**App not approved**
+- Ensure your app complies with X Developer Policy
+- Provide detailed use case documentation
+- Include privacy policy and terms of service
+- Be specific about data usage and user benefits
+
+**Invalid redirect URI**
+- Ensure redirect URI matches exactly in X app settings
+- Use HTTPS for production applications
+- Check for trailing slashes and query parameters
+
+**Scope access denied**
+- Verify requested scopes are approved for your app
+- Some scopes require additional review
+- Check X Developer Portal for scope status
+
+**Rate limiting**
+- X has strict rate limits based on your access level
+- Implement proper retry logic with exponential backoff
+- Consider upgrading to higher access tier
+
+## Security Considerations
+
+- Store client secret securely (environment variables)
+- Use HTTPS in production
+- Follow X Developer Agreement and Policy
+- Respect user privacy and data protection laws
+- Implement proper error handling
+- Monitor for suspicious OAuth activity
+- Use appropriate scopes for your use case
+
+## Migration from Twitter API v1.1
+
+If migrating from Twitter API v1.1:
+
+- **OAuth 2.0**: X now uses OAuth 2.0 instead of OAuth 1.0a
+- **Scopes**: Granular scopes replace broad permissions
+- **Rate Limits**: Different rate limiting structure
+- **Endpoints**: New API endpoints and data formats
+- **Authentication**: Updated authentication flow
+
+## See also
+
+- [X API Documentation](https://developer.twitter.com/en/docs/twitter-api)
+- [X OAuth 2.0 Guide](https://developer.twitter.com/en/docs/authentication/oauth-2-0)
+- [Provider Overview](/docs/providers/overview)
+- [React Hooks](/docs/react/hooks)

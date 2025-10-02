@@ -1,0 +1,210 @@
+---
+title: Spotify Provider
+description: Configure Spotify OAuth for Keyloom authentication - setup, scopes, and music streaming platform integration.
+---
+
+# Spotify Provider
+
+Enable Spotify OAuth authentication in your Keyloom application for music streaming and playlist integration.
+
+## Prerequisites
+
+- Spotify app created at [Spotify for Developers](https://developer.spotify.com/dashboard)
+- Keyloom handler configured at `/api/auth/[...keyloom]`
+
+## Setup
+
+### 1. Create Spotify Application
+
+1. Go to [Spotify for Developers Dashboard](https://developer.spotify.com/dashboard)
+2. Click "Create App"
+3. Fill in required information:
+   - **App Name**: Your application name
+   - **App Description**: Brief description of your app
+   - **Website**: Your app's homepage (optional)
+   - **Redirect URIs**: `${YOUR_APP_URL}/api/auth/oauth/spotify/callback`
+4. Accept Spotify's Terms of Service and Design Guidelines
+5. Click "Create"
+
+### 2. Configure App Settings
+
+1. In your Spotify app dashboard, click "Settings"
+2. Add redirect URI: `${YOUR_APP_URL}/api/auth/oauth/spotify/callback`
+3. Note your Client ID and Client Secret
+
+### 3. Environment Variables
+
+```ini title=".env.local"
+SPOTIFY_CLIENT_ID=your_spotify_client_id
+SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
+```
+
+### 4. Configure Provider
+
+```ts title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { spotify } from "@keyloom/providers";
+
+export default defineKeyloom({
+  providers: [
+    spotify({
+      clientId: process.env.SPOTIFY_CLIENT_ID!,
+      clientSecret: process.env.SPOTIFY_CLIENT_SECRET!,
+    }),
+  ],
+  // ... other config
+});
+```
+
+## Configuration Options
+
+```ts
+spotify({
+  clientId: string;
+  clientSecret: string;
+  profileOverrides?: (profile: Profile) => Record<string, any>;
+})
+```
+
+## Available Scopes
+
+Spotify provides extensive scopes for different functionalities:
+
+### User Profile Scopes
+- `user-read-email` - Read user's email address
+- `user-read-private` - Read user's subscription details and country
+
+### Playback Scopes
+- `user-read-playback-state` - Read user's current playback state
+- `user-modify-playback-state` - Control user's playback
+- `user-read-currently-playing` - Read user's currently playing track
+
+### Library Scopes
+- `user-library-read` - Read user's saved tracks and albums
+- `user-library-modify` - Manage user's saved tracks and albums
+
+### Playlist Scopes
+- `playlist-read-private` - Read user's private playlists
+- `playlist-read-collaborative` - Read user's collaborative playlists
+- `playlist-modify-private` - Manage user's private playlists
+- `playlist-modify-public` - Manage user's public playlists
+
+### Follow Scopes
+- `user-follow-read` - Read user's followed artists and users
+- `user-follow-modify` - Manage user's followed artists and users
+
+### Listening History Scopes
+- `user-read-recently-played` - Read user's recently played tracks
+- `user-top-read` - Read user's top artists and tracks
+
+**Default Scopes**: `user-read-email user-read-private`
+
+## User Profile
+
+Spotify returns the following user information:
+
+```ts
+{
+  id: string;           // Spotify user ID
+  name: string | null;  // Display name
+  email: string | null; // Email address (if user-read-email scope granted)
+  image: string | null; // Profile picture URL
+  // Raw Spotify data available in profile
+}
+```
+
+## Usage Example
+
+```tsx title="components/SpotifySignIn.tsx"
+import { useLogin } from "@keyloom/react";
+
+export function SpotifySignIn() {
+  const { login, loading } = useLogin();
+
+  const handleSpotifyLogin = async () => {
+    await login({
+      provider: "spotify",
+      callbackUrl: "/dashboard",
+    });
+  };
+
+  return (
+    <button onClick={handleSpotifyLogin} disabled={loading}>
+      {loading ? "Connecting..." : "Sign in with Spotify"}
+    </button>
+  );
+}
+```
+
+## Music Integration Use Cases
+
+Spotify integration is perfect for:
+
+- **Music Discovery Apps**: Build recommendation engines
+- **Playlist Management**: Create and manage playlists
+- **Social Music**: Share music with friends
+- **Analytics**: Analyze listening habits
+- **DJ Tools**: Control playback for events
+- **Music Education**: Track learning progress
+
+## App Quota and Extensions
+
+Spotify has different quota limits:
+
+- **Development Mode**: 25 users, full API access
+- **Extended Quota Request**: For apps needing more than 25 users
+- **Commercial Use**: Requires approval for commercial applications
+
+### Requesting Extended Quota
+
+1. Go to your Spotify app dashboard
+2. Click "Request Extension"
+3. Provide detailed information about your app
+4. Include privacy policy and terms of service
+5. Wait for Spotify's review (can take several weeks)
+
+## Troubleshooting
+
+**Invalid redirect URI**
+- Ensure redirect URI matches exactly in Spotify app settings
+- Check protocol (http vs https) and domain
+- Verify no trailing slashes unless specified
+
+**Scope access denied**
+- Check if requested scopes are appropriate for your use case
+- Some scopes require user consent during OAuth flow
+- Verify your app has the necessary permissions
+
+**Rate limiting**
+- Spotify has rate limits on API calls
+- Implement proper retry logic with exponential backoff
+- Monitor your API usage in the dashboard
+
+**App in development mode**
+- Add users to your app's user management section
+- Users must accept invitation to use your app
+- Consider requesting extended quota for production
+
+## Security Considerations
+
+- Store client secret securely (environment variables)
+- Use HTTPS in production
+- Follow Spotify's Developer Terms of Service
+- Implement proper token refresh logic
+- Respect user privacy and data usage policies
+- Monitor for suspicious OAuth activity
+
+## Spotify API Best Practices
+
+- **Token Management**: Implement proper access token refresh
+- **Rate Limiting**: Respect API rate limits and implement backoff
+- **Caching**: Cache API responses to reduce API calls
+- **Error Handling**: Handle API errors gracefully
+- **User Experience**: Provide clear feedback during OAuth flow
+
+## See also
+
+- [Spotify Web API Documentation](https://developer.spotify.com/documentation/web-api/)
+- [Spotify OAuth Guide](https://developer.spotify.com/documentation/general/guides/authorization/)
+- [Provider Overview](/docs/providers/overview)
+- [React Hooks](/docs/react/hooks)

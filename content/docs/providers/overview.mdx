@@ -41,19 +41,59 @@ Routes handled by the Next.js handler:
 
 ## Available Providers
 
-- GitHub, Google, Apple, Auth0, GitLab, Microsoft, Discord, X (Twitter)
-- `dev` provider for local development
+Keyloom supports a comprehensive list of OAuth providers:
+
+### Major Platforms
+- **GitHub** - Developer-focused platform
+- **Google** - Google accounts and Workspace
+- **Apple** - Sign in with Apple
+- **Microsoft** - Microsoft accounts and Azure AD
+- **Auth0** - Identity platform
+
+### Social Media
+- **Discord** - Gaming and community platform
+- **Facebook** - Meta's social platform
+- **Instagram** - Photo and video sharing
+- **LinkedIn** - Professional networking
+- **Reddit** - Community discussions
+- **Spotify** - Music streaming
+- **TikTok** - Short-form video platform
+- **Twitch** - Live streaming platform
+- **X (Twitter)** - Social media platform
+
+### Enterprise & Self-Hosted
+- **Authentik** - Open-source identity provider
+- **GitLab** - DevOps platform (GitLab.com or self-hosted)
+
+### Development
+- **Dev** - Local development provider for testing
 
 ```ts
 import {
+  // Major platforms
   github,
   google,
   apple,
-  auth0,
-  gitlab,
   microsoft,
+  auth0,
+
+  // Social media
   discord,
+  facebook,
+  instagram,
+  linkedin,
+  reddit,
+  spotify,
+  tiktok,
+  twitch,
   x,
+
+  // Enterprise
+  authentik,
+  gitlab,
+
+  // Development
+  dev,
 } from "@keyloom/providers";
 ```
 

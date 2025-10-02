@@ -21,59 +21,316 @@ export default defineKeyloom({
 });
 ```
 
-## Options
+## Configuration Options
 
-- `baseUrl: string`
-  - External URL of your app used for OAuth callbacks and links
-- `session`
-  - `strategy: "jwt" | "database"`
-  - `ttlMinutes: number` - session time to live
-  - `rolling: boolean` - refresh expiration on activity
-- `cookie`
-  - `name: string` - cookie name
-  - `path: string` - default "/"
-  - `sameSite: "lax" | "strict" | "none"`
-  - `secure: boolean` - set true in production HTTPS
-  - `domain?: string`
-- `providers: Provider[]` - OAuth/OpenID providers
-- `adapter: Adapter` - required for database sessions
-- `rbac`
-  - `enabled: boolean`
-  - `defaultRole?: string`
-  - `roles?: Record<string, string[]>` - role to permission keys
-- `secrets`
-  - `authSecret: string` - secret for encryption or signing
+### Core Settings
 
-## Environment variables
-
-Recommended:
-
-- `AUTH_SECRET`
-- `NEXT_PUBLIC_APP_URL`
-- Provider specific secrets such as `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`
-
-## Strategy selection
-
-- `jwt` - stateless, edge friendly, simple horizontal scaling
-- `database` - central revocation, introspection, server sided invalidation
-
-## Error handling
-
-Most methods throw typed errors with a `code` and `message`. Handle at integration boundaries:
+#### `baseUrl: string` (required)
+External URL of your application used for OAuth callbacks and email links.
 
 ```ts
-try {
-  // sign in
-} catch (err: any) {
-  if (err.code === "OAUTH_CALLBACK_ERROR") {
-    // show friendly message
+baseUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+```
+
+#### `adapter: Adapter` (required)
+Database adapter for persisting users, sessions, and tokens.
+
+```ts
+import { PrismaAdapter } from "@keyloom/adapters";
+import { PrismaClient } from "@prisma/client";
+
+const db = new PrismaClient();
+adapter: PrismaAdapter(db)
+```
+
+#### `secrets: { authSecret: string }` (required)
+Secret key for encryption and signing. Use base64url encoding for best security.
+
+```ts
+secrets: {
+  authSecret: process.env.AUTH_SECRET! // Generate with: openssl rand -base64url 32
+}
+```
+
+### Session Configuration
+
+#### `session.strategy: "jwt" | "database"` (default: "database")
+- **database**: Sessions stored in database, server-side revocation
+- **jwt**: Stateless JWT tokens, edge-friendly, no database queries
+
+#### `session.ttlMinutes: number` (default: 60)
+Session time-to-live in minutes.
+
+#### `session.rolling: boolean` (default: true)
+Whether to refresh session expiration on activity.
+
+```ts
+session: {
+  strategy: "database",
+  ttlMinutes: 60 * 24, // 24 hours
+  rolling: true
+}
+```
+
+### Cookie Configuration
+
+#### `cookie.name: string` (default: "keyloom")
+Name of the session cookie.
+
+#### `cookie.sameSite: "lax" | "strict" | "none"` (default: "lax")
+SameSite cookie attribute for CSRF protection.
+
+#### `cookie.secure: boolean` (default: auto-detected)
+Whether cookies require HTTPS. Auto-detected based on baseUrl.
+
+#### `cookie.maxAgeSec: number` (default: 604800 = 7 days)
+Maximum age of cookies in seconds.
+
+```ts
+cookie: {
+  name: "my-app-session",
+  sameSite: "lax",
+  secure: true,
+  path: "/",
+  domain: ".example.com", // Optional: for subdomain sharing
+  maxAgeSec: 60 * 60 * 24 * 30 // 30 days
+}
+```
+
+### JWT Configuration (when strategy = "jwt")
+
+#### `jwt.algorithm: string` (default: "EdDSA")
+JWT signing algorithm. Supported: EdDSA, RS256, HS256.
+
+#### `jwt.accessTTL: string` (default: "10m")
+Access token time-to-live (e.g., "10m", "1h", "1d").
+
+#### `jwt.refreshTTL: string` (default: "30d")
+Refresh token time-to-live.
+
+#### `jwt.clockSkewSec: number` (default: 60)
+Clock skew tolerance in seconds for JWT validation.
+
+#### `jwt.includeOrgRoleInAccess: boolean` (default: false)
+Whether to include organization roles in access tokens.
+
+```ts
+jwt: {
+  algorithm: "EdDSA",
+  accessTTL: "15m",
+  refreshTTL: "7d",
+  clockSkewSec: 60,
+  includeOrgRoleInAccess: true,
+  keyRotationDays: 90,
+  keyOverlapDays: 7
+}
+```
+
+### Provider Configuration
+
+#### `providers: Provider[]` (default: [])
+Array of OAuth/OpenID Connect providers.
+
+```ts
+import { github, google, microsoft } from "@keyloom/providers";
+
+providers: [
+  github({
+    clientId: process.env.GITHUB_CLIENT_ID!,
+    clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+    scopes: ["read:user", "user:email"]
+  }),
+  google({
+    clientId: process.env.GOOGLE_CLIENT_ID!,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET!
+  })
+]
+```
+
+### RBAC Configuration
+
+#### `rbac.enabled: boolean` (default: false)
+Enable role-based access control features.
+
+#### `rbac.defaultRole: string` (optional)
+Default role assigned to new organization members.
+
+#### `rbac.roles: Record<string, string[]>` (optional)
+Role definitions mapping role names to permission arrays.
+
+```ts
+rbac: {
+  enabled: true,
+  defaultRole: "member",
+  roles: {
+    owner: ["*"],
+    admin: ["users:*", "billing:*", "settings:*"],
+    member: ["users:read", "content:*"],
+    viewer: ["users:read", "content:read"]
   }
 }
 ```
 
-## Migration tips
+### Plugin Configuration
 
-- Start with `memoryAdapter` in development
-- Switch to your DB adapter before production
-- When moving from `jwt` to `database`, ensure middleware and server utilities are updated to read server sessions
+#### `plugins: KeyloomPlugin[]` (default: [])
+Array of Keyloom plugins to extend functionality.
+
+```ts
+import { createPasskeyPlugin } from "@keyloom/plugin-passkey";
+
+plugins: [
+  createPasskeyPlugin()
+]
+```
+
+## Environment Variables
+
+### Required
+
+```ini title=".env.local"
+# Core authentication secret (generate with: openssl rand -base64url 32)
+AUTH_SECRET=your-secret-key-here
+
+# Application URL for OAuth callbacks
+NEXT_PUBLIC_APP_URL=https://your-app.com
+```
+
+### Provider Secrets
+
+```ini title=".env.local"
+# GitHub OAuth
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
+
+# Google OAuth
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+
+# Microsoft OAuth
+MICROSOFT_CLIENT_ID=your-microsoft-client-id
+MICROSOFT_CLIENT_SECRET=your-microsoft-client-secret
+```
+
+### Database (if using database adapter)
+
+```ini title=".env.local"
+# Prisma
+DATABASE_URL=postgresql://user:password@localhost:5432/mydb
+
+# Or other database connection strings
+```
+
+## Strategy Comparison
+
+### Database Strategy
+**Pros:**
+- Server-side session revocation
+- Session introspection and management
+- Audit trails and session monitoring
+- Fine-grained control over session lifecycle
+
+**Cons:**
+- Database queries on every request
+- More complex horizontal scaling
+- Requires database adapter
+
+**Best for:** Traditional web applications, admin dashboards, applications requiring session management
+
+### JWT Strategy
+**Pros:**
+- Stateless and edge-friendly
+- No database queries for session validation
+- Simple horizontal scaling
+- Works well with CDNs and edge functions
+
+**Cons:**
+- Cannot revoke tokens before expiration
+- Larger cookie/header size
+- Token rotation complexity
+
+**Best for:** APIs, microservices, edge-deployed applications, high-scale stateless apps
+
+## Configuration Validation
+
+Keyloom validates your configuration at startup:
+
+```ts
+import { validateKeyloomConfig } from "@keyloom/core";
+
+try {
+  validateKeyloomConfig(config);
+} catch (error) {
+  console.error("Configuration error:", error.message);
+}
+```
+
+Common validation errors:
+- Missing required `adapter` when using database strategy
+- Invalid `cookie.sameSite` values
+- Negative `session.ttlMinutes`
+- Invalid JWT configuration
+
+## Best Practices
+
+### Security
+- Use strong, randomly generated `AUTH_SECRET` (32+ bytes)
+- Enable `cookie.secure` in production (HTTPS)
+- Use `sameSite: "lax"` for CSRF protection
+- Rotate secrets regularly
+- Store secrets in environment variables, never in code
+
+### Performance
+- Choose JWT strategy for high-scale, stateless applications
+- Use database strategy when you need session management features
+- Configure appropriate session TTL based on security requirements
+- Use connection pooling for database adapters
+
+### Development
+- Start with `memoryAdapter()` for local development
+- Use shorter session TTL in development for testing
+- Enable detailed error logging in development
+- Test OAuth flows with ngrok or similar tunneling tools
+
+## Migration Guide
+
+### From JWT to Database Strategy
+
+1. Add database adapter to configuration
+2. Update session strategy
+3. Run database migrations
+4. Update server-side session reading code
+5. Test session persistence and revocation
+
+### From Database to JWT Strategy
+
+1. Configure JWT settings
+2. Update session strategy
+3. Remove database adapter (optional)
+4. Update client-side session handling
+5. Test token refresh flows
+
+## Troubleshooting
+
+**Configuration not loading**
+- Check file path and export syntax
+- Verify environment variables are set
+- Check for TypeScript compilation errors
+
+**OAuth callback errors**
+- Verify `baseUrl` matches your domain
+- Check provider callback URL configuration
+- Ensure HTTPS in production
+
+**Session not persisting**
+- Check cookie configuration
+- Verify database adapter connection
+- Check browser cookie settings and HTTPS requirements
+
+## See also
+
+- [Adapters](/docs/adapters/overview) - Database adapter configuration
+- [Providers](/docs/providers/overview) - OAuth provider setup
+- [JWT](/docs/core/jwt) - JWT configuration details
+- [RBAC](/docs/core/rbac) - Role-based access control
 

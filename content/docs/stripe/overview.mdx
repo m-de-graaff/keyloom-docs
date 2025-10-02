@@ -1,0 +1,262 @@
+---
+title: Stripe Integration
+description: Complete Stripe payment integration for Keyloom - payments, subscriptions, customers, and webhooks with type-safe APIs.
+---
+
+# @keyloom/stripe
+
+Keyloom's Stripe integration provides a type-safe, simplified wrapper around Stripe's payment APIs with seamless integration into the Keyloom authentication system.
+
+## Prerequisites
+
+- Stripe account with API keys
+- Keyloom authentication configured
+- Node.js 18+ for server-side operations
+
+## Installation
+
+```bash
+pnpm add @keyloom/stripe stripe
+```
+
+## Quick Start
+
+```ts title="lib/stripe.ts"
+import { createKeyloomStripe } from "@keyloom/stripe";
+
+export const stripe = createKeyloomStripe({
+  secretKey: process.env.STRIPE_SECRET_KEY!,
+  webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+  defaultCurrency: "usd",
+});
+```
+
+```ts title="app/api/payment/route.ts"
+import { stripe } from "@/lib/stripe";
+import { getServerSession } from "@keyloom/nextjs";
+
+export async function POST(request: Request) {
+  const session = await getServerSession();
+  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { amount } = await request.json();
+
+  const result = await stripe.payments.createPaymentIntent({
+    amount: amount * 100, // Convert to cents
+    currency: "usd",
+    customerId: session.user.id,
+  });
+
+  if (result.success) {
+    return Response.json({ clientSecret: result.data.client_secret });
+  } else {
+    return Response.json({ error: result.error.message }, { status: 400 });
+  }
+}
+```
+
+## Configuration
+
+### Basic Configuration
+
+```ts
+import { createKeyloomStripe } from "@keyloom/stripe";
+
+const stripe = createKeyloomStripe({
+  secretKey: process.env.STRIPE_SECRET_KEY!,
+  webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+  defaultCurrency: "usd",
+  apiVersion: "2023-10-16", // Optional: specify Stripe API version
+});
+```
+
+### Advanced Configuration
+
+```ts
+const stripe = createKeyloomStripe({
+  secretKey: process.env.STRIPE_SECRET_KEY!,
+  webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+  defaultCurrency: "usd",
+  
+  // Stripe client options
+  stripeOptions: {
+    apiVersion: "2023-10-16",
+    timeout: 10000,
+    maxNetworkRetries: 3,
+  },
+  
+  // Default metadata for all operations
+  defaultMetadata: {
+    source: "keyloom-app",
+    environment: process.env.NODE_ENV,
+  },
+});
+```
+
+## Core Features
+
+### Type-Safe Results
+
+All operations return a consistent `StripeResult<T>` type:
+
+```ts
+type StripeResult<T> = 
+  | { success: true; data: T }
+  | { success: false; error: StripeError }
+
+// Usage
+const result = await stripe.payments.createPaymentIntent(options);
+
+if (result.success) {
+  console.log("Payment intent:", result.data.id);
+} else {
+  console.error("Error:", result.error.message);
+}
+```
+
+### Error Handling
+
+Built-in error normalization and handling:
+
+```ts
+import { 
+  KeyloomStripeError, 
+  isCardError, 
+  STRIPE_ERROR_CODES 
+} from "@keyloom/stripe";
+
+const result = await stripe.payments.createPaymentIntent(options);
+
+if (!result.success) {
+  const { error } = result;
+  
+  if (isCardError(error)) {
+    console.log("Card was declined:", error.decline_code);
+  } else if (error.code === STRIPE_ERROR_CODES.INVALID_REQUEST) {
+    console.log("Invalid request parameters");
+  }
+}
+```
+
+### Keyloom Integration
+
+Automatic integration with Keyloom user system:
+
+```ts
+// Automatically links Stripe customers to Keyloom users
+const result = await stripe.customers.create({
+  keyloomUserId: session.user.id,
+  email: session.user.email,
+  name: session.user.name,
+});
+
+// Retrieve customer by Keyloom user ID
+const customer = await stripe.customers.getByKeyloomUserId(session.user.id);
+```
+
+## Main Operations
+
+### Payments
+
+```ts
+// Create payment intent
+const payment = await stripe.payments.createPaymentIntent({
+  amount: 2000, // $20.00 in cents
+  currency: "usd",
+  customerId: "cus_123",
+  metadata: { orderId: "order_456" },
+});
+
+// Confirm payment intent
+const confirmed = await stripe.payments.confirmPaymentIntent(
+  payment.data.id,
+  { payment_method: "pm_123" }
+);
+```
+
+### Customers
+
+```ts
+// Create customer
+const customer = await stripe.customers.create({
+  keyloomUserId: session.user.id,
+  email: "user@example.com",
+  name: "John Doe",
+});
+
+// Update customer
+const updated = await stripe.customers.update("cus_123", {
+  name: "Jane Doe",
+  metadata: { tier: "premium" },
+});
+```
+
+### Subscriptions
+
+```ts
+// Create subscription
+const subscription = await stripe.subscriptions.create({
+  customerId: "cus_123",
+  priceId: "price_123",
+  metadata: { plan: "pro" },
+});
+
+// Cancel subscription
+const cancelled = await stripe.subscriptions.cancel("sub_123", {
+  prorate: true,
+});
+```
+
+### Payment Methods
+
+```ts
+// Attach payment method to customer
+const attached = await stripe.paymentMethods.attach({
+  paymentMethodId: "pm_123",
+  customerId: "cus_123",
+});
+
+// Set as default payment method
+const defaultPM = await stripe.paymentMethods.setDefault({
+  paymentMethodId: "pm_123",
+  customerId: "cus_123",
+});
+```
+
+## Environment Variables
+
+```ini title=".env.local"
+# Required
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PUBLISHABLE_KEY=pk_test_...
+
+# Optional but recommended
+STRIPE_WEBHOOK_SECRET=whsec_...
+
+# Optional
+STRIPE_API_VERSION=2023-10-16
+```
+
+## Security Best Practices
+
+- Store Stripe keys in environment variables, never in code
+- Use webhook secrets to verify webhook authenticity
+- Validate amounts and currencies on the server
+- Implement proper error handling and logging
+- Use HTTPS in production
+- Regularly rotate API keys
+
+## See also
+
+- [Payments](/docs/stripe/payments) - Payment intents and processing
+- [Customers](/docs/stripe/customers) - Customer management
+- [Subscriptions](/docs/stripe/subscriptions) - Recurring billing
+- [Webhooks](/docs/stripe/webhooks) - Event handling
+- [Stripe Documentation](https://stripe.com/docs)
+
+## Next steps
+
+- Set up Stripe API keys in your environment
+- Create your first payment intent
+- Configure webhooks for event handling
+- Implement subscription billing if needed

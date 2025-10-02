@@ -1,0 +1,238 @@
+---
+title: Authentik Provider
+description: Configure Authentik OAuth for Keyloom authentication - setup, scopes, and self-hosted identity provider integration.
+---
+
+# Authentik Provider
+
+Enable Authentik OAuth authentication in your Keyloom application for self-hosted identity provider integration.
+
+## Prerequisites
+
+- Authentik instance running and accessible
+- Authentik application configured for OAuth2/OpenID Connect
+- Keyloom handler configured at `/api/auth/[...keyloom]`
+
+## Setup
+
+### 1. Configure Authentik Application
+
+1. Log into your Authentik admin interface
+2. Go to **Applications** → **Applications**
+3. Click **Create** to create a new application
+4. Fill in the application details:
+   - **Name**: Your application name
+   - **Slug**: URL-friendly identifier
+   - **Provider**: Create a new OAuth2/OpenID Provider
+
+### 2. Create OAuth2/OpenID Provider
+
+1. In the application creation form, click **Create** next to Provider
+2. Choose **OAuth2/OpenID Provider**
+3. Configure the provider:
+   - **Name**: Provider name
+   - **Authorization flow**: Choose appropriate flow (usually "default-authorization-flow")
+   - **Client type**: Confidential
+   - **Client ID**: Auto-generated or custom
+   - **Client Secret**: Auto-generated or custom
+   - **Redirect URIs**: `${YOUR_APP_URL}/api/auth/oauth/authentik/callback`
+   - **Scopes**: `openid profile email` (minimum recommended)
+
+### 3. Get Credentials and URLs
+
+From your Authentik provider settings:
+
+- **Client ID**: Your OAuth2 client ID
+- **Client Secret**: Your OAuth2 client secret
+- **Authentik Base URL**: Your Authentik instance URL (e.g., `https://auth.example.com`)
+
+### 4. Environment Variables
+
+```ini title=".env.local"
+AUTHENTIK_CLIENT_ID=your_authentik_client_id
+AUTHENTIK_CLIENT_SECRET=your_authentik_client_secret
+AUTHENTIK_BASE_URL=https://your-authentik-instance.com
+```
+
+### 5. Configure Provider
+
+```ts title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { authentik } from "@keyloom/providers";
+
+export default defineKeyloom({
+  providers: [
+    authentik({
+      clientId: process.env.AUTHENTIK_CLIENT_ID!,
+      clientSecret: process.env.AUTHENTIK_CLIENT_SECRET!,
+      baseUrl: process.env.AUTHENTIK_BASE_URL!, // e.g., "https://auth.example.com"
+    }),
+  ],
+  // ... other config
+});
+```
+
+## Configuration Options
+
+```ts
+authentik({
+  clientId: string;
+  clientSecret: string;
+  baseUrl: string; // Your Authentik instance URL
+  scopes?: string[]; // Default: ["openid", "profile", "email"]
+})
+```
+
+## Available Scopes
+
+Authentik supports standard OpenID Connect scopes:
+
+### Standard Scopes
+- `openid` - Required for OpenID Connect
+- `profile` - Basic profile information (name, username, etc.)
+- `email` - Email address
+- `groups` - User group memberships
+- `offline_access` - Refresh token support
+
+### Custom Scopes
+Authentik allows you to define custom scopes based on your needs:
+- Custom attribute scopes
+- Application-specific scopes
+- Role-based scopes
+
+**Default Scopes**: `openid profile email`
+
+## User Profile
+
+Authentik returns the following user information (based on configured scopes):
+
+```ts
+{
+  id: string;           // Authentik user ID (sub claim)
+  email: string | null; // Email address
+  name: string | null;  // Full name or preferred username
+  image: string | null; // Avatar URL (if configured)
+  // Additional custom claims available based on Authentik configuration
+}
+```
+
+## Usage Example
+
+```tsx title="components/AuthentikSignIn.tsx"
+import { useLogin } from "@keyloom/react";
+
+export function AuthentikSignIn() {
+  const { login, loading } = useLogin();
+
+  const handleAuthentikLogin = async () => {
+    await login({
+      provider: "authentik",
+      callbackUrl: "/dashboard",
+    });
+  };
+
+  return (
+    <button onClick={handleAuthentikLogin} disabled={loading}>
+      {loading ? "Connecting..." : "Sign in with Authentik"}
+    </button>
+  );
+}
+```
+
+## Enterprise Use Cases
+
+Authentik integration is ideal for:
+
+- **Enterprise SSO**: Single sign-on for internal applications
+- **Self-hosted Identity**: Complete control over identity provider
+- **LDAP Integration**: Connect with existing LDAP directories
+- **Multi-factor Authentication**: Built-in MFA support
+- **Custom Flows**: Flexible authentication flows
+- **Compliance**: Meet specific security and compliance requirements
+
+## Advanced Configuration
+
+### Custom Flows
+
+Authentik allows custom authentication flows:
+
+1. **Password Flow**: Traditional username/password
+2. **Social Login Flow**: Integration with external providers
+3. **MFA Flow**: Multi-factor authentication
+4. **Passwordless Flow**: WebAuthn/FIDO2 support
+
+### Group and Role Mapping
+
+Configure group/role mapping in Authentik:
+
+1. Go to **Directory** → **Groups**
+2. Create groups with appropriate permissions
+3. Assign users to groups
+4. Configure group claims in OAuth provider
+
+### Custom Attributes
+
+Add custom user attributes:
+
+1. Go to **Customization** → **Property Mappings**
+2. Create custom scope mappings
+3. Include custom attributes in tokens
+4. Access custom claims in your application
+
+## Troubleshooting
+
+**Connection refused**
+- Verify Authentik base URL is correct and accessible
+- Check network connectivity between your app and Authentik
+- Ensure Authentik is running and healthy
+
+**Invalid redirect URI**
+- Ensure redirect URI matches exactly in Authentik provider settings
+- Check protocol (http vs https) and domain
+- Verify no trailing slashes unless specified
+
+**Scope access denied**
+- Check if requested scopes are configured in Authentik
+- Verify user has permissions for requested scopes
+- Review Authentik authorization policies
+
+**Token validation errors**
+- Verify client ID and secret are correct
+- Check token expiration settings
+- Ensure proper token validation in your application
+
+## Security Considerations
+
+- Use HTTPS for all communications
+- Store client secret securely (environment variables)
+- Configure appropriate token lifetimes
+- Implement proper session management
+- Use strong authentication flows
+- Regular security updates for Authentik
+- Monitor authentication logs
+- Implement proper access controls
+
+## Authentik Best Practices
+
+- **High Availability**: Deploy Authentik in HA configuration
+- **Backup**: Regular backups of Authentik configuration and data
+- **Monitoring**: Monitor Authentik health and performance
+- **Updates**: Keep Authentik updated with security patches
+- **Logging**: Enable comprehensive audit logging
+- **Network Security**: Secure network access to Authentik
+
+## Self-Hosted Benefits
+
+- **Data Control**: Complete control over user data
+- **Customization**: Extensive customization options
+- **Compliance**: Meet specific regulatory requirements
+- **Integration**: Deep integration with existing infrastructure
+- **Cost Control**: Predictable hosting costs
+- **Privacy**: Enhanced privacy and data protection
+
+## See also
+
+- [Authentik Documentation](https://goauthentik.io/docs/)
+- [Authentik OAuth2 Provider Guide](https://goauthentik.io/docs/providers/oauth2/)
+- [Provider Overview](/docs/providers/overview)
+- [React Hooks](/docs/react/hooks)

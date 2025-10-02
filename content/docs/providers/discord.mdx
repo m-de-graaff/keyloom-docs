@@ -1,0 +1,137 @@
+---
+title: Discord Provider
+description: Configure Discord OAuth for Keyloom authentication - setup, scopes, and best practices.
+---
+
+# Discord Provider
+
+Enable Discord OAuth authentication in your Keyloom application.
+
+## Prerequisites
+
+- Discord application created at [Discord Developer Portal](https://discord.com/developers/applications)
+- Keyloom handler configured at `/api/auth/[...keyloom]`
+
+## Setup
+
+### 1. Create Discord Application
+
+1. Go to [Discord Developer Portal](https://discord.com/developers/applications)
+2. Click "New Application" and give it a name
+3. Navigate to "OAuth2" section
+4. Add redirect URI: `${YOUR_APP_URL}/api/auth/oauth/discord/callback`
+
+### 2. Get Credentials
+
+From your Discord application's OAuth2 page:
+
+- **Client ID**: Copy the Client ID
+- **Client Secret**: Copy the Client Secret
+
+### 3. Environment Variables
+
+```ini title=".env.local"
+DISCORD_CLIENT_ID=your_discord_client_id
+DISCORD_CLIENT_SECRET=your_discord_client_secret
+```
+
+### 4. Configure Provider
+
+```ts title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { discord } from "@keyloom/providers";
+
+export default defineKeyloom({
+  providers: [
+    discord({
+      clientId: process.env.DISCORD_CLIENT_ID!,
+      clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+      scopes: ["identify", "email"], // Optional: customize scopes
+    }),
+  ],
+  // ... other config
+});
+```
+
+## Configuration Options
+
+```ts
+discord({
+  clientId: string;
+  clientSecret: string;
+  scopes?: string[]; // Default: ["identify", "email"]
+})
+```
+
+## Available Scopes
+
+- `identify` - Basic user information (username, discriminator, avatar)
+- `email` - User's email address
+- `guilds` - User's Discord servers (use with caution)
+- `connections` - User's connected accounts
+
+**Recommended**: Use minimal scopes (`identify` and `email`) unless you need additional data.
+
+## User Profile
+
+Discord returns the following user information:
+
+```ts
+{
+  id: string;           // Discord user ID
+  email: string;        // User's email
+  name: string;         // Username#discriminator
+  image?: string;       // Avatar URL
+  // Raw Discord data available in profile
+}
+```
+
+## Usage Example
+
+```tsx title="components/DiscordSignIn.tsx"
+import { useLogin } from "@keyloom/react";
+
+export function DiscordSignIn() {
+  const { login, loading } = useLogin();
+
+  const handleDiscordLogin = async () => {
+    await login({
+      provider: "discord",
+      callbackUrl: "/dashboard",
+    });
+  };
+
+  return (
+    <button onClick={handleDiscordLogin} disabled={loading}>
+      {loading ? "Connecting..." : "Sign in with Discord"}
+    </button>
+  );
+}
+```
+
+## Troubleshooting
+
+**Invalid redirect URI**
+- Ensure redirect URI in Discord app matches exactly: `${YOUR_APP_URL}/api/auth/oauth/discord/callback`
+- Check for trailing slashes and protocol (http vs https)
+
+**Scope errors**
+- Verify requested scopes are enabled in your Discord application
+- Some scopes require approval for public applications
+
+**Rate limiting**
+- Discord has rate limits on OAuth requests
+- Implement proper error handling for rate limit responses
+
+## Security Considerations
+
+- Store client secret securely (environment variables, not in code)
+- Use HTTPS in production
+- Regularly rotate client secrets
+- Monitor for suspicious OAuth activity
+
+## See also
+
+- [Discord OAuth2 Documentation](https://discord.com/developers/docs/topics/oauth2)
+- [Provider Overview](/docs/providers/overview)
+- [React Hooks](/docs/react/hooks)

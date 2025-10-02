@@ -1,0 +1,396 @@
+---
+title: keyloom routes
+description: Analyze and validate authentication routes, middleware setup, and route protection configuration in your application.
+---
+
+import { Table } from '@/components/Table';
+
+# keyloom routes
+
+Analyze and validate authentication routes, middleware setup, and route protection configuration to ensure proper security implementation across your application.
+
+## Overview
+
+The `keyloom routes` command scans your application to analyze authentication routes, validate middleware configuration, and identify potential security issues with route protection. It provides insights into your application's authentication flow and suggests improvements.
+
+## Usage
+
+```bash
+# Analyze all routes
+npx keyloom routes
+
+# Analyze with specific options
+npx keyloom routes --format json --include-protected --verbose
+```
+
+## Command Flags
+
+### `--format <type>`
+Output format for the analysis results.
+
+```bash
+# Table format (default)
+npx keyloom routes --format table
+
+# JSON format for programmatic use
+npx keyloom routes --format json
+
+# Markdown format for documentation
+npx keyloom routes --format markdown
+```
+
+### `--include-protected`
+Include analysis of protected routes and their protection mechanisms.
+
+```bash
+npx keyloom routes --include-protected
+```
+
+### `--include-public`
+Include analysis of public routes that bypass authentication.
+
+```bash
+npx keyloom routes --include-public
+```
+
+### `--verbose`
+Show detailed information about each route and its configuration.
+
+```bash
+npx keyloom routes --verbose
+```
+
+### `--output <file>`
+Save analysis results to a file.
+
+```bash
+npx keyloom routes --output routes-analysis.json
+```
+
+## Route Analysis
+
+### Authentication Routes
+
+**Detected Routes:**
+```text
+Authentication Routes:
+✓ /api/auth/[...keyloom] - Keyloom handler
+  ├── GET  /api/auth/session - Session endpoint
+  ├── POST /api/auth/login - Login endpoint  
+  ├── POST /api/auth/logout - Logout endpoint
+  ├── POST /api/auth/register - Registration endpoint
+  ├── GET  /api/auth/oauth/[provider] - OAuth initiation
+  └── GET  /api/auth/oauth/[provider]/callback - OAuth callback
+
+✓ /api/auth/csrf - CSRF token endpoint
+✗ /api/auth/verify - Email verification (missing)
+```
+
+### Middleware Configuration
+
+**Analysis Results:**
+```text
+Middleware Analysis:
+✓ middleware.ts found and configured
+✓ Keyloom middleware properly imported
+✓ Route matchers configured correctly
+
+Protected Paths:
+✓ /dashboard/* - Protected by middleware
+✓ /admin/* - Protected by middleware  
+✓ /profile/* - Protected by middleware
+
+Public Paths:
+✓ / - Public (explicitly configured)
+✓ /about - Public (explicitly configured)
+✓ /login - Public (auth route)
+✓ /register - Public (auth route)
+
+Potential Issues:
+⚠️  /api/admin/* - No explicit protection
+⚠️  /settings - Missing from middleware config
+```
+
+### Route Protection Validation
+
+**Security Analysis:**
+```text
+Route Protection Analysis:
+
+High Security Routes:
+✓ /admin/* - Properly protected
+✓ /api/admin/* - Requires admin role
+✓ /billing/* - Payment routes protected
+
+Medium Security Routes:
+✓ /dashboard - User authentication required
+✓ /profile - User authentication required
+⚠️  /settings - Protection unclear
+
+Low Security Routes:
+✓ / - Public access intended
+✓ /about - Public access intended
+✓ /pricing - Public access intended
+
+Recommendations:
+→ Add explicit protection for /api/admin/*
+→ Clarify protection for /settings route
+→ Consider rate limiting for auth endpoints
+```
+
+## Output Formats
+
+### Table Format (Default)
+
+**Route Analysis Report**
+
+<Table
+  headers={['Route', 'Method', 'Protection', 'Status']}
+  rows={[
+    ['<code>/api/auth/[...keyloom]</code>', 'GET/POST', 'Public', '✅ Configured'],
+    ['<code>/dashboard</code>', 'GET', 'Protected', '✅ Middleware'],
+    ['<code>/admin</code>', 'GET', 'Protected', '✅ RBAC'],
+    ['<code>/api/admin/users</code>', 'GET/POST', 'Unknown', '⚠️ Needs Review'],
+    ['<code>/settings</code>', 'GET', 'Unknown', '⚠️ Needs Review'],
+  ]}
+/>
+
+**Summary:** 3 protected, 1 public, 2 need review
+
+### JSON Format
+
+```json
+{
+  "analysis": {
+    "timestamp": "2024-01-06T12:00:00Z",
+    "framework": "Next.js App Router",
+    "middleware": {
+      "configured": true,
+      "file": "middleware.ts",
+      "matcher": ["/((?!api|_next/static|_next/image|favicon.ico).*)"]
+    },
+    "routes": [
+      {
+        "path": "/api/auth/[...keyloom]",
+        "methods": ["GET", "POST"],
+        "protection": "public",
+        "status": "configured",
+        "handler": "keyloom"
+      },
+      {
+        "path": "/dashboard",
+        "methods": ["GET"],
+        "protection": "protected",
+        "status": "middleware",
+        "middleware": true
+      }
+    ],
+    "summary": {
+      "total": 15,
+      "protected": 8,
+      "public": 5,
+      "needsReview": 2
+    }
+  }
+}
+```
+
+### Markdown Format
+
+```markdown
+# Route Analysis Report
+
+Generated: 2024-01-06 12:00:00
+
+## Authentication Routes
+
+- ✅ `/api/auth/[...keyloom]` - Keyloom handler configured
+- ✅ `/api/auth/csrf` - CSRF protection enabled
+- ❌ `/api/auth/verify` - Email verification missing
+
+## Protected Routes
+
+- ✅ `/dashboard/*` - Protected by middleware
+- ✅ `/admin/*` - Protected with RBAC
+- ⚠️ `/settings` - Protection unclear
+
+## Recommendations
+
+1. Add email verification endpoint
+2. Clarify protection for `/settings` route
+3. Consider rate limiting for auth endpoints
+```
+
+## Framework-Specific Analysis
+
+### Next.js App Router
+
+**Route Detection:**
+- Scans `app/` directory for route files
+- Analyzes `page.tsx`, `route.ts`, and `layout.tsx` files
+- Checks middleware configuration
+- Validates API route handlers
+
+**Sample Output:**
+```text
+Next.js App Router Analysis:
+
+App Directory Structure:
+├── app/
+│   ├── (auth)/
+│   │   ├── login/page.tsx - Public
+│   │   └── register/page.tsx - Public
+│   ├── dashboard/
+│   │   ├── page.tsx - Protected
+│   │   └── layout.tsx - Auth wrapper
+│   └── api/
+│       ├── auth/[...keyloom]/route.ts - Auth handler
+│       └── admin/route.ts - Needs protection
+
+Middleware: ✓ Configured in middleware.ts
+```
+
+### Next.js Pages Router
+
+**Route Detection:**
+- Scans `pages/` directory for route files
+- Analyzes `getServerSideProps` and `getStaticProps`
+- Checks for authentication wrappers
+- Validates API routes
+
+### React (Vite/CRA)
+
+**Route Detection:**
+- Analyzes React Router configuration
+- Checks for route guards and protected routes
+- Validates authentication context usage
+
+## Security Recommendations
+
+### Route Protection Best Practices
+
+```text
+Security Recommendations:
+
+High Priority:
+→ Add authentication to /api/admin/* endpoints
+→ Implement rate limiting on auth endpoints
+→ Add CSRF protection to state-changing operations
+
+Medium Priority:
+→ Consider adding request logging for admin routes
+→ Implement session timeout for sensitive areas
+→ Add input validation to API endpoints
+
+Low Priority:
+→ Add security headers to all responses
+→ Consider implementing request signing
+→ Add monitoring for suspicious activity
+```
+
+### Common Security Issues
+
+**Detected Issues:**
+```text
+Security Issues Found:
+
+🔴 Critical:
+- /api/admin/delete-user - No authentication check
+- /api/payment/process - Missing authorization
+
+🟡 Warning:
+- /dashboard/settings - Inconsistent protection
+- /api/user/profile - Missing input validation
+
+🟢 Info:
+- Consider adding rate limiting
+- Add security headers
+```
+
+## Integration Examples
+
+### CI/CD Pipeline
+
+```yaml title=".github/workflows/security-check.yml"
+name: Security Check
+on: [push, pull_request]
+
+jobs:
+  route-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - run: npm install
+      - name: Analyze routes
+        run: |
+          npx keyloom routes --format json --output routes.json
+          # Check for critical issues
+          if grep -q '"status": "critical"' routes.json; then
+            echo "Critical security issues found!"
+            exit 1
+          fi
+```
+
+### Pre-deployment Check
+
+```json title="package.json"
+{
+  "scripts": {
+    "security-check": "keyloom routes --include-protected --verbose",
+    "pre-deploy": "npm run security-check && npm run build"
+  }
+}
+```
+
+### Development Workflow
+
+```bash
+# Check routes during development
+npm run dev &
+npx keyloom routes --watch
+
+# Generate security report
+npx keyloom routes --format markdown --output SECURITY.md
+```
+
+## Troubleshooting
+
+**No routes detected**
+```text
+Error: No routes found in project
+```
+- Ensure you're in the project root directory
+- Check that framework is properly detected
+- Verify route files exist in expected locations
+
+**Middleware not detected**
+```text
+Warning: No middleware configuration found
+```
+- Check for `middleware.ts` or `middleware.js` file
+- Verify middleware is properly exported
+- Ensure middleware matcher is configured
+
+**Permission errors**
+```text
+Error: Cannot read route files
+```
+- Check file permissions
+- Ensure all route files are readable
+- Run with appropriate permissions
+
+**Framework not supported**
+```text
+Error: Framework not supported for route analysis
+```
+- Currently supports Next.js, React Router
+- Check framework detection with `keyloom doctor`
+- Consider manual route documentation
+
+## See also
+
+- [CLI Overview](/docs/cli/overview)
+- [Middleware Configuration](/docs/nextjs/middleware)
+- [Route Protection](/docs/getting-started/basic-usage)
+- [Security Best Practices](/docs/security/overview)

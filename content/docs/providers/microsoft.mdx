@@ -3,6 +3,8 @@ title: Microsoft Provider
 description: Configure Microsoft OAuth with Keyloom using Azure AD. Complete Azure app registration, scopes, tenant configuration, and troubleshooting.
 ---
 
+import { Table } from '@/components/Table';
+
 # Microsoft Provider
 
 Add Microsoft OAuth to your Keyloom app using Azure Active Directory (Azure AD). This guide covers Azure app registration and configuration.
@@ -118,13 +120,16 @@ export default defineKeyloom({
 
 ## Recommended scopes
 
-| Scope | Purpose | Required |
-| --- | --- | --- |
-| `openid` | OpenID Connect authentication | Yes |
-| `profile` | Basic profile info (name, picture) | Yes |
-| `email` | User's email address | Yes |
-| `User.Read` | Read user profile via Microsoft Graph | Optional |
-| `offline_access` | Refresh tokens | Optional |
+<Table
+  headers={['Scope', 'Purpose', 'Required']}
+  rows={[
+    ['<code>openid</code>', 'OpenID Connect authentication', 'Yes'],
+    ['<code>profile</code>', 'Basic profile info (name, picture)', 'Yes'],
+    ['<code>email</code>', 'User\'s email address', 'Yes'],
+    ['<code>User.Read</code>', 'Read user profile via Microsoft Graph', 'Optional'],
+    ['<code>offline_access</code>', 'Refresh tokens', 'Optional'],
+  ]}
+/>
 
 **Minimal setup**: Use `openid`, `profile`, and `email` for basic authentication.
 

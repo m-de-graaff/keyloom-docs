@@ -1,0 +1,293 @@
+---
+title: MongoDB Adapter
+description: Use MongoDB with Keyloom. Complete setup, collections, indexes, performance optimization, and troubleshooting.
+---
+
+# MongoDB Adapter
+
+Use MongoDB to persist users, accounts, sessions, tokens, refresh tokens, and memberships with Keyloom.
+
+## Prerequisites
+
+- MongoDB instance running and accessible
+- MongoDB driver installed
+- Basic understanding of MongoDB collections and documents
+
+## Install
+
+```bash
+pnpm add @keyloom/adapters-mongo mongodb
+# or
+npm install @keyloom/adapters-mongo mongodb
+```
+
+## Database Connection
+
+```ts title="src/db/mongodb.ts"
+import { MongoClient } from "mongodb";
+
+const client = new MongoClient(process.env.MONGODB_URL!);
+
+// Connect to MongoDB
+await client.connect();
+
+export const db = client.db(process.env.MONGODB_DATABASE || "keyloom");
+```
+
+## Using the Adapter
+
+```ts title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { mongoAdapter } from "@keyloom/adapters-mongo";
+import { db } from "@/src/db/mongodb";
+
+export default defineKeyloom({
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
+  session: { strategy: "database", ttlMinutes: 30 },
+  adapter: mongoAdapter(db),
+  providers: [],
+  rbac: { enabled: true },
+  secrets: { authSecret: process.env.AUTH_SECRET! },
+});
+```
+
+## Configuration Options
+
+```ts
+mongoAdapter(db, {
+  collections?: {
+    users?: string;           // Default: "users"
+    accounts?: string;        // Default: "accounts"
+    sessions?: string;        // Default: "sessions"
+    verificationTokens?: string; // Default: "verification_tokens"
+    organizations?: string;   // Default: "organizations"
+    memberships?: string;     // Default: "memberships"
+    refreshTokens?: string;   // Default: "refresh_tokens"
+  };
+  enableQueryLogging?: boolean; // Default: false
+})
+```
+
+## Collections Schema
+
+### Users Collection
+
+```ts
+{
+  _id: ObjectId,
+  id: string,           // Unique user identifier
+  email?: string,       // User email (unique)
+  emailVerified?: Date, // Email verification timestamp
+  name?: string,        // Display name
+  image?: string,       // Profile image URL
+  createdAt: Date,      // Account creation timestamp
+  updatedAt: Date       // Last update timestamp
+}
+```
+
+### Accounts Collection
+
+```ts
+{
+  _id: ObjectId,
+  id: string,                    // Unique account identifier
+  userId: string,                // Reference to user
+  type: "oauth" | "credentials", // Account type
+  provider: string,              // Provider name (e.g., "github")
+  providerAccountId: string,     // Provider's user ID
+  refresh_token?: string,        // OAuth refresh token
+  access_token?: string,         // OAuth access token
+  expires_at?: number,           // Token expiration timestamp
+  token_type?: string,           // Token type
+  scope?: string,                // OAuth scopes
+  id_token?: string,             // OpenID Connect ID token
+  session_state?: string,        // OAuth session state
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+### Sessions Collection
+
+```ts
+{
+  _id: ObjectId,
+  id: string,           // Unique session identifier
+  sessionToken: string, // Session token (unique)
+  userId: string,       // Reference to user
+  expiresAt: Date,      // Session expiration
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+### Verification Tokens Collection
+
+```ts
+{
+  _id: ObjectId,
+  identifier: string,   // Email or phone number
+  token: string,        // Verification token
+  expiresAt: Date,      // Token expiration
+  createdAt: Date
+}
+```
+
+## Required Indexes
+
+Create these indexes for optimal performance:
+
+```js
+// Users collection
+db.users.createIndex({ "email": 1 }, { unique: true, sparse: true });
+db.users.createIndex({ "id": 1 }, { unique: true });
+
+// Accounts collection
+db.accounts.createIndex({ "userId": 1 });
+db.accounts.createIndex({ "provider": 1, "providerAccountId": 1 }, { unique: true });
+db.accounts.createIndex({ "id": 1 }, { unique: true });
+
+// Sessions collection
+db.sessions.createIndex({ "sessionToken": 1 }, { unique: true });
+db.sessions.createIndex({ "userId": 1 });
+db.sessions.createIndex({ "expiresAt": 1 }, { expireAfterSeconds: 0 });
+db.sessions.createIndex({ "id": 1 }, { unique: true });
+
+// Verification tokens collection
+db.verification_tokens.createIndex({ "identifier": 1, "token": 1 }, { unique: true });
+db.verification_tokens.createIndex({ "expiresAt": 1 }, { expireAfterSeconds: 0 });
+
+// Organizations collection (if using RBAC)
+db.organizations.createIndex({ "id": 1 }, { unique: true });
+db.organizations.createIndex({ "slug": 1 }, { unique: true, sparse: true });
+
+// Memberships collection (if using RBAC)
+db.memberships.createIndex({ "userId": 1, "organizationId": 1 }, { unique: true });
+db.memberships.createIndex({ "organizationId": 1 });
+db.memberships.createIndex({ "id": 1 }, { unique: true });
+```
+
+## Environment Variables
+
+```ini title=".env.local"
+MONGODB_URL=mongodb://localhost:27017
+MONGODB_DATABASE=keyloom
+AUTH_SECRET=your-auth-secret-here
+```
+
+## Connection Pooling
+
+For production applications, configure connection pooling:
+
+```ts title="src/db/mongodb.ts"
+import { MongoClient } from "mongodb";
+
+const client = new MongoClient(process.env.MONGODB_URL!, {
+  maxPoolSize: 10,        // Maximum connections in pool
+  minPoolSize: 2,         // Minimum connections in pool
+  maxIdleTimeMS: 30000,   // Close connections after 30 seconds of inactivity
+  serverSelectionTimeoutMS: 5000, // How long to try selecting a server
+  socketTimeoutMS: 45000, // How long a send or receive on a socket can take
+});
+
+export const db = client.db(process.env.MONGODB_DATABASE || "keyloom");
+```
+
+## Performance Optimization
+
+### 1. Use Appropriate Indexes
+- Create compound indexes for frequently queried field combinations
+- Use sparse indexes for optional fields
+- Monitor slow queries with MongoDB profiler
+
+### 2. Connection Management
+- Use connection pooling in production
+- Implement proper connection error handling
+- Monitor connection pool metrics
+
+### 3. Query Optimization
+- Use projection to limit returned fields
+- Implement pagination for large result sets
+- Use aggregation pipeline for complex queries
+
+### 4. TTL Indexes
+MongoDB automatically removes expired documents:
+
+```js
+// Sessions expire automatically
+db.sessions.createIndex({ "expiresAt": 1 }, { expireAfterSeconds: 0 });
+
+// Verification tokens expire automatically
+db.verification_tokens.createIndex({ "expiresAt": 1 }, { expireAfterSeconds: 0 });
+```
+
+## Troubleshooting
+
+**Connection refused**
+- Verify MongoDB URL and credentials
+- Check network connectivity
+- Ensure MongoDB service is running
+
+**Duplicate key errors**
+- Check for existing documents with same unique field values
+- Verify index constraints
+- Handle race conditions in user creation
+
+**Slow queries**
+- Create appropriate indexes
+- Use MongoDB profiler to identify slow operations
+- Consider query optimization
+
+**Memory issues**
+- Implement proper connection pooling
+- Use projection to limit returned data
+- Monitor memory usage and optimize queries
+
+## Security Considerations
+
+- Use authentication and authorization in MongoDB
+- Enable SSL/TLS for connections
+- Implement proper network security
+- Regular security updates
+- Monitor access logs
+- Use least privilege principle for database users
+
+## MongoDB Atlas Integration
+
+For MongoDB Atlas (cloud):
+
+```ts title="src/db/mongodb.ts"
+import { MongoClient } from "mongodb";
+
+const client = new MongoClient(process.env.MONGODB_ATLAS_URL!, {
+  retryWrites: true,
+  w: "majority",
+  ssl: true,
+});
+
+export const db = client.db("keyloom");
+```
+
+## Backup and Recovery
+
+- Set up regular automated backups
+- Test backup restoration procedures
+- Consider point-in-time recovery options
+- Document recovery procedures
+
+## Migration from Other Databases
+
+When migrating from SQL databases:
+
+1. **Schema Design**: Adapt relational schema to document structure
+2. **Data Migration**: Use MongoDB migration tools
+3. **Index Creation**: Create appropriate indexes for performance
+4. **Testing**: Thoroughly test all authentication flows
+5. **Rollback Plan**: Prepare rollback procedures
+
+## See also
+
+- [MongoDB Documentation](https://docs.mongodb.com/)
+- [MongoDB Node.js Driver](https://mongodb.github.io/node-mongodb-native/)
+- [Adapter Overview](/docs/adapters/overview)
+- [Core Configuration](/docs/core/config)

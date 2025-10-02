@@ -1,0 +1,508 @@
+---
+title: keyloom ui
+description: Set up Keyloom UI components and scaffold authentication interfaces with Tailwind CSS integration and component generation.
+---
+
+# keyloom ui
+
+Set up Keyloom UI components and scaffold authentication interfaces with automatic Tailwind CSS integration, component generation, and framework-specific templates.
+
+## Overview
+
+The `keyloom ui` command streamlines the setup and scaffolding of Keyloom's UI component library. It handles Tailwind CSS configuration, generates authentication interfaces, and creates ready-to-use components for common authentication patterns.
+
+## Usage
+
+```bash
+# Interactive UI setup
+npx keyloom ui
+
+# Set up Tailwind and CSS variables
+npx keyloom ui setup
+
+# Add specific UI components
+npx keyloom ui add sign-in
+npx keyloom ui add user-button
+npx keyloom ui add org
+```
+
+## Commands
+
+### `ui setup`
+
+Configure Tailwind CSS preset and import CSS variables for Keyloom UI components.
+
+```bash
+npx keyloom ui setup
+```
+
+**What it does:**
+1. Installs required dependencies
+2. Updates Tailwind configuration with Keyloom preset
+3. Adds CSS variables import to global styles
+4. Creates component directory structure
+
+**Generated/Updated Files:**
+```text
+tailwind.config.js - Updated with Keyloom preset
+app/globals.css - CSS variables imported
+components/ - Component directory created
+```
+
+**Tailwind Configuration:**
+```js title="tailwind.config.js"
+const keyloom = require("@keyloom/ui/theme/tailwind-preset.cjs");
+
+module.exports = {
+  presets: [keyloom],
+  content: [
+    "./app/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./node_modules/@keyloom/ui/dist/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {
+      // Your custom theme extensions
+    },
+  },
+};
+```
+
+**CSS Variables:**
+```css title="app/globals.css"
+@import "@keyloom/ui/theme/css-vars.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+```
+
+### `ui add sign-in`
+
+Generate a complete sign-in page with form, OAuth providers, and responsive design.
+
+```bash
+npx keyloom ui add sign-in
+```
+
+**Generated Files:**
+```text
+app/(auth)/
+├── layout.tsx - Authentication layout
+└── sign-in/
+    └── page.tsx - Sign-in page
+```
+
+**Generated Sign-in Page:**
+```tsx title="app/(auth)/sign-in/page.tsx"
+import { SignInForm, Providers } from "@keyloom/ui/auth";
+import { Card } from "@keyloom/ui/components/card";
+import Link from "next/link";
+
+export default function SignInPage() {
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <Card className="w-full max-w-md p-6 space-y-6">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold">Welcome back</h1>
+          <p className="text-muted-foreground">
+            Sign in to your account to continue
+          </p>
+        </div>
+
+        {/* OAuth Providers */}
+        <Providers
+          callbackUrl="/dashboard"
+          providers={[
+            { id: "github", name: "GitHub" },
+            { id: "google", name: "Google" },
+          ]}
+        />
+
+        {/* Divider */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">
+              Or continue with
+            </span>
+          </div>
+        </div>
+
+        {/* Email/Password Form */}
+        <SignInForm
+          redirectTo="/dashboard"
+          onSuccess={(result) => {
+            console.log("Sign in successful:", result);
+          }}
+        />
+
+        {/* Sign up link */}
+        <div className="text-center text-sm">
+          <span className="text-muted-foreground">Don't have an account? </span>
+          <Link href="/sign-up" className="text-primary hover:underline">
+            Sign up
+          </Link>
+        </div>
+      </Card>
+    </div>
+  );
+}
+```
+
+**Authentication Layout:**
+```tsx title="app/(auth)/layout.tsx"
+import { AuthUIProvider } from "@keyloom/ui";
+
+export default function AuthLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <AuthUIProvider>
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted">
+        <div className="container mx-auto px-4 py-8">
+          {children}
+        </div>
+      </div>
+    </AuthUIProvider>
+  );
+}
+```
+
+### `ui add user-button`
+
+Generate a user button component with dropdown menu and profile management.
+
+```bash
+npx keyloom ui add user-button
+```
+
+**Generated Files:**
+```text
+components/
+├── user-button.tsx - Custom user button component
+└── navigation/
+    └── header.tsx - Header with user button
+```
+
+**User Button Component:**
+```tsx title="components/user-button.tsx"
+"use client";
+
+import { UserButton as KeyloomUserButton } from "@keyloom/ui/auth";
+import { useSession } from "@keyloom/react";
+
+export function UserButton() {
+  const { data: session, status } = useSession();
+
+  if (status === "loading") {
+    return (
+      <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
+    );
+  }
+
+  if (!session) {
+    return null;
+  }
+
+  return (
+    <KeyloomUserButton
+      user={session.user}
+      menuItems={[
+        {
+          label: "Profile",
+          href: "/profile",
+        },
+        {
+          label: "Settings",
+          href: "/settings",
+        },
+        {
+          label: "Billing",
+          href: "/billing",
+        },
+        { type: "separator" },
+        {
+          label: "Sign out",
+          action: "logout",
+        },
+      ]}
+    />
+  );
+}
+```
+
+**Header Component:**
+```tsx title="components/navigation/header.tsx"
+import { UserButton } from "../user-button";
+
+export function Header() {
+  return (
+    <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <h1 className="text-xl font-semibold">My App</h1>
+        </div>
+        
+        <div className="flex items-center space-x-4">
+          <UserButton />
+        </div>
+      </div>
+    </header>
+  );
+}
+```
+
+### `ui add org`
+
+Generate organization management interface with switcher, member management, and invitation system.
+
+```bash
+npx keyloom ui add org
+```
+
+**Generated Files:**
+```text
+app/org/
+├── layout.tsx - Organization layout
+├── page.tsx - Organization dashboard
+├── members/
+│   └── page.tsx - Member management
+├── settings/
+│   └── page.tsx - Organization settings
+└── invites/
+    └── page.tsx - Invitation management
+
+components/org/
+├── org-switcher.tsx - Organization switcher
+├── member-table.tsx - Member management table
+├── invite-dialog.tsx - Invitation dialog
+└── create-org-dialog.tsx - Organization creation
+```
+
+**Organization Switcher:**
+```tsx title="components/org/org-switcher.tsx"
+"use client";
+
+import { OrgSwitcher as KeyloomOrgSwitcher } from "@keyloom/ui/org";
+import { useCurrentOrganization } from "@keyloom/react";
+
+export function OrgSwitcher() {
+  const { organization, organizations, switchOrganization } = useCurrentOrganization();
+
+  return (
+    <KeyloomOrgSwitcher
+      currentOrg={organization}
+      organizations={organizations}
+      onSwitch={switchOrganization}
+      onCreateNew={() => {
+        // Handle organization creation
+      }}
+    />
+  );
+}
+```
+
+**Member Management Page:**
+```tsx title="app/org/members/page.tsx"
+import { MembersTable } from "@keyloom/ui/org";
+import { InviteMemberDialog } from "@/components/org/invite-dialog";
+import { Button } from "@keyloom/ui/components/button";
+
+export default function MembersPage() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Team Members</h1>
+          <p className="text-muted-foreground">
+            Manage your organization's team members and their roles.
+          </p>
+        </div>
+        
+        <InviteMemberDialog
+          trigger={<Button>Invite Member</Button>}
+        />
+      </div>
+
+      <MembersTable
+        onRemoveMember={(memberId) => {
+          // Handle member removal
+        }}
+        onUpdateRole={(memberId, role) => {
+          // Handle role update
+        }}
+      />
+    </div>
+  );
+}
+```
+
+## Configuration Options
+
+### Framework Selection
+
+```bash
+# Next.js App Router (default)
+npx keyloom ui add sign-in --framework nextjs-app
+
+# Next.js Pages Router
+npx keyloom ui add sign-in --framework nextjs-pages
+
+# React with Vite
+npx keyloom ui add sign-in --framework react-vite
+```
+
+### Styling Options
+
+```bash
+# Use default Keyloom styling
+npx keyloom ui add sign-in --style default
+
+# Minimal styling
+npx keyloom ui add sign-in --style minimal
+
+# Custom brand colors
+npx keyloom ui add sign-in --brand-color "#3b82f6"
+```
+
+### Component Customization
+
+```bash
+# Include additional features
+npx keyloom ui add sign-in --features oauth,magic-link,2fa
+
+# Specify OAuth providers
+npx keyloom ui add sign-in --providers github,google,microsoft
+
+# Custom redirect URL
+npx keyloom ui add sign-in --redirect-url "/dashboard"
+```
+
+## Interactive Setup
+
+```bash
+npx keyloom ui
+```
+
+**Interactive Prompts:**
+```text
+? What would you like to do?
+❯ Set up Keyloom UI (Tailwind + CSS variables)
+  Add sign-in page
+  Add user button component
+  Add organization management
+  Add complete authentication flow
+
+? Which framework are you using?
+❯ Next.js App Router
+  Next.js Pages Router
+  React with Vite
+  React with Create React App
+
+? Which styling approach do you prefer?
+❯ Use Keyloom's default theme
+  Minimal styling (customize yourself)
+  Custom brand colors
+
+? Additional features to include:
+❯◉ OAuth provider buttons
+ ◉ Email/password forms
+ ◯ Magic link authentication
+ ◯ Two-factor authentication
+ ◯ Remember me functionality
+```
+
+## Dependency Management
+
+The CLI automatically installs required dependencies:
+
+```json title="package.json"
+{
+  "dependencies": {
+    "@keyloom/ui": "^3.1.0",
+    "@keyloom/react": "^3.1.0",
+    "clsx": "^2.0.0",
+    "lucide-react": "^0.300.0"
+  },
+  "devDependencies": {
+    "@radix-ui/react-dialog": "^1.0.0",
+    "@radix-ui/react-dropdown-menu": "^2.0.0",
+    "@radix-ui/react-avatar": "^1.0.0",
+    "tailwindcss": "^3.4.0"
+  }
+}
+```
+
+## Troubleshooting
+
+**Tailwind not working**
+```text
+Error: Tailwind classes not applying
+```
+- Ensure Tailwind preset is properly configured
+- Check content paths include Keyloom UI dist files
+- Verify CSS variables are imported in global styles
+
+**Component not found**
+```text
+Error: Cannot resolve '@keyloom/ui/auth'
+```
+- Install dependencies: `npm install @keyloom/ui`
+- Check import paths match generated code
+- Ensure TypeScript paths are configured
+
+**Styling conflicts**
+```text
+Warning: CSS conflicts detected
+```
+- Check for conflicting CSS imports
+- Ensure Keyloom preset is loaded first
+- Use CSS layers to control specificity
+
+**Framework not detected**
+```text
+Warning: Could not detect framework
+```
+- Ensure framework dependencies are installed
+- Use `--framework` flag to specify explicitly
+- Check that you're in the project root directory
+
+## Advanced Usage
+
+### Custom Component Templates
+
+```bash
+# Use custom component template
+npx keyloom ui add sign-in --template ./templates/custom-signin.tsx
+
+# Generate with custom props
+npx keyloom ui add user-button --props "showNotifications,theme"
+```
+
+### Batch Component Generation
+
+```bash
+# Generate multiple components at once
+npx keyloom ui add sign-in,user-button,org --batch
+```
+
+### Integration with Design Systems
+
+```bash
+# Generate components compatible with Shadcn/ui
+npx keyloom ui add sign-in --design-system shadcn
+
+# Generate for Chakra UI
+npx keyloom ui add sign-in --design-system chakra
+```
+
+## See also
+
+- [CLI Overview](/docs/cli/overview)
+- [UI Components](/docs/ui/overview)
+- [Scaffold Command](/docs/cli/scaffold)
+- [Tailwind Integration](/docs/ui/overview#tailwind-configuration)

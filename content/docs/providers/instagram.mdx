@@ -1,0 +1,179 @@
+---
+title: Instagram Provider
+description: Configure Instagram OAuth for Keyloom authentication - setup, scopes, and media platform integration.
+---
+
+# Instagram Provider
+
+Enable Instagram OAuth authentication in your Keyloom application for social media integration.
+
+## Prerequisites
+
+- Instagram app created at [Facebook for Developers](https://developers.facebook.com/)
+- Instagram Basic Display API configured
+- Keyloom handler configured at `/api/auth/[...keyloom]`
+
+## Setup
+
+### 1. Create Facebook App with Instagram Basic Display
+
+1. Go to [Facebook for Developers](https://developers.facebook.com/)
+2. Click "Create App" and choose "Consumer" type
+3. Fill in app details and create the app
+4. Add "Instagram Basic Display" product to your app
+
+### 2. Configure Instagram Basic Display
+
+1. In Instagram Basic Display settings, add redirect URI:
+   `${YOUR_APP_URL}/api/auth/oauth/instagram/callback`
+2. Add test users or submit for app review for production use
+
+### 3. Get Credentials
+
+From your Facebook app's Instagram Basic Display settings:
+
+- **Instagram App ID**: Your Instagram App ID
+- **Instagram App Secret**: Your Instagram App Secret
+
+### 4. Environment Variables
+
+```ini title=".env.local"
+INSTAGRAM_CLIENT_ID=your_instagram_app_id
+INSTAGRAM_CLIENT_SECRET=your_instagram_app_secret
+```
+
+### 5. Configure Provider
+
+```ts title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { instagram } from "@keyloom/providers";
+
+export default defineKeyloom({
+  providers: [
+    instagram({
+      clientId: process.env.INSTAGRAM_CLIENT_ID!,
+      clientSecret: process.env.INSTAGRAM_CLIENT_SECRET!,
+    }),
+  ],
+  // ... other config
+});
+```
+
+## Configuration Options
+
+```ts
+instagram({
+  clientId: string;
+  clientSecret: string;
+})
+```
+
+## Available Scopes
+
+Instagram Basic Display API provides limited scopes:
+
+- `user_profile` - Basic profile information (username, account type)
+- `user_media` - User's media (photos and videos)
+
+**Note**: Instagram Basic Display API has limited functionality compared to Instagram Graph API. For business features, consider Instagram Graph API integration.
+
+## User Profile
+
+Instagram returns the following user information:
+
+```ts
+{
+  id: string;           // Instagram user ID
+  name: string | null;  // Username (display name not available)
+  email: null;          // Email not provided by Instagram Basic Display
+  image: null;          // Profile picture requires additional API call
+  // Raw Instagram data available in profile
+}
+```
+
+**Important**: Instagram Basic Display API does not provide email addresses or profile pictures through the basic user info endpoint.
+
+## Usage Example
+
+```tsx title="components/InstagramSignIn.tsx"
+import { useLogin } from "@keyloom/react";
+
+export function InstagramSignIn() {
+  const { login, loading } = useLogin();
+
+  const handleInstagramLogin = async () => {
+    await login({
+      provider: "instagram",
+      callbackUrl: "/dashboard",
+    });
+  };
+
+  return (
+    <button onClick={handleInstagramLogin} disabled={loading}>
+      {loading ? "Connecting..." : "Sign in with Instagram"}
+    </button>
+  );
+}
+```
+
+## App Review Process
+
+For production apps, Instagram requires app review:
+
+1. Submit your app for review in Facebook Developer Console
+2. Provide detailed use case for Instagram integration
+3. Include privacy policy and terms of service
+4. Demonstrate compliance with Instagram Platform Policy
+5. Test your integration thoroughly before submission
+
+## Limitations
+
+**Instagram Basic Display API Limitations:**
+- No email address access
+- Limited to personal Instagram accounts
+- Requires app review for public use
+- Rate limits on API calls
+- No direct profile picture access
+
+**Alternative**: For business use cases, consider Instagram Graph API which provides more features but requires business verification.
+
+## Troubleshooting
+
+**Invalid redirect URI**
+- Ensure redirect URI matches exactly in Instagram app settings
+- Check protocol (http vs https) and domain
+- Verify the callback URL format
+
+**App not approved**
+- Submit for Instagram app review with detailed use case
+- Ensure compliance with Instagram Platform Policy
+- Provide privacy policy and terms of service
+
+**Limited user data**
+- Instagram Basic Display API provides minimal user information
+- Email and profile pictures are not available through basic API
+- Consider additional API calls for extended user information
+
+## Security Considerations
+
+- Store app secret securely (environment variables)
+- Use HTTPS in production
+- Follow Instagram Platform Policy guidelines
+- Regularly review app permissions and access
+- Monitor for suspicious OAuth activity
+- Respect user privacy and data usage policies
+
+## Migration Notes
+
+Instagram has deprecated some older API versions:
+
+- Use Instagram Basic Display API for personal accounts
+- Consider Instagram Graph API for business accounts
+- Update scope names to current standards
+- Test authentication flows regularly
+
+## See also
+
+- [Instagram Basic Display API Documentation](https://developers.facebook.com/docs/instagram-basic-display-api)
+- [Provider Overview](/docs/providers/overview)
+- [React Hooks](/docs/react/hooks)

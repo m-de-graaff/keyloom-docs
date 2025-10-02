@@ -1,0 +1,473 @@
+---
+title: keyloom scaffold
+description: Generate boilerplate code, components, and configuration files for common authentication patterns and integrations.
+---
+
+# keyloom scaffold
+
+Generate boilerplate code, components, and configuration files for common authentication patterns, integrations, and application structures with framework-specific templates.
+
+## Overview
+
+The `keyloom scaffold` command provides intelligent code generation for common authentication patterns, helping you quickly set up authentication flows, protected routes, user management interfaces, and integration boilerplate.
+
+## Usage
+
+```bash
+# Interactive scaffolding
+npx keyloom scaffold
+
+# Scaffold specific templates
+npx keyloom scaffold auth-pages
+npx keyloom scaffold admin-panel
+npx keyloom scaffold user-profile
+```
+
+## Available Templates
+
+### `auth-pages`
+
+Generate complete authentication page templates with forms and layouts.
+
+```bash
+npx keyloom scaffold auth-pages
+```
+
+**Generated Files:**
+```text
+app/(auth)/
+├── layout.tsx - Auth layout wrapper
+├── login/
+│   └── page.tsx - Login page with form
+├── register/
+│   └── page.tsx - Registration page
+├── forgot-password/
+│   └── page.tsx - Password reset request
+├── reset-password/
+│   └── page.tsx - Password reset form
+└── verify-email/
+    └── page.tsx - Email verification
+```
+
+**Example Generated Code:**
+```tsx title="app/(auth)/login/page.tsx"
+import { SignInForm } from "@keyloom/ui/auth";
+import { Card } from "@keyloom/ui/components/card";
+import Link from "next/link";
+
+export default function LoginPage() {
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <Card className="w-full max-w-md p-6 space-y-6">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold">Welcome back</h1>
+          <p className="text-muted-foreground">
+            Sign in to your account to continue
+          </p>
+        </div>
+
+        <SignInForm redirectTo="/dashboard" />
+
+        <div className="text-center text-sm">
+          <span className="text-muted-foreground">Don't have an account? </span>
+          <Link href="/register" className="text-primary hover:underline">
+            Sign up
+          </Link>
+        </div>
+      </Card>
+    </div>
+  );
+}
+```
+
+### `admin-panel`
+
+Generate admin panel with user management, role assignment, and system monitoring.
+
+```bash
+npx keyloom scaffold admin-panel
+```
+
+**Generated Files:**
+```text
+app/admin/
+├── layout.tsx - Admin layout with navigation
+├── page.tsx - Admin dashboard
+├── users/
+│   ├── page.tsx - User management table
+│   └── [id]/page.tsx - User detail page
+├── organizations/
+│   ├── page.tsx - Organization management
+│   └── [id]/members/page.tsx - Member management
+└── settings/
+    └── page.tsx - System settings
+```
+
+**Features:**
+- User management with role assignment
+- Organization and member management
+- System settings and configuration
+- Audit log viewing
+- Permission-based access control
+
+### `user-profile`
+
+Generate user profile management interface with account settings.
+
+```bash
+npx keyloom scaffold user-profile
+```
+
+**Generated Files:**
+```text
+app/profile/
+├── layout.tsx - Profile layout
+├── page.tsx - Profile overview
+├── settings/
+│   ├── page.tsx - Account settings
+│   ├── security/page.tsx - Security settings
+│   └── preferences/page.tsx - User preferences
+└── organizations/
+    └── page.tsx - Organization memberships
+```
+
+### `dashboard`
+
+Generate protected dashboard with navigation and common layouts.
+
+```bash
+npx keyloom scaffold dashboard
+```
+
+**Generated Files:**
+```text
+app/dashboard/
+├── layout.tsx - Dashboard layout with sidebar
+├── page.tsx - Dashboard home
+├── components/
+│   ├── sidebar.tsx - Navigation sidebar
+│   ├── header.tsx - Dashboard header
+│   └── user-menu.tsx - User dropdown menu
+└── settings/
+    └── page.tsx - Dashboard settings
+```
+
+### `api-routes`
+
+Generate API route handlers for custom authentication endpoints.
+
+```bash
+npx keyloom scaffold api-routes
+```
+
+**Generated Files:**
+```text
+app/api/
+├── user/
+│   ├── profile/route.ts - User profile API
+│   └── preferences/route.ts - User preferences API
+├── admin/
+│   ├── users/route.ts - User management API
+│   └── organizations/route.ts - Organization API
+└── webhooks/
+    └── auth/route.ts - Authentication webhooks
+```
+
+### `middleware`
+
+Generate advanced middleware configurations for route protection.
+
+```bash
+npx keyloom scaffold middleware
+```
+
+**Generated Files:**
+```text
+middleware.ts - Enhanced middleware
+lib/
+├── auth-middleware.ts - Custom auth logic
+├── rbac-middleware.ts - Role-based access control
+└── rate-limit-middleware.ts - Rate limiting
+```
+
+## Interactive Scaffolding
+
+```bash
+npx keyloom scaffold
+```
+
+**Interactive Prompts:**
+```text
+? What would you like to scaffold?
+❯ Complete authentication flow
+  Admin panel with user management
+  User profile and settings
+  Protected dashboard
+  API routes and endpoints
+  Custom middleware configuration
+
+? Which framework are you using?
+❯ Next.js App Router
+  Next.js Pages Router
+  React with Vite
+  React with Create React App
+
+? Do you want to include UI components?
+❯ Yes, use @keyloom/ui components
+  No, generate basic HTML forms
+  Custom, I'll provide my own components
+
+? Authentication features to include:
+❯◉ Email/password authentication
+ ◉ OAuth providers (GitHub, Google, etc.)
+ ◯ Magic link authentication
+ ◯ Two-factor authentication
+ ◯ Passwordless authentication
+
+? Additional features:
+❯◉ Role-based access control (RBAC)
+ ◉ Organization management
+ ◯ Audit logging
+ ◯ Rate limiting
+ ◯ Email verification
+```
+
+## Customization Options
+
+### Template Variables
+
+Customize generated code with template variables:
+
+```bash
+npx keyloom scaffold auth-pages \
+  --app-name "My App" \
+  --brand-color "#3b82f6" \
+  --redirect-url "/dashboard"
+```
+
+### Framework-Specific Generation
+
+```bash
+# Next.js App Router (default)
+npx keyloom scaffold dashboard --framework nextjs-app
+
+# Next.js Pages Router
+npx keyloom scaffold dashboard --framework nextjs-pages
+
+# React with Vite
+npx keyloom scaffold dashboard --framework react-vite
+```
+
+### Component Library Integration
+
+```bash
+# Use Keyloom UI components (default)
+npx keyloom scaffold auth-pages --ui keyloom
+
+# Use Shadcn/ui components
+npx keyloom scaffold auth-pages --ui shadcn
+
+# Generate basic HTML forms
+npx keyloom scaffold auth-pages --ui none
+```
+
+## Generated Code Examples
+
+### Authentication Layout
+
+```tsx title="app/(auth)/layout.tsx"
+import { AuthUIProvider } from "@keyloom/ui";
+
+export default function AuthLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <AuthUIProvider>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">My App</h1>
+            <p className="text-gray-600">Secure authentication platform</p>
+          </div>
+          {children}
+        </div>
+      </div>
+    </AuthUIProvider>
+  );
+}
+```
+
+### Protected Dashboard Layout
+
+```tsx title="app/dashboard/layout.tsx"
+import { redirect } from "next/navigation";
+import { getSession } from "@keyloom/nextjs";
+import { Sidebar } from "./components/sidebar";
+import { Header } from "./components/header";
+
+export default async function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const session = await getSession();
+  
+  if (!session) {
+    redirect("/login");
+  }
+
+  return (
+    <div className="flex h-screen bg-gray-100">
+      <Sidebar />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Header user={session.user} />
+        <main className="flex-1 overflow-auto p-6">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+}
+```
+
+### API Route with Authentication
+
+```ts title="app/api/user/profile/route.ts"
+import { NextRequest, NextResponse } from "next/server";
+import { getSession } from "@keyloom/nextjs";
+
+export async function GET(request: NextRequest) {
+  const session = await getSession();
+  
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Fetch user profile data
+  const profile = await getUserProfile(session.user.id);
+  
+  return NextResponse.json(profile);
+}
+
+export async function PUT(request: NextRequest) {
+  const session = await getSession();
+  
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const data = await request.json();
+  
+  // Update user profile
+  const updatedProfile = await updateUserProfile(session.user.id, data);
+  
+  return NextResponse.json(updatedProfile);
+}
+```
+
+## Configuration Files
+
+### Tailwind Configuration
+
+```js title="tailwind.config.js"
+const keyloom = require("@keyloom/ui/theme/tailwind-preset.cjs");
+
+module.exports = {
+  presets: [keyloom],
+  content: [
+    "./app/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./node_modules/@keyloom/ui/dist/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        brand: {
+          50: "#eff6ff",
+          500: "#3b82f6",
+          900: "#1e3a8a",
+        },
+      },
+    },
+  },
+};
+```
+
+### TypeScript Configuration
+
+```json title="tsconfig.json"
+{
+  "compilerOptions": {
+    "target": "es5",
+    "lib": ["dom", "dom.iterable", "es6"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"],
+      "@/components/*": ["./components/*"],
+      "@/lib/*": ["./lib/*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}
+```
+
+## Troubleshooting
+
+**Template not found**
+```text
+Error: Template 'custom-template' not found
+```
+- Check available templates with `keyloom scaffold --list`
+- Verify template name spelling
+- Ensure CLI is up to date
+
+**File conflicts**
+```text
+Error: File already exists: app/login/page.tsx
+```
+- Use `--force` flag to overwrite existing files
+- Backup existing files before scaffolding
+- Use `--dry-run` to preview changes
+
+**Framework not detected**
+```text
+Warning: Could not detect framework, using default templates
+```
+- Ensure framework dependencies are installed
+- Use `--framework` flag to specify explicitly
+- Check that you're in the project root directory
+
+**Permission errors**
+```text
+Error: Cannot write to directory
+```
+- Check file and directory permissions
+- Ensure target directory is writable
+- Run with appropriate permissions
+
+## See also
+
+- [CLI Overview](/docs/cli/overview)
+- [UI Components](/docs/ui/overview)
+- [Getting Started](/docs/getting-started/installation)
+- [Next.js Integration](/docs/nextjs/overview)

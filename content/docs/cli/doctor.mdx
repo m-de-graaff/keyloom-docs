@@ -1,0 +1,340 @@
+---
+title: keyloom doctor
+description: Diagnose and fix common Keyloom configuration issues with comprehensive health checks and automated fixes.
+---
+
+# keyloom doctor
+
+Diagnose and fix common Keyloom configuration issues with comprehensive health checks, environment validation, and automated fixes.
+
+## Overview
+
+The `keyloom doctor` command performs a comprehensive analysis of your Keyloom setup to identify potential issues and provide actionable solutions. It checks your configuration, environment variables, dependencies, and project structure.
+
+## Usage
+
+```bash
+# Run basic health checks
+npx keyloom doctor
+
+# Run with specific options
+npx keyloom doctor --strict --fix --json
+```
+
+## Command Flags
+
+### `--json`
+Output results in JSON format for programmatic consumption.
+
+```bash
+npx keyloom doctor --json
+```
+
+**Example Output:**
+```json
+{
+  "status": "warning",
+  "checks": [
+    {
+      "name": "Environment Variables",
+      "status": "error",
+      "message": "AUTH_SECRET is not set",
+      "fix": "Generate AUTH_SECRET with: openssl rand -base64url 32"
+    },
+    {
+      "name": "Configuration File",
+      "status": "success",
+      "message": "keyloom.config.ts found and valid"
+    }
+  ]
+}
+```
+
+### `--strict`
+Enable strict mode for more rigorous checks and warnings.
+
+```bash
+npx keyloom doctor --strict
+```
+
+Strict mode includes:
+- Security best practices validation
+- Performance optimization checks
+- Production readiness assessment
+- Deprecated feature warnings
+
+### `--fix`
+Automatically fix issues where possible.
+
+```bash
+npx keyloom doctor --fix
+```
+
+**Automatic Fixes Include:**
+- Generate missing AUTH_SECRET
+- Create missing environment files
+- Fix import paths in configuration
+- Update deprecated configuration options
+
+### `--yes`
+Skip confirmation prompts when using `--fix`.
+
+```bash
+npx keyloom doctor --fix --yes
+```
+
+### `--cwd <path>`
+Specify the working directory for the project.
+
+```bash
+npx keyloom doctor --cwd /path/to/project
+```
+
+### `--skip-env-consent`
+Skip asking for permission to read environment variables.
+
+```bash
+npx keyloom doctor --skip-env-consent
+```
+
+### `--no-env-access`
+Disable environment variable access entirely.
+
+```bash
+npx keyloom doctor --no-env-access
+```
+
+## Health Checks Performed
+
+### 1. Configuration Validation
+
+**Checks:**
+- `keyloom.config.ts` exists and is valid
+- Required configuration options are present
+- Provider configurations are complete
+- Adapter configuration is valid
+
+**Example Output:**
+```text
+✓ Configuration file found: keyloom.config.ts
+✓ Base URL configured
+✗ No providers configured
+  → Add at least one authentication provider
+```
+
+### 2. Environment Variables
+
+**Checks:**
+- `AUTH_SECRET` is set and secure
+- Provider client IDs and secrets are configured
+- Database connection strings are valid
+- Required environment variables are present
+
+**Example Output:**
+```text
+✓ AUTH_SECRET is set
+✗ GITHUB_CLIENT_ID is missing
+  → Set GITHUB_CLIENT_ID in .env.local
+✗ GITHUB_CLIENT_SECRET is missing
+  → Set GITHUB_CLIENT_SECRET in .env.local
+```
+
+### 3. Dependencies
+
+**Checks:**
+- Core Keyloom packages are installed
+- Framework-specific packages are present
+- Provider packages match configuration
+- Adapter packages are installed
+
+**Example Output:**
+```text
+✓ @keyloom/core installed (v3.1.0)
+✓ @keyloom/nextjs installed (v3.1.0)
+✗ @keyloom/providers not installed
+  → Run: npm install @keyloom/providers
+```
+
+### 4. Framework Integration
+
+**Checks:**
+- Authentication routes are configured
+- Middleware is properly set up
+- API handlers are present
+- Route protection is configured
+
+**Example Output:**
+```text
+✓ API route handler found: app/api/auth/[...keyloom]/route.ts
+✓ Middleware configured: middleware.ts
+✗ No protected routes detected
+  → Consider adding route protection
+```
+
+### 5. Database Connection (if using database adapter)
+
+**Checks:**
+- Database connection is successful
+- Required tables/collections exist
+- Migrations are up to date
+- Indexes are properly configured
+
+**Example Output:**
+```text
+✓ Database connection successful
+✓ All required tables exist
+✗ Missing index on sessions.expires_at
+  → Run: CREATE INDEX idx_sessions_expires_at ON sessions(expires_at)
+```
+
+## Usage Examples
+
+### Basic Health Check
+
+```bash
+npx keyloom doctor
+```
+
+**Sample Output:**
+```text
+🔍 Keyloom Doctor - Health Check Report
+
+Configuration
+✓ keyloom.config.ts found and valid
+✓ Base URL configured: http://localhost:3000
+✓ Session strategy: database
+✗ No providers configured
+
+Environment Variables
+✓ AUTH_SECRET is set
+✗ DATABASE_URL is missing
+
+Dependencies
+✓ @keyloom/core (v3.1.0)
+✓ @keyloom/nextjs (v3.1.0)
+✓ @keyloom/adapters (v3.1.0)
+
+Framework Integration
+✓ Next.js App Router detected
+✓ API handler configured
+✓ Middleware present
+
+Summary: 2 errors, 0 warnings
+Run with --fix to automatically resolve issues
+```
+
+### Automated Fix
+
+```bash
+npx keyloom doctor --fix
+```
+
+**Sample Output:**
+```text
+🔧 Keyloom Doctor - Fixing Issues
+
+✓ Generated AUTH_SECRET and added to .env.local
+✓ Created .env.local with required variables
+✓ Updated keyloom.config.ts imports
+
+Summary: 3 issues fixed automatically
+Please review the changes and set provider credentials
+```
+
+### JSON Output for CI/CD
+
+```bash
+npx keyloom doctor --json --no-env-access
+```
+
+Use in GitHub Actions or other CI/CD pipelines:
+
+```yaml
+- name: Check Keyloom Configuration
+  run: |
+    result=$(npx keyloom doctor --json --no-env-access)
+    echo "$result" | jq '.status'
+    if [ "$(echo "$result" | jq -r '.status')" = "error" ]; then
+      exit 1
+    fi
+```
+
+## Troubleshooting
+
+**Command not found**
+```bash
+npm install -g @keyloom/cli
+# or use npx
+npx keyloom doctor
+```
+
+**Permission errors**
+```bash
+# On Unix systems
+sudo npx keyloom doctor
+
+# Or fix permissions
+chmod +x node_modules/.bin/keyloom
+```
+
+**Configuration file not found**
+```text
+Error: keyloom.config.ts not found
+```
+- Ensure you're in the project root directory
+- Run `keyloom init` to create initial configuration
+- Use `--cwd` flag to specify project directory
+
+**Environment variable access denied**
+```text
+Error: Cannot read environment variables
+```
+- Use `--skip-env-consent` to bypass permission prompt
+- Use `--no-env-access` to disable environment checks entirely
+
+**Database connection failed**
+```text
+Error: Cannot connect to database
+```
+- Verify DATABASE_URL is correct
+- Ensure database server is running
+- Check network connectivity and firewall settings
+
+## Integration with Development Workflow
+
+### Pre-commit Hook
+
+```json title="package.json"
+{
+  "husky": {
+    "hooks": {
+      "pre-commit": "keyloom doctor --strict"
+    }
+  }
+}
+```
+
+### Development Script
+
+```json title="package.json"
+{
+  "scripts": {
+    "dev": "keyloom doctor && next dev",
+    "health": "keyloom doctor --json | jq '.status'"
+  }
+}
+```
+
+### Docker Health Check
+
+```dockerfile
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD keyloom doctor --json --no-env-access || exit 1
+```
+
+## See also
+
+- [CLI Overview](/docs/cli/overview)
+- [Configuration](/docs/core/config)
+- [Installation](/docs/getting-started/installation)
+- [Troubleshooting](/docs/troubleshooting/overview)

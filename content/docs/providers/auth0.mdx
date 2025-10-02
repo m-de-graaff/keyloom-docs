@@ -3,6 +3,8 @@ title: Auth0 Provider
 description: Configure Auth0 OAuth with Keyloom. Complete Auth0 application setup, custom domains, scopes, and troubleshooting.
 ---
 
+import { Table } from '@/components/Table';
+
 # Auth0 Provider
 
 Add Auth0 OAuth to your Keyloom app. This guide covers Auth0 application setup, configuration, and best practices.
@@ -87,12 +89,15 @@ export default defineKeyloom({
 
 ## Recommended scopes
 
-| Scope | Purpose | Required |
-| --- | --- | --- |
-| `openid` | OpenID Connect authentication | Yes |
-| `profile` | Basic profile info (name, picture) | Yes |
-| `email` | User's email address | Yes |
-| `offline_access` | Refresh tokens | Optional |
+<Table
+  headers={['Scope', 'Purpose', 'Required']}
+  rows={[
+    ['<code>openid</code>', 'OpenID Connect authentication', 'Yes'],
+    ['<code>profile</code>', 'Basic profile info (name, picture)', 'Yes'],
+    ['<code>email</code>', 'User\'s email address', 'Yes'],
+    ['<code>offline_access</code>', 'Refresh tokens', 'Optional'],
+  ]}
+/>
 
 **Minimal setup**: Use `openid`, `profile`, and `email` for basic authentication.
 

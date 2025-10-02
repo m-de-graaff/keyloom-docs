@@ -17,20 +17,24 @@ Below are practical patterns to get productive fast.
 
 Configure the authentication methods you want to use in `keyloom.config.ts`.
 
-```ts title="keyloom.config.ts (Email + GitHub)"
+```ts title="keyloom.config.ts (Multiple OAuth Providers)"
 import { defineKeyloom } from "@keyloom/core";
-import { emailPassword } from "@keyloom/providers/email-password"; // if using email/password
-import { github } from "@keyloom/providers/github";
+import { github, google, discord } from "@keyloom/providers";
 
 export default defineKeyloom({
   // ...other options
   providers: [
-    emailPassword({
-      // password policy, email delivery, etc.
-    }),
     github({
       clientId: process.env.GITHUB_CLIENT_ID!,
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+    }),
+    google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
+    discord({
+      clientId: process.env.DISCORD_CLIENT_ID!,
+      clientSecret: process.env.DISCORD_CLIENT_SECRET!,
     }),
   ],
 });

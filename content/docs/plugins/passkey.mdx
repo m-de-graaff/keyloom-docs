@@ -1,0 +1,297 @@
+---
+title: Passkey Plugin
+description: WebAuthn passkey authentication plugin for Keyloom - passwordless authentication with biometrics and security keys.
+---
+
+# Passkey Plugin
+
+The Keyloom Passkey plugin enables WebAuthn-based passwordless authentication using biometrics, security keys, and platform authenticators.
+
+## Prerequisites
+
+- Modern browser with WebAuthn support
+- HTTPS (required for WebAuthn in production)
+- Keyloom core authentication configured
+
+## Installation
+
+```bash
+pnpm add @keyloom/plugin-passkey
+```
+
+## Setup
+
+### 1. Configure Server Plugin
+
+```ts title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { createPasskeyPlugin } from "@keyloom/plugin-passkey";
+
+export default defineKeyloom({
+  // ... other config
+  plugins: [
+    createPasskeyPlugin(),
+  ],
+});
+```
+
+### 2. Available Endpoints
+
+The plugin adds these endpoints to your auth handler:
+
+- `GET /api/auth/passkey/supported` - Check WebAuthn support
+- `POST /api/auth/passkey/register/begin` - Start passkey registration
+- `POST /api/auth/passkey/register/finish` - Complete passkey registration
+- `POST /api/auth/passkey/authenticate/begin` - Start passkey authentication
+- `POST /api/auth/passkey/authenticate/finish` - Complete passkey authentication
+
+## React Hooks
+
+### usePasskey()
+
+Handle passkey authentication (sign-in).
+
+```tsx title="components/PasskeySignIn.tsx"
+import { usePasskey } from "@keyloom/plugin-passkey";
+
+export function PasskeySignIn() {
+  const { supported, signIn, loading, error } = usePasskey();
+
+  if (!supported) {
+    return <div>Passkeys are not supported in this browser</div>;
+  }
+
+  return (
+    <div>
+      {error && <div className="text-red-600">{error.message}</div>}
+      
+      <button onClick={signIn} disabled={loading}>
+        {loading ? "Authenticating..." : "Sign in with Passkey"}
+      </button>
+    </div>
+  );
+}
+```
+
+**Return values:**
+
+- `supported: boolean` - Whether WebAuthn is supported
+- `signIn: () => Promise<{ ok: boolean; error?: string }>` - Initiate passkey authentication
+- `loading: boolean` - Whether authentication is in progress
+- `error: { message: string } | null` - Any authentication errors
+
+### usePasskeyRegistration()
+
+Handle passkey registration for existing users.
+
+```tsx title="components/PasskeyRegistration.tsx"
+import { usePasskeyRegistration } from "@keyloom/plugin-passkey";
+
+export function PasskeyRegistration() {
+  const { supported, register, loading, error } = usePasskeyRegistration();
+
+  if (!supported) {
+    return <div>Passkey registration not available</div>;
+  }
+
+  return (
+    <div className="space-y-4">
+      <h3>Add Passkey to Your Account</h3>
+      <p>Register a passkey for faster, more secure sign-ins.</p>
+      
+      {error && <div className="text-red-600">{error.message}</div>}
+      
+      <button onClick={register} disabled={loading}>
+        {loading ? "Registering..." : "Register Passkey"}
+      </button>
+    </div>
+  );
+}
+```
+
+**Return values:**
+
+- `supported: boolean` - Whether WebAuthn is supported
+- `register: () => Promise<{ ok: boolean; error?: string }>` - Register new passkey
+- `loading: boolean` - Whether registration is in progress
+- `error: { message: string } | null` - Any registration errors
+
+### usePasskeyList()
+
+List user's registered passkeys (placeholder implementation).
+
+```tsx title="components/PasskeyList.tsx"
+import { usePasskeyList } from "@keyloom/plugin-passkey";
+
+export function PasskeyList() {
+  const { passkeys, refresh } = usePasskeyList();
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h3>Your Passkeys</h3>
+        <button onClick={refresh}>Refresh</button>
+      </div>
+      
+      {passkeys.length === 0 ? (
+        <p>No passkeys registered</p>
+      ) : (
+        <ul className="space-y-2">
+          {passkeys.map((passkey) => (
+            <li key={passkey.id} className="p-2 border rounded">
+              {passkey.label || `Passkey ${passkey.id.slice(0, 8)}`}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+```
+
+### usePasskeyDelete()
+
+Remove registered passkeys (placeholder implementation).
+
+```tsx title="components/PasskeyManager.tsx"
+import { usePasskeyDelete, usePasskeyList } from "@keyloom/plugin-passkey";
+
+export function PasskeyManager() {
+  const { passkeys, refresh } = usePasskeyList();
+  const { remove, loading } = usePasskeyDelete();
+
+  const handleDelete = async (id: string) => {
+    const result = await remove(id);
+    if (result.ok) {
+      await refresh();
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <h3>Manage Passkeys</h3>
+      
+      {passkeys.map((passkey) => (
+        <div key={passkey.id} className="flex justify-between items-center p-2 border rounded">
+          <span>{passkey.label || `Passkey ${passkey.id.slice(0, 8)}`}</span>
+          <button 
+            onClick={() => handleDelete(passkey.id)}
+            disabled={loading}
+            className="text-red-600"
+          >
+            {loading ? "Removing..." : "Remove"}
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+## Complete Authentication Flow
+
+```tsx title="components/AuthWithPasskey.tsx"
+import { useSession } from "@keyloom/react";
+import { usePasskey, usePasskeyRegistration } from "@keyloom/plugin-passkey";
+
+export function AuthWithPasskey() {
+  const { data: session, status } = useSession();
+  const { supported, signIn, loading: signingIn } = usePasskey();
+  const { register, loading: registering } = usePasskeyRegistration();
+
+  if (status === "loading") return <div>Loading...</div>;
+
+  if (status === "authenticated") {
+    return (
+      <div className="space-y-4">
+        <p>Welcome, {session.user?.name}!</p>
+        
+        {supported && (
+          <div>
+            <h3>Enhance Security</h3>
+            <button onClick={register} disabled={registering}>
+              {registering ? "Adding..." : "Add Passkey"}
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <h2>Sign In</h2>
+      
+      {supported ? (
+        <button onClick={signIn} disabled={signingIn}>
+          {signingIn ? "Authenticating..." : "Sign in with Passkey"}
+        </button>
+      ) : (
+        <div>
+          <p>Passkeys not supported in this browser</p>
+          {/* Fallback to other auth methods */}
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+## Browser Support
+
+WebAuthn is supported in:
+
+- **Chrome/Edge**: 67+
+- **Firefox**: 60+
+- **Safari**: 14+
+- **Mobile browsers**: iOS Safari 14+, Chrome Mobile 70+
+
+## Security Features
+
+- **Phishing resistant**: Passkeys are bound to the origin
+- **No shared secrets**: Private keys never leave the device
+- **Biometric authentication**: Touch ID, Face ID, Windows Hello
+- **Hardware security keys**: FIDO2/WebAuthn compatible keys
+- **Cross-device authentication**: QR code flows for mobile devices
+
+## Implementation Status
+
+**Note**: This plugin is currently in development with placeholder implementations:
+
+- ✅ Browser support detection
+- ✅ Basic API endpoints structure
+- ✅ React hooks interface
+- 🚧 WebAuthn credential creation (in progress)
+- 🚧 WebAuthn authentication (in progress)
+- 🚧 Credential storage and management (in progress)
+
+## Troubleshooting
+
+**Passkeys not supported**
+- Ensure HTTPS is enabled (required for WebAuthn)
+- Check browser compatibility
+- Verify user has biometric/PIN setup on device
+
+**Registration fails**
+- Check browser console for WebAuthn errors
+- Ensure user gesture initiated the request
+- Verify server endpoints are accessible
+
+**Authentication fails**
+- Check if passkey exists for the current origin
+- Verify user hasn't changed biometric settings
+- Try re-registering the passkey
+
+## See also
+
+- [WebAuthn Specification](https://w3c.github.io/webauthn/)
+- [FIDO Alliance](https://fidoalliance.org/)
+- [Core Plugins](/docs/core/plugins)
+- [React Hooks](/docs/react/hooks)
+
+## Next steps
+
+- Configure the passkey plugin in your Keyloom config
+- Add passkey authentication to your sign-in flow
+- Implement passkey registration for existing users
+- Test across different browsers and devices

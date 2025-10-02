@@ -1,0 +1,431 @@
+---
+title: PostgreSQL Adapter
+description: Use PostgreSQL with Keyloom via pg driver. Complete setup, schema, migrations, performance optimization, and troubleshooting.
+---
+
+# PostgreSQL Adapter
+
+Use PostgreSQL database with Keyloom via the pg driver for robust, ACID-compliant authentication data persistence.
+
+## Prerequisites
+
+- PostgreSQL server running and accessible
+- pg (node-postgres) driver installed
+- Basic understanding of PostgreSQL and SQL
+
+## Install
+
+```bash
+pnpm add @keyloom/adapters-postgres pg @types/pg
+# or
+npm install @keyloom/adapters-postgres pg @types/pg
+```
+
+## Database Connection
+
+```ts title="src/db/postgres.ts"
+import { Pool } from "pg";
+
+// Create connection pool
+export const pool = new Pool({
+  host: process.env.POSTGRES_HOST || "localhost",
+  port: parseInt(process.env.POSTGRES_PORT || "5432"),
+  user: process.env.POSTGRES_USER || "postgres",
+  password: process.env.POSTGRES_PASSWORD,
+  database: process.env.POSTGRES_DATABASE || "keyloom",
+  
+  // Connection pool settings
+  max: 20,                    // Maximum connections
+  idleTimeoutMillis: 30000,   // Close idle connections after 30s
+  connectionTimeoutMillis: 2000, // Timeout when connecting
+  
+  // SSL configuration (for production)
+  ssl: process.env.NODE_ENV === "production" ? {
+    rejectUnauthorized: false, // Adjust based on your SSL setup
+  } : false,
+});
+
+// Graceful shutdown
+process.on("SIGINT", async () => {
+  await pool.end();
+  process.exit(0);
+});
+```
+
+## Using the Adapter
+
+```ts title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { postgresAdapter } from "@keyloom/adapters-postgres";
+import { pool } from "@/src/db/postgres";
+
+export default defineKeyloom({
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
+  session: { strategy: "database", ttlMinutes: 30 },
+  adapter: postgresAdapter(pool),
+  providers: [],
+  rbac: { enabled: true },
+  secrets: { authSecret: process.env.AUTH_SECRET! },
+});
+```
+
+## Configuration Options
+
+```ts
+postgresAdapter(pool, {
+  tableNames?: {
+    users?: string;           // Default: "users"
+    accounts?: string;        // Default: "accounts"
+    sessions?: string;        // Default: "sessions"
+    verificationTokens?: string; // Default: "verification_tokens"
+    organizations?: string;   // Default: "organizations"
+    memberships?: string;     // Default: "memberships"
+    refreshTokens?: string;   // Default: "refresh_tokens"
+  };
+  enableQueryLogging?: boolean; // Default: false
+})
+```
+
+## Database Schema
+
+Create the required tables with this PostgreSQL schema:
+
+```sql title="schema.sql"
+-- Enable UUID extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Users table
+CREATE TABLE users (
+  id VARCHAR(191) PRIMARY KEY,
+  email VARCHAR(191) UNIQUE,
+  email_verified TIMESTAMPTZ,
+  name VARCHAR(191),
+  image TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create index on email
+CREATE INDEX idx_users_email ON users(email);
+
+-- Accounts table
+CREATE TABLE accounts (
+  id VARCHAR(191) PRIMARY KEY,
+  user_id VARCHAR(191) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type VARCHAR(50) NOT NULL,
+  provider VARCHAR(50) NOT NULL,
+  provider_account_id VARCHAR(191) NOT NULL,
+  refresh_token TEXT,
+  access_token TEXT,
+  expires_at BIGINT,
+  token_type VARCHAR(50),
+  scope TEXT,
+  id_token TEXT,
+  session_state TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  
+  UNIQUE(provider, provider_account_id)
+);
+
+-- Create indexes on accounts
+CREATE INDEX idx_accounts_user_id ON accounts(user_id);
+
+-- Sessions table
+CREATE TABLE sessions (
+  id VARCHAR(191) PRIMARY KEY,
+  session_token VARCHAR(191) UNIQUE NOT NULL,
+  user_id VARCHAR(191) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create indexes on sessions
+CREATE INDEX idx_sessions_user_id ON sessions(user_id);
+CREATE INDEX idx_sessions_expires_at ON sessions(expires_at);
+
+-- Verification tokens table
+CREATE TABLE verification_tokens (
+  identifier VARCHAR(191) NOT NULL,
+  token VARCHAR(191) NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  
+  PRIMARY KEY (identifier, token)
+);
+
+-- Create index on verification tokens
+CREATE INDEX idx_verification_tokens_expires_at ON verification_tokens(expires_at);
+
+-- Organizations table (for RBAC)
+CREATE TABLE organizations (
+  id VARCHAR(191) PRIMARY KEY,
+  name VARCHAR(191) NOT NULL,
+  slug VARCHAR(191) UNIQUE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create index on organizations
+CREATE INDEX idx_organizations_slug ON organizations(slug);
+
+-- Memberships table (for RBAC)
+CREATE TABLE memberships (
+  id VARCHAR(191) PRIMARY KEY,
+  user_id VARCHAR(191) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  organization_id VARCHAR(191) NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  role VARCHAR(50) NOT NULL DEFAULT 'member',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  
+  UNIQUE(user_id, organization_id)
+);
+
+-- Create indexes on memberships
+CREATE INDEX idx_memberships_organization_id ON memberships(organization_id);
+
+-- Refresh tokens table
+CREATE TABLE refresh_tokens (
+  id VARCHAR(191) PRIMARY KEY,
+  user_id VARCHAR(191) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token VARCHAR(191) UNIQUE NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create indexes on refresh tokens
+CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens(user_id);
+CREATE INDEX idx_refresh_tokens_expires_at ON refresh_tokens(expires_at);
+
+-- Create updated_at trigger function
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- Create triggers for updated_at
+CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_accounts_updated_at BEFORE UPDATE ON accounts
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_sessions_updated_at BEFORE UPDATE ON sessions
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_organizations_updated_at BEFORE UPDATE ON organizations
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_memberships_updated_at BEFORE UPDATE ON memberships
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+```
+
+## Environment Variables
+
+```ini title=".env.local"
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_USER=keyloom_user
+POSTGRES_PASSWORD=your_secure_password
+POSTGRES_DATABASE=keyloom
+AUTH_SECRET=your-auth-secret-here
+```
+
+## Advanced Connection Configuration
+
+For production applications, optimize connection pooling:
+
+```ts title="src/db/postgres.ts"
+import { Pool } from "pg";
+
+export const pool = new Pool({
+  host: process.env.POSTGRES_HOST,
+  port: parseInt(process.env.POSTGRES_PORT || "5432"),
+  user: process.env.POSTGRES_USER,
+  password: process.env.POSTGRES_PASSWORD,
+  database: process.env.POSTGRES_DATABASE,
+  
+  // Connection pool settings
+  max: 20,                    // Maximum connections
+  min: 2,                     // Minimum connections
+  idleTimeoutMillis: 30000,   // Close idle connections after 30s
+  connectionTimeoutMillis: 2000, // Timeout when connecting
+  
+  // Query settings
+  statement_timeout: 30000,   // 30 second query timeout
+  query_timeout: 30000,       // 30 second query timeout
+  
+  // SSL configuration
+  ssl: process.env.NODE_ENV === "production" ? {
+    rejectUnauthorized: true,
+    ca: process.env.POSTGRES_CA_CERT,
+    cert: process.env.POSTGRES_CLIENT_CERT,
+    key: process.env.POSTGRES_CLIENT_KEY,
+  } : false,
+  
+  // Application name for monitoring
+  application_name: "keyloom-auth",
+});
+
+// Connection error handling
+pool.on("error", (err) => {
+  console.error("Unexpected error on idle client", err);
+  process.exit(-1);
+});
+```
+
+## Migrations
+
+Create a migration system for schema updates:
+
+```ts title="src/db/migrations.ts"
+import { pool } from "./postgres";
+
+export async function runMigrations() {
+  const client = await pool.connect();
+  
+  try {
+    // Create migrations table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS migrations (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL UNIQUE,
+        executed_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    
+    // Define migrations
+    const migrations = [
+      {
+        name: "001_initial_schema",
+        sql: `-- Your initial schema SQL here`,
+      },
+      {
+        name: "002_add_refresh_tokens",
+        sql: `-- Add refresh tokens table`,
+      },
+    ];
+    
+    for (const migration of migrations) {
+      const result = await client.query(
+        "SELECT COUNT(*) FROM migrations WHERE name = $1",
+        [migration.name]
+      );
+      
+      if (parseInt(result.rows[0].count) === 0) {
+        await client.query("BEGIN");
+        try {
+          await client.query(migration.sql);
+          await client.query(
+            "INSERT INTO migrations (name) VALUES ($1)",
+            [migration.name]
+          );
+          await client.query("COMMIT");
+          console.log(`Migration ${migration.name} executed`);
+        } catch (error) {
+          await client.query("ROLLBACK");
+          throw error;
+        }
+      }
+    }
+  } finally {
+    client.release();
+  }
+}
+```
+
+## Performance Optimization
+
+### 1. Indexing Strategy
+- Use B-tree indexes for equality and range queries
+- Consider partial indexes for filtered queries
+- Use composite indexes for multi-column queries
+- Monitor query performance with EXPLAIN ANALYZE
+
+### 2. Connection Management
+- Use connection pooling
+- Monitor connection pool metrics
+- Implement proper error handling and reconnection logic
+
+### 3. Query Optimization
+- Use prepared statements (automatically handled by pg)
+- Implement proper pagination with LIMIT/OFFSET or cursor-based pagination
+- Use EXPLAIN ANALYZE to optimize slow queries
+
+### 4. PostgreSQL-Specific Features
+- Use JSONB for flexible data storage
+- Implement full-text search with tsvector
+- Use materialized views for complex aggregations
+
+## Troubleshooting
+
+**Connection refused**
+- Verify PostgreSQL server is running
+- Check host, port, and credentials
+- Verify pg_hba.conf allows connections
+
+**Too many connections**
+- Adjust max_connections in postgresql.conf
+- Optimize connection pool settings
+- Monitor connection usage
+
+**Slow queries**
+- Enable slow query logging
+- Use EXPLAIN ANALYZE to identify bottlenecks
+- Add appropriate indexes
+
+**Lock contention**
+- Minimize transaction scope
+- Use appropriate isolation levels
+- Monitor lock waits
+
+## Security Considerations
+
+- Use SSL/TLS for connections in production
+- Implement proper user privileges (least privilege principle)
+- Regular security updates
+- Configure pg_hba.conf securely
+- Use parameterized queries (handled by adapter)
+- Enable audit logging
+
+## High Availability Setup
+
+For production environments:
+
+### Streaming Replication
+```ts
+// Primary connection
+const primaryPool = new Pool({
+  host: process.env.POSTGRES_PRIMARY_HOST,
+  // ... other config
+});
+
+// Replica connection (read-only)
+const replicaPool = new Pool({
+  host: process.env.POSTGRES_REPLICA_HOST,
+  // ... other config
+});
+```
+
+### Load Balancing
+- Use pgBouncer for connection pooling
+- Implement read/write splitting
+- Monitor replication lag
+
+## Backup and Recovery
+
+- Set up automated backups with pg_dump or pg_basebackup
+- Configure Write-Ahead Logging (WAL) archiving
+- Test backup restoration procedures
+- Implement point-in-time recovery (PITR)
+
+## See also
+
+- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
+- [node-postgres Documentation](https://node-postgres.com/)
+- [Adapter Overview](/docs/adapters/overview)
+- [Core Configuration](/docs/core/config)

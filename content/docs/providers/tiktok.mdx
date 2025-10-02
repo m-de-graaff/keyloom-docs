@@ -1,0 +1,225 @@
+---
+title: TikTok Provider
+description: Configure TikTok OAuth for Keyloom authentication - setup, scopes, and short-form video platform integration.
+---
+
+# TikTok Provider
+
+Enable TikTok OAuth authentication in your Keyloom application for short-form video platform integration.
+
+## Prerequisites
+
+- TikTok for Developers account and app created at [TikTok for Developers](https://developers.tiktok.com/)
+- App approved for Login Kit
+- Keyloom handler configured at `/api/auth/[...keyloom]`
+
+## Setup
+
+### 1. Create TikTok Developer Account
+
+1. Go to [TikTok for Developers](https://developers.tiktok.com/)
+2. Sign up for a developer account
+3. Complete the verification process
+
+### 2. Create TikTok Application
+
+1. In the TikTok Developer Portal, click "Manage Apps"
+2. Click "Create an App"
+3. Fill in required information:
+   - **App Name**: Your application name
+   - **App Description**: Detailed description of your app
+   - **Category**: Choose appropriate category
+   - **Platform**: Select "Web"
+4. Submit for review
+
+### 3. Configure Login Kit
+
+1. Once your app is approved, go to "Products" section
+2. Add "Login Kit" to your app
+3. Configure redirect URI: `${YOUR_APP_URL}/api/auth/oauth/tiktok/callback`
+4. Set up scopes (see Available Scopes below)
+
+### 4. Get Credentials
+
+From your TikTok app settings:
+
+- **Client Key**: Your TikTok app's Client Key
+- **Client Secret**: Your TikTok app's Client Secret
+
+### 5. Environment Variables
+
+```ini title=".env.local"
+TIKTOK_CLIENT_ID=your_tiktok_client_key
+TIKTOK_CLIENT_SECRET=your_tiktok_client_secret
+```
+
+### 6. Configure Provider
+
+```ts title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { tiktok } from "@keyloom/providers";
+
+export default defineKeyloom({
+  providers: [
+    tiktok({
+      clientId: process.env.TIKTOK_CLIENT_ID!,
+      clientSecret: process.env.TIKTOK_CLIENT_SECRET!,
+    }),
+  ],
+  // ... other config
+});
+```
+
+## Configuration Options
+
+```ts
+tiktok({
+  clientId: string;
+  clientSecret: string;
+  profileOverrides?: (profile: Profile) => Record<string, any>;
+})
+```
+
+## Available Scopes
+
+TikTok Login Kit provides the following scopes:
+
+### Basic Scopes
+- `user.info.basic` - Access to basic user information (display name, avatar)
+- `user.info.profile` - Access to user profile information
+- `user.info.stats` - Access to user statistics (follower count, etc.)
+
+### Video Scopes
+- `video.list` - Access to user's video list
+- `video.upload` - Upload videos on behalf of user
+
+**Default Scope**: `user.info.basic`
+
+**Note**: TikTok has strict approval processes for different scopes. Basic user information is typically approved, while video-related scopes require detailed justification.
+
+## User Profile
+
+TikTok returns the following user information:
+
+```ts
+{
+  id: string;           // TikTok user's open_id
+  name: string | null;  // Display name
+  email: null;          // Email not provided by TikTok Login Kit
+  image: string | null; // Avatar URL
+  // Raw TikTok data available in profile
+}
+```
+
+**Important**: TikTok Login Kit does not provide email addresses for privacy reasons.
+
+## Usage Example
+
+```tsx title="components/TikTokSignIn.tsx"
+import { useLogin } from "@keyloom/react";
+
+export function TikTokSignIn() {
+  const { login, loading } = useLogin();
+
+  const handleTikTokLogin = async () => {
+    await login({
+      provider: "tiktok",
+      callbackUrl: "/dashboard",
+    });
+  };
+
+  return (
+    <button onClick={handleTikTokLogin} disabled={loading}>
+      {loading ? "Connecting..." : "Sign in with TikTok"}
+    </button>
+  );
+}
+```
+
+## App Review Process
+
+TikTok has a strict app review process:
+
+### Development Phase
+1. Create app and configure basic settings
+2. Test with limited functionality
+3. Prepare detailed app documentation
+
+### Review Submission
+1. Submit app for review with detailed use case
+2. Provide privacy policy and terms of service
+3. Include screenshots and app flow documentation
+4. Specify exactly which scopes you need and why
+
+### Review Criteria
+- **User Safety**: App must not compromise user safety
+- **Content Policy**: Must comply with TikTok Community Guidelines
+- **Data Usage**: Clear justification for data access
+- **User Experience**: Smooth and intuitive user experience
+
+## Use Cases
+
+TikTok integration is ideal for:
+
+- **Social Media Management**: Cross-platform content management
+- **Analytics Tools**: TikTok performance analytics
+- **Content Creation**: Tools for TikTok creators
+- **Social Login**: Alternative authentication method
+- **Community Building**: Connect TikTok users
+
+## Limitations
+
+**TikTok API Limitations:**
+- No email address access
+- Strict app review process
+- Limited scopes available
+- Rate limits on API calls
+- Geographic restrictions in some regions
+
+## Troubleshooting
+
+**App not approved**
+- Ensure your app complies with TikTok's policies
+- Provide detailed use case documentation
+- Include privacy policy and terms of service
+- Be specific about data usage and user benefits
+
+**Invalid redirect URI**
+- Ensure redirect URI matches exactly in TikTok app settings
+- Use HTTPS for production applications
+- Check for trailing slashes and query parameters
+
+**Scope access denied**
+- Verify requested scopes are approved for your app
+- Some scopes require additional review
+- Check TikTok Developer Portal for scope status
+
+**Rate limiting**
+- TikTok has rate limits on API calls
+- Implement proper retry logic
+- Monitor your API usage
+
+## Security Considerations
+
+- Store client secret securely (environment variables)
+- Use HTTPS in production
+- Follow TikTok's Developer Terms of Service
+- Respect user privacy and data protection laws
+- Implement proper error handling
+- Monitor for suspicious OAuth activity
+
+## Regional Considerations
+
+TikTok availability varies by region:
+
+- **Global**: TikTok for Developers available in most regions
+- **China**: Different platform (Douyin) with separate APIs
+- **Restricted Regions**: Some countries may have limited access
+- **Compliance**: Ensure compliance with local data protection laws
+
+## See also
+
+- [TikTok for Developers Documentation](https://developers.tiktok.com/doc/)
+- [TikTok Login Kit Guide](https://developers.tiktok.com/doc/login-kit-web/)
+- [Provider Overview](/docs/providers/overview)
+- [React Hooks](/docs/react/hooks)

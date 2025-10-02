@@ -1,0 +1,197 @@
+---
+title: Reddit Provider
+description: Configure Reddit OAuth for Keyloom authentication - setup, scopes, and community platform integration.
+---
+
+# Reddit Provider
+
+Enable Reddit OAuth authentication in your Keyloom application for community and discussion platform integration.
+
+## Prerequisites
+
+- Reddit app created at [Reddit App Preferences](https://www.reddit.com/prefs/apps)
+- Keyloom handler configured at `/api/auth/[...keyloom]`
+
+## Setup
+
+### 1. Create Reddit Application
+
+1. Go to [Reddit App Preferences](https://www.reddit.com/prefs/apps)
+2. Click "Create App" or "Create Another App"
+3. Choose "web app" as the app type
+4. Fill in required information:
+   - **Name**: Your application name
+   - **Description**: Brief description of your app
+   - **About URL**: Your app's homepage (optional)
+   - **Redirect URI**: `${YOUR_APP_URL}/api/auth/oauth/reddit/callback`
+
+### 2. Get Credentials
+
+From your Reddit app settings:
+
+- **Client ID**: Found under your app name (short string)
+- **Client Secret**: The "secret" field in your app settings
+
+### 3. Environment Variables
+
+```ini title=".env.local"
+REDDIT_CLIENT_ID=your_reddit_client_id
+REDDIT_CLIENT_SECRET=your_reddit_client_secret
+```
+
+### 4. Configure Provider
+
+```ts title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { reddit } from "@keyloom/providers";
+
+export default defineKeyloom({
+  providers: [
+    reddit({
+      clientId: process.env.REDDIT_CLIENT_ID!,
+      clientSecret: process.env.REDDIT_CLIENT_SECRET!,
+    }),
+  ],
+  // ... other config
+});
+```
+
+## Configuration Options
+
+```ts
+reddit({
+  clientId: string;
+  clientSecret: string;
+  profileOverrides?: (profile: Profile) => Record<string, any>;
+})
+```
+
+## Available Scopes
+
+Reddit OAuth provides the following scopes:
+
+- `identity` - Access to user's basic identity information (username, account creation date)
+- `edit` - Edit and delete user's comments and submissions
+- `flair` - Manage user and link flair
+- `history` - Access user's voting history
+- `modconfig` - Manage configuration of subreddits user moderates
+- `modflair` - Manage flair in subreddits user moderates
+- `modlog` - Access moderation log in subreddits user moderates
+- `modposts` - Approve, remove, mark nsfw, and distinguish content in subreddits user moderates
+- `modwiki` - Change wiki pages in subreddits user moderates
+- `mysubreddits` - Access list of subreddits user moderates, contributes to, and subscribes to
+- `privatemessages` - Access user's inbox and send private messages
+- `read` - Read user's posts and comments
+- `report` - Report content for rules violations
+- `save` - Save and unsave comments and submissions
+- `submit` - Submit content to subreddits
+- `subscribe` - Manage user's subreddit subscriptions
+- `vote` - Submit and change votes on comments and submissions
+- `wikiedit` - Edit wiki pages
+- `wikiread` - Read wiki pages
+
+**Recommended**: Use minimal scopes (`identity`) unless you need specific Reddit functionality.
+
+## User Profile
+
+Reddit returns the following user information:
+
+```ts
+{
+  id: string;           // Reddit user ID
+  name: string | null;  // Reddit username
+  email: null;          // Email not provided by Reddit OAuth
+  image: string | null; // Profile icon URL (if available)
+  // Raw Reddit data available in profile
+}
+```
+
+**Note**: Reddit OAuth does not provide email addresses through the API.
+
+## Usage Example
+
+```tsx title="components/RedditSignIn.tsx"
+import { useLogin } from "@keyloom/react";
+
+export function RedditSignIn() {
+  const { login, loading } = useLogin();
+
+  const handleRedditLogin = async () => {
+    await login({
+      provider: "reddit",
+      callbackUrl: "/dashboard",
+    });
+  };
+
+  return (
+    <button onClick={handleRedditLogin} disabled={loading}>
+      {loading ? "Connecting..." : "Sign in with Reddit"}
+    </button>
+  );
+}
+```
+
+## Reddit API Guidelines
+
+When using Reddit OAuth, follow Reddit's API guidelines:
+
+- **Rate Limiting**: Reddit has strict rate limits (60 requests per minute)
+- **User-Agent**: Always include a descriptive User-Agent header
+- **OAuth Duration**: Choose between temporary and permanent tokens
+- **API Rules**: Follow Reddit's API Terms of Use
+
+## Use Cases
+
+Reddit integration is ideal for:
+
+- **Community Applications**: Building tools for Reddit communities
+- **Content Management**: Managing posts and comments
+- **Moderation Tools**: Creating moderation utilities
+- **Analytics**: Analyzing Reddit activity and engagement
+- **Bot Applications**: Creating Reddit bots (with proper permissions)
+
+## Troubleshooting
+
+**Invalid redirect URI**
+- Ensure redirect URI matches exactly in Reddit app settings
+- Check for trailing slashes and protocol (http vs https)
+- Verify the callback URL format
+
+**Rate limiting errors**
+- Implement proper rate limiting in your application
+- Use exponential backoff for retries
+- Monitor your API usage
+
+**Scope access denied**
+- Verify requested scopes are appropriate for your use case
+- Some scopes require user consent during OAuth flow
+- Check if your app type supports the requested scopes
+
+**Authentication failures**
+- Verify client ID and secret are correct
+- Check that your app is configured as "web app" type
+- Ensure User-Agent header is properly set
+
+## Security Considerations
+
+- Store client secret securely (environment variables)
+- Use HTTPS in production
+- Follow Reddit's API Terms of Use
+- Implement proper rate limiting
+- Respect user privacy and Reddit's content policy
+- Monitor for suspicious OAuth activity
+
+## Reddit API Best Practices
+
+- **Caching**: Cache API responses to reduce rate limit usage
+- **Batch Requests**: Group related API calls when possible
+- **Error Handling**: Implement robust error handling for rate limits
+- **User-Agent**: Use descriptive User-Agent strings
+- **Respect Limits**: Stay well under rate limits to avoid blocking
+
+## See also
+
+- [Reddit API Documentation](https://www.reddit.com/dev/api/)
+- [Reddit OAuth2 Documentation](https://github.com/reddit-archive/reddit/wiki/OAuth2)
+- [Provider Overview](/docs/providers/overview)
+- [React Hooks](/docs/react/hooks)

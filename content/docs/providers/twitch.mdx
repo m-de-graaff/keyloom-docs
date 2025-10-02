@@ -1,0 +1,222 @@
+---
+title: Twitch Provider
+description: Configure Twitch OAuth for Keyloom authentication - setup, scopes, and live streaming platform integration.
+---
+
+# Twitch Provider
+
+Enable Twitch OAuth authentication in your Keyloom application for live streaming and gaming community integration.
+
+## Prerequisites
+
+- Twitch application created at [Twitch Developers Console](https://dev.twitch.tv/console)
+- Keyloom handler configured at `/api/auth/[...keyloom]`
+
+## Setup
+
+### 1. Create Twitch Application
+
+1. Go to [Twitch Developers Console](https://dev.twitch.tv/console)
+2. Click "Register Your Application"
+3. Fill in required information:
+   - **Name**: Your application name
+   - **OAuth Redirect URLs**: `${YOUR_APP_URL}/api/auth/oauth/twitch/callback`
+   - **Category**: Choose appropriate category (e.g., "Website Integration")
+4. Click "Create"
+
+### 2. Get Credentials
+
+From your Twitch application settings:
+
+- **Client ID**: Your Twitch application's Client ID
+- **Client Secret**: Generate and copy the Client Secret
+
+### 3. Environment Variables
+
+```ini title=".env.local"
+TWITCH_CLIENT_ID=your_twitch_client_id
+TWITCH_CLIENT_SECRET=your_twitch_client_secret
+```
+
+### 4. Configure Provider
+
+```ts title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { twitch } from "@keyloom/providers";
+
+export default defineKeyloom({
+  providers: [
+    twitch({
+      clientId: process.env.TWITCH_CLIENT_ID!,
+      clientSecret: process.env.TWITCH_CLIENT_SECRET!,
+    }),
+  ],
+  // ... other config
+});
+```
+
+## Configuration Options
+
+```ts
+twitch({
+  clientId: string;
+  clientSecret: string;
+  profileOverrides?: (profile: Profile) => Record<string, any>;
+})
+```
+
+## Available Scopes
+
+Twitch provides extensive scopes for different functionalities:
+
+### User Information Scopes
+- `user:read:email` - Read user's email address
+
+### Channel Scopes
+- `channel:read:subscriptions` - Read channel subscription information
+- `channel:read:stream_key` - Read channel stream key
+- `channel:edit:commercial` - Run commercials on channel
+- `channel:manage:broadcast` - Manage channel broadcast configuration
+- `channel:manage:extensions` - Manage channel extensions
+- `channel:manage:moderators` - Manage channel moderators
+- `channel:manage:polls` - Manage channel polls
+- `channel:manage:predictions` - Manage channel predictions
+- `channel:manage:raids` - Manage channel raids
+- `channel:manage:redemptions` - Manage channel point redemptions
+- `channel:manage:schedule` - Manage channel schedule
+- `channel:manage:videos` - Manage channel videos
+- `channel:manage:vips` - Manage channel VIPs
+
+### Moderation Scopes
+- `moderation:read` - Read moderation information
+- `moderator:manage:announcements` - Manage announcements
+- `moderator:manage:automod` - Manage AutoMod
+- `moderator:manage:banned_users` - Manage banned users
+- `moderator:manage:blocked_terms` - Manage blocked terms
+- `moderator:manage:chat_messages` - Manage chat messages
+- `moderator:manage:chat_settings` - Manage chat settings
+
+### Analytics Scopes
+- `analytics:read:extensions` - Read extension analytics
+- `analytics:read:games` - Read game analytics
+
+**Default Scope**: `user:read:email`
+
+**Recommended**: Start with minimal scopes and add more as needed for your specific use case.
+
+## User Profile
+
+Twitch returns the following user information:
+
+```ts
+{
+  id: string;           // Twitch user ID
+  name: string | null;  // Display name or login name
+  email: string | null; // Email address (if user:read:email scope granted)
+  image: string | null; // Profile image URL
+  // Raw Twitch data available in profile
+}
+```
+
+## Usage Example
+
+```tsx title="components/TwitchSignIn.tsx"
+import { useLogin } from "@keyloom/react";
+
+export function TwitchSignIn() {
+  const { login, loading } = useLogin();
+
+  const handleTwitchLogin = async () => {
+    await login({
+      provider: "twitch",
+      callbackUrl: "/dashboard",
+    });
+  };
+
+  return (
+    <button onClick={handleTwitchLogin} disabled={loading}>
+      {loading ? "Connecting..." : "Sign in with Twitch"}
+    </button>
+  );
+}
+```
+
+## Gaming and Streaming Use Cases
+
+Twitch integration is perfect for:
+
+- **Gaming Applications**: Connect with gaming communities
+- **Streaming Tools**: Build tools for streamers
+- **Community Management**: Manage Twitch communities
+- **Analytics Dashboards**: Track streaming performance
+- **Chat Bots**: Create interactive chat experiences
+- **Tournament Platforms**: Organize gaming tournaments
+- **Content Creation**: Tools for content creators
+
+## Rate Limits and API Guidelines
+
+Twitch has specific rate limits and guidelines:
+
+- **Rate Limits**: 800 requests per minute per client ID
+- **User Rate Limits**: 120 requests per minute per user
+- **Webhook Limits**: Specific limits for EventSub webhooks
+- **Best Practices**: Implement proper caching and error handling
+
+## Troubleshooting
+
+**Invalid redirect URI**
+- Ensure redirect URI matches exactly in Twitch app settings
+- Check protocol (http vs https) and domain
+- Verify no trailing slashes unless specified
+
+**Scope access denied**
+- Check if requested scopes are appropriate for your use case
+- Some scopes require specific app categories
+- Verify user has granted necessary permissions
+
+**Rate limiting**
+- Twitch has strict rate limits
+- Implement proper retry logic with exponential backoff
+- Use caching to reduce API calls
+- Monitor your API usage
+
+**Authentication failures**
+- Verify client ID and secret are correct
+- Check that your app category supports the requested scopes
+- Ensure redirect URI is properly configured
+
+## Security Considerations
+
+- Store client secret securely (environment variables)
+- Use HTTPS in production
+- Follow Twitch's Developer Services Agreement
+- Implement proper token refresh logic
+- Respect user privacy and data usage policies
+- Monitor for suspicious OAuth activity
+- Use appropriate scopes for your use case
+
+## Twitch API Best Practices
+
+- **Token Management**: Implement proper access token refresh
+- **Rate Limiting**: Respect API rate limits and implement backoff
+- **Caching**: Cache API responses to reduce API calls
+- **Error Handling**: Handle API errors gracefully
+- **Webhooks**: Use EventSub webhooks for real-time updates
+- **User Experience**: Provide clear feedback during OAuth flow
+
+## EventSub Integration
+
+For real-time updates, consider using Twitch EventSub:
+
+- **Webhooks**: Receive real-time notifications
+- **WebSockets**: Persistent connection for events
+- **Subscriptions**: Subscribe to specific event types
+- **Verification**: Proper webhook verification
+
+## See also
+
+- [Twitch API Documentation](https://dev.twitch.tv/docs/api/)
+- [Twitch Authentication Guide](https://dev.twitch.tv/docs/authentication/)
+- [Twitch EventSub Guide](https://dev.twitch.tv/docs/eventsub/)
+- [Provider Overview](/docs/providers/overview)
+- [React Hooks](/docs/react/hooks)

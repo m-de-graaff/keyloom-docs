@@ -1,0 +1,383 @@
+---
+title: keyloom generate
+description: Generate database migrations, schemas, and RBAC scaffolding for different adapters with automatic adapter detection.
+---
+
+# keyloom generate
+
+Generate database migrations, schemas, and RBAC scaffolding for different adapters with automatic adapter detection and framework-specific templates.
+
+## Overview
+
+The `keyloom generate` command automatically detects your database adapter and generates the necessary migrations, schemas, and RBAC scaffolding to extend your authentication system with role-based access control and additional features.
+
+## Usage
+
+```bash
+# Generate migrations for detected adapter
+npx keyloom generate migration
+
+# Legacy command (deprecated)
+npx keyloom generate prisma-rbac
+```
+
+## Subcommands
+
+### `migration`
+
+Detects your adapter and generates appropriate RBAC migrations and schema files.
+
+```bash
+npx keyloom generate migration
+```
+
+**Supported Adapters:**
+- **Prisma** - Generates Prisma schema additions and migrations
+- **Drizzle** - Generates Drizzle schema files for PostgreSQL/MySQL
+- **PostgreSQL** - Generates raw SQL migration files
+- **MySQL2** - Generates MySQL-specific migration files
+- **MongoDB** - Generates MongoDB collection schemas
+
+### `prisma-rbac` (Deprecated)
+
+Legacy command for generating Prisma RBAC scaffolding. Use `migration` instead.
+
+```bash
+# Deprecated - use 'migration' instead
+npx keyloom generate prisma-rbac
+```
+
+## Adapter Detection
+
+The CLI automatically detects your adapter based on:
+
+1. **Configuration file analysis** - Reads `keyloom.config.ts`
+2. **Package.json dependencies** - Checks installed packages
+3. **Project structure** - Looks for adapter-specific files
+
+**Detection Priority:**
+1. Prisma (`prisma/schema.prisma` exists)
+2. Drizzle (`drizzle.config.ts` exists)
+3. PostgreSQL (`pg` dependency found)
+4. MySQL2 (`mysql2` dependency found)
+5. MongoDB (`mongodb` dependency found)
+
+## Generated Files by Adapter
+
+### Prisma Adapter
+
+**Generated Files:**
+```text
+prisma/
+├── migrations/
+│   └── 20240101000000_add_rbac/
+│       └── migration.sql
+└── schema.prisma (updated)
+```
+
+**Schema Additions:**
+```prisma title="prisma/schema.prisma"
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String?  @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  memberships Membership[]
+  
+  @@map("organizations")
+}
+
+model Membership {
+  id             String   @id @default(cuid())
+  userId         String
+  organizationId String
+  role           String   @default("member")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, organizationId])
+  @@map("memberships")
+}
+```
+
+### Drizzle Adapter
+
+**Generated Files:**
+```text
+src/db/
+├── schema/
+│   ├── organizations.ts
+│   └── memberships.ts
+└── migrations/
+    └── 0001_add_rbac.sql
+```
+
+**Schema Files:**
+```ts title="src/db/schema/organizations.ts"
+import { pgTable, varchar, timestamp } from "drizzle-orm/pg-core";
+
+export const organizations = pgTable("organizations", {
+  id: varchar("id", { length: 191 }).primaryKey(),
+  name: varchar("name", { length: 191 }).notNull(),
+  slug: varchar("slug", { length: 191 }).unique(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+```
+
+### PostgreSQL Adapter
+
+**Generated Files:**
+```text
+migrations/
+└── 001_add_rbac.sql
+```
+
+**Migration Content:**
+```sql title="migrations/001_add_rbac.sql"
+-- Add organizations table
+CREATE TABLE organizations (
+  id VARCHAR(191) PRIMARY KEY,
+  name VARCHAR(191) NOT NULL,
+  slug VARCHAR(191) UNIQUE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Add memberships table
+CREATE TABLE memberships (
+  id VARCHAR(191) PRIMARY KEY,
+  user_id VARCHAR(191) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  organization_id VARCHAR(191) NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  role VARCHAR(50) NOT NULL DEFAULT 'member',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  
+  UNIQUE(user_id, organization_id)
+);
+
+-- Add indexes
+CREATE INDEX idx_memberships_organization_id ON memberships(organization_id);
+CREATE INDEX idx_organizations_slug ON organizations(slug);
+```
+
+### MySQL2 Adapter
+
+**Generated Files:**
+```text
+migrations/
+└── 001_add_rbac.sql
+```
+
+**Migration Content:**
+```sql title="migrations/001_add_rbac.sql"
+-- Add organizations table
+CREATE TABLE organizations (
+  id VARCHAR(191) PRIMARY KEY,
+  name VARCHAR(191) NOT NULL,
+  slug VARCHAR(191) UNIQUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  INDEX idx_organizations_slug (slug)
+);
+
+-- Add memberships table
+CREATE TABLE memberships (
+  id VARCHAR(191) PRIMARY KEY,
+  user_id VARCHAR(191) NOT NULL,
+  organization_id VARCHAR(191) NOT NULL,
+  role VARCHAR(50) NOT NULL DEFAULT 'member',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_user_organization (user_id, organization_id),
+  INDEX idx_memberships_organization_id (organization_id)
+);
+```
+
+### MongoDB Adapter
+
+**Generated Files:**
+```text
+schemas/
+├── organizations.js
+└── memberships.js
+```
+
+**Schema Content:**
+```js title="schemas/organizations.js"
+// MongoDB Organizations Collection Schema
+db.createCollection("organizations", {
+  validator: {
+    $jsonSchema: {
+      bsonType: "object",
+      required: ["id", "name", "createdAt", "updatedAt"],
+      properties: {
+        id: { bsonType: "string" },
+        name: { bsonType: "string" },
+        slug: { bsonType: ["string", "null"] },
+        createdAt: { bsonType: "date" },
+        updatedAt: { bsonType: "date" }
+      }
+    }
+  }
+});
+
+// Create indexes
+db.organizations.createIndex({ "id": 1 }, { unique: true });
+db.organizations.createIndex({ "slug": 1 }, { unique: true, sparse: true });
+```
+
+## Usage Examples
+
+### Basic Migration Generation
+
+```bash
+npx keyloom generate migration
+```
+
+**Sample Output:**
+```text
+🔍 Detecting adapter...
+✓ Found Prisma adapter
+
+📝 Generating RBAC migration...
+✓ Created prisma/migrations/20240101000000_add_rbac/migration.sql
+✓ Updated prisma/schema.prisma
+
+🚀 Next steps:
+1. Review the generated migration
+2. Run: npx prisma db push
+3. Update your keyloom.config.ts to enable RBAC
+```
+
+### Multiple Adapters Detected
+
+```bash
+npx keyloom generate migration
+```
+
+**Sample Output:**
+```text
+🔍 Multiple adapters detected:
+  1. Prisma (prisma/schema.prisma)
+  2. Drizzle (drizzle.config.ts)
+
+? Which adapter would you like to use? › Prisma
+```
+
+### Custom Migration Path
+
+```bash
+npx keyloom generate migration --output ./custom/migrations
+```
+
+## Configuration Updates
+
+After generating migrations, update your configuration to enable RBAC:
+
+```ts title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { PrismaAdapter } from "@keyloom/adapters";
+import { prisma } from "@/lib/prisma";
+
+export default defineKeyloom({
+  adapter: PrismaAdapter(prisma),
+  rbac: {
+    enabled: true, // Enable RBAC
+    roles: ["owner", "admin", "member"],
+    permissions: {
+      "users:read": ["owner", "admin"],
+      "users:write": ["owner", "admin"],
+      "org:manage": ["owner"],
+    },
+  },
+  // ... other config
+});
+```
+
+## Troubleshooting
+
+**No adapter detected**
+```text
+Error: Could not detect database adapter
+```
+- Ensure adapter packages are installed
+- Check keyloom.config.ts has adapter configuration
+- Verify adapter-specific files exist (schema.prisma, drizzle.config.ts, etc.)
+
+**Migration already exists**
+```text
+Error: RBAC migration already exists
+```
+- Check existing migrations for RBAC tables
+- Use `--force` flag to overwrite (if available)
+- Manually remove existing migration files
+
+**Permission errors**
+```text
+Error: Cannot write to migrations directory
+```
+- Check file permissions
+- Ensure directory exists and is writable
+- Run with appropriate permissions
+
+**Invalid schema format**
+```text
+Error: Could not parse existing schema
+```
+- Verify schema file syntax
+- Check for conflicting table/model names
+- Ensure schema is compatible with adapter version
+
+## Integration Examples
+
+### With Prisma
+
+```bash
+# Generate migration
+npx keyloom generate migration
+
+# Apply migration
+npx prisma db push
+
+# Generate Prisma client
+npx prisma generate
+```
+
+### With Drizzle
+
+```bash
+# Generate migration
+npx keyloom generate migration
+
+# Apply migration
+npx drizzle-kit push
+
+# Update schema imports
+```
+
+### With Raw SQL
+
+```bash
+# Generate migration
+npx keyloom generate migration
+
+# Apply to database
+psql -d mydb -f migrations/001_add_rbac.sql
+```
+
+## See also
+
+- [CLI Overview](/docs/cli/overview)
+- [RBAC Configuration](/docs/core/rbac)
+- [Adapters Overview](/docs/adapters/overview)
+- [Database Migrations](/docs/cli/migrate)
