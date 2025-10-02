@@ -186,9 +186,7 @@ export default defineKeyloom({
 
 ## OAuth flow
 
-<Mermaid
-  chart="
-flowchart TD
+<Mermaid chart={`flowchart TD
   A[Start /oauth/:provider/start] --> B[Redirect to Provider]
   B --> C[Provider Consent]
   C --> D[/oauth/:provider/callback]
@@ -197,8 +195,7 @@ flowchart TD
   F --> G[Create/link account]
   G --> H[Issue session/JWT]
   H --> I[Redirect to callbackUrl]
-"
-/>
+`} />
 
 ## Scope recommendations
 
