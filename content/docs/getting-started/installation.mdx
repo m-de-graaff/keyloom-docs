@@ -490,7 +490,8 @@ Common issues:
 
 ## OAuth & JWT flow (overview)
 
-```mermaid
+<Mermaid
+  chart="
 flowchart TD
   A[User clicks Sign in] --> B[POST /api/auth/signin/:provider]
   B --> C[Redirect to Provider]
@@ -500,7 +501,8 @@ flowchart TD
   F --> G[Middleware checks cookie]
   G -->|valid| H[Allow]
   G -->|invalid| I[Redirect /sign-in]
-```
+"
+/>
 
 ## Next steps
 
