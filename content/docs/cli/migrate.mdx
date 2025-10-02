@@ -3,6 +3,13 @@ title: keyloom migrate
 description: Manage database migrations for Keyloom authentication tables with rollback support and migration history tracking.
 ---
 
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "fumadocs-ui/components/tabs";
+
 # keyloom migrate
 
 Manage database migrations for Keyloom authentication tables with rollback support, migration history tracking, and cross-adapter compatibility.
@@ -13,7 +20,29 @@ The `keyloom migrate` command provides a unified interface for managing database
 
 ## Usage
 
-```bash
+<Tabs defaultValue="npm">
+  <TabsList>
+    <TabsTrigger value="npm">
+    <NpmIcon />
+    npm
+    </TabsTrigger>
+    <TabsTrigger value="pnpm">
+    <PnpmIcon />
+    pnpm
+    </TabsTrigger>
+    <TabsTrigger value="yarn">
+    <YarnIcon />
+    yarn
+    </TabsTrigger>
+    <TabsTrigger value="bun">
+    <BunIcon />
+    bun
+    </TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="npm">
+
+```bash title="npm"
 # Run pending migrations
 npx keyloom migrate up
 
@@ -26,6 +55,61 @@ npx keyloom migrate status
 # Create new migration
 npx keyloom migrate create <name>
 ```
+
+  </TabsContent>
+  <TabsContent value="pnpm">
+
+```bash title="pnpm"
+# Run pending migrations
+pnpm dlx keyloom migrate up
+
+# Rollback last migration
+pnpm dlx keyloom migrate down
+
+# Check migration status
+pnpm dlx keyloom migrate status
+
+# Create new migration
+pnpm dlx keyloom migrate create <name>
+```
+
+  </TabsContent>
+  <TabsContent value="yarn">
+
+```bash title="yarn"
+# Run pending migrations
+yarn dlx keyloom migrate up
+
+# Rollback last migration
+yarn dlx keyloom migrate down
+
+# Check migration status
+yarn dlx keyloom migrate status
+
+# Create new migration
+yarn dlx keyloom migrate create <name>
+```
+
+  </TabsContent>
+  <TabsContent value="bun">
+
+```bash title="bun"
+# Run pending migrations
+bunx keyloom migrate up
+
+# Rollback last migration
+bunx keyloom migrate down
+
+# Check migration status
+bunx keyloom migrate status
+
+# Create new migration
+bunx keyloom migrate create <name>
+```
+
+  </TabsContent>
+
+</Tabs>
 
 ## Commands
 

@@ -15,13 +15,72 @@ The `keyloom routes` command scans your application to analyze authentication ro
 
 ## Usage
 
-```bash
+<Tabs defaultValue="npm">
+  <TabsList>
+    <TabsTrigger value="npm">
+    <NpmIcon />
+    npm
+    </TabsTrigger>
+    <TabsTrigger value="pnpm">
+    <PnpmIcon />
+    pnpm
+    </TabsTrigger>
+    <TabsTrigger value="yarn">
+    <YarnIcon />
+    yarn
+    </TabsTrigger>
+    <TabsTrigger value="bun">
+    <BunIcon />
+    bun
+    </TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="npm">
+
+```bash title="npm"
 # Analyze all routes
 npx keyloom routes
 
 # Analyze with specific options
 npx keyloom routes --format json --include-protected --verbose
 ```
+
+  </TabsContent>
+  <TabsContent value="pnpm">
+
+```bash title="pnpm"
+# Analyze all routes
+pnpm dlx keyloom routes
+
+# Analyze with specific options
+pnpm dlx keyloom routes --format json --include-protected --verbose
+```
+
+  </TabsContent>
+  <TabsContent value="yarn">
+
+```bash title="yarn"
+# Analyze all routes
+yarn dlx keyloom routes
+
+# Analyze with specific options
+yarn dlx keyloom routes --format json --include-protected --verbose
+```
+
+  </TabsContent>
+  <TabsContent value="bun">
+
+```bash title="bun"
+# Analyze all routes
+bunx keyloom routes
+
+# Analyze with specific options
+bunx keyloom routes --format json --include-protected --verbose
+```
+
+  </TabsContent>
+
+</Tabs>
 
 ## Command Flags
 

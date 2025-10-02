@@ -177,12 +177,68 @@ export const auditEvents = pgTable("audit_events", {
 
 ## Create database and run migrations
 
-```bash
+<Tabs defaultValue="npm">
+  <TabsList>
+    <TabsTrigger value="npm">
+    <NpmIcon />
+    npm
+    </TabsTrigger>
+    <TabsTrigger value="pnpm">
+    <PnpmIcon />
+    pnpm
+    </TabsTrigger>
+    <TabsTrigger value="yarn">
+    <YarnIcon />
+    yarn
+    </TabsTrigger>
+    <TabsTrigger value="bun">
+    <BunIcon />
+    bun
+    </TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="npm">
+
+```bash title="npm"
+# Generate SQL from schema
+npx drizzle-kit generate
+# Apply to database
+npx drizzle-kit push
+```
+
+  </TabsContent>
+  <TabsContent value="pnpm">
+
+```bash title="pnpm"
 # Generate SQL from schema
 pnpm drizzle-kit generate
 # Apply to database
 pnpm drizzle-kit push
 ```
+
+  </TabsContent>
+  <TabsContent value="yarn">
+
+```bash title="yarn"
+# Generate SQL from schema
+yarn drizzle-kit generate
+# Apply to database
+yarn drizzle-kit push
+```
+
+  </TabsContent>
+  <TabsContent value="bun">
+
+```bash title="bun"
+# Generate SQL from schema
+bunx drizzle-kit generate
+# Apply to database
+bunx drizzle-kit push
+```
+
+  </TabsContent>
+
+</Tabs>
 
 ## DB connection
 
@@ -273,10 +329,60 @@ export const users = pgTable("users", {
   plan: text("plan"), // new column
 });
 ```
-```bash
+<Tabs defaultValue="npm">
+  <TabsList>
+    <TabsTrigger value="npm">
+    <NpmIcon />
+    npm
+    </TabsTrigger>
+    <TabsTrigger value="pnpm">
+    <PnpmIcon />
+    pnpm
+    </TabsTrigger>
+    <TabsTrigger value="yarn">
+    <YarnIcon />
+    yarn
+    </TabsTrigger>
+    <TabsTrigger value="bun">
+    <BunIcon />
+    bun
+    </TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="npm">
+
+```bash title="npm"
+npx drizzle-kit generate --name add-user-plan
+npx drizzle-kit push
+```
+
+  </TabsContent>
+  <TabsContent value="pnpm">
+
+```bash title="pnpm"
 pnpm drizzle-kit generate --name add-user-plan
 pnpm drizzle-kit push
 ```
+
+  </TabsContent>
+  <TabsContent value="yarn">
+
+```bash title="yarn"
+yarn drizzle-kit generate --name add-user-plan
+yarn drizzle-kit push
+```
+
+  </TabsContent>
+  <TabsContent value="bun">
+
+```bash title="bun"
+bunx drizzle-kit generate --name add-user-plan
+bunx drizzle-kit push
+```
+
+  </TabsContent>
+
+</Tabs>
 
 - Add index
 ```sql

@@ -3,6 +3,13 @@ title: keyloom scaffold
 description: Generate boilerplate code, components, and configuration files for common authentication patterns and integrations.
 ---
 
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "fumadocs-ui/components/tabs";
+
 # keyloom scaffold
 
 Generate boilerplate code, components, and configuration files for common authentication patterns, integrations, and application structures with framework-specific templates.
@@ -13,7 +20,29 @@ The `keyloom scaffold` command provides intelligent code generation for common a
 
 ## Usage
 
-```bash
+<Tabs defaultValue="npm">
+  <TabsList>
+    <TabsTrigger value="npm">
+    <NpmIcon />
+    npm
+    </TabsTrigger>
+    <TabsTrigger value="pnpm">
+    <PnpmIcon />
+    pnpm
+    </TabsTrigger>
+    <TabsTrigger value="yarn">
+    <YarnIcon />
+    yarn
+    </TabsTrigger>
+    <TabsTrigger value="bun">
+    <BunIcon />
+    bun
+    </TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="npm">
+
+```bash title="npm"
 # Interactive scaffolding
 npx keyloom scaffold
 
@@ -22,6 +51,49 @@ npx keyloom scaffold auth-pages
 npx keyloom scaffold admin-panel
 npx keyloom scaffold user-profile
 ```
+
+  </TabsContent>
+  <TabsContent value="pnpm">
+
+```bash title="pnpm"
+# Interactive scaffolding
+pnpm dlx keyloom scaffold
+
+# Scaffold specific templates
+pnpm dlx keyloom scaffold auth-pages
+pnpm dlx keyloom scaffold admin-panel
+pnpm dlx keyloom scaffold user-profile
+```
+
+  </TabsContent>
+  <TabsContent value="yarn">
+
+```bash title="yarn"
+# Interactive scaffolding
+yarn dlx keyloom scaffold
+
+# Scaffold specific templates
+yarn dlx keyloom scaffold auth-pages
+yarn dlx keyloom scaffold admin-panel
+yarn dlx keyloom scaffold user-profile
+```
+
+  </TabsContent>
+  <TabsContent value="bun">
+
+```bash title="bun"
+# Interactive scaffolding
+bunx keyloom scaffold
+
+# Scaffold specific templates
+bunx keyloom scaffold auth-pages
+bunx keyloom scaffold admin-panel
+bunx keyloom scaffold user-profile
+```
+
+  </TabsContent>
+
+</Tabs>
 
 ## Available Templates
 

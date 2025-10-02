@@ -3,6 +3,13 @@ title: keyloom doctor
 description: Diagnose and fix common Keyloom configuration issues with comprehensive health checks and automated fixes.
 ---
 
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "fumadocs-ui/components/tabs";
+
 # keyloom doctor
 
 Diagnose and fix common Keyloom configuration issues with comprehensive health checks, environment validation, and automated fixes.
@@ -13,7 +20,29 @@ The `keyloom doctor` command performs a comprehensive analysis of your Keyloom s
 
 ## Usage
 
-```bash
+<Tabs defaultValue="npm">
+  <TabsList>
+    <TabsTrigger value="npm">
+    <NpmIcon />
+    npm
+    </TabsTrigger>
+    <TabsTrigger value="pnpm">
+    <PnpmIcon />
+    pnpm
+    </TabsTrigger>
+    <TabsTrigger value="yarn">
+    <YarnIcon />
+    yarn
+    </TabsTrigger>
+    <TabsTrigger value="bun">
+    <BunIcon />
+    bun
+    </TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="npm">
+
+```bash title="npm"
 # Run basic health checks
 npx keyloom doctor
 
@@ -21,14 +50,98 @@ npx keyloom doctor
 npx keyloom doctor --strict --fix --json
 ```
 
+  </TabsContent>
+  <TabsContent value="pnpm">
+
+```bash title="pnpm"
+# Run basic health checks
+pnpm dlx keyloom doctor
+
+# Run with specific options
+pnpm dlx keyloom doctor --strict --fix --json
+```
+
+  </TabsContent>
+  <TabsContent value="yarn">
+
+```bash title="yarn"
+# Run basic health checks
+yarn dlx keyloom doctor
+
+# Run with specific options
+yarn dlx keyloom doctor --strict --fix --json
+```
+
+  </TabsContent>
+  <TabsContent value="bun">
+
+```bash title="bun"
+# Run basic health checks
+bunx keyloom doctor
+
+# Run with specific options
+bunx keyloom doctor --strict --fix --json
+```
+
+  </TabsContent>
+
+</Tabs>
+
 ## Command Flags
 
 ### `--json`
 Output results in JSON format for programmatic consumption.
 
-```bash
+<Tabs defaultValue="npm">
+  <TabsList>
+    <TabsTrigger value="npm">
+    <NpmIcon />
+    npm
+    </TabsTrigger>
+    <TabsTrigger value="pnpm">
+    <PnpmIcon />
+    pnpm
+    </TabsTrigger>
+    <TabsTrigger value="yarn">
+    <YarnIcon />
+    yarn
+    </TabsTrigger>
+    <TabsTrigger value="bun">
+    <BunIcon />
+    bun
+    </TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="npm">
+
+```bash title="npm"
 npx keyloom doctor --json
 ```
+
+  </TabsContent>
+  <TabsContent value="pnpm">
+
+```bash title="pnpm"
+pnpm dlx keyloom doctor --json
+```
+
+  </TabsContent>
+  <TabsContent value="yarn">
+
+```bash title="yarn"
+yarn dlx keyloom doctor --json
+```
+
+  </TabsContent>
+  <TabsContent value="bun">
+
+```bash title="bun"
+bunx keyloom doctor --json
+```
+
+  </TabsContent>
+
+</Tabs>
 
 **Example Output:**
 ```json
@@ -191,9 +304,56 @@ npx keyloom doctor --no-env-access
 
 ### Basic Health Check
 
-```bash
+<Tabs defaultValue="npm">
+  <TabsList>
+    <TabsTrigger value="npm">
+    <NpmIcon />
+    npm
+    </TabsTrigger>
+    <TabsTrigger value="pnpm">
+    <PnpmIcon />
+    pnpm
+    </TabsTrigger>
+    <TabsTrigger value="yarn">
+    <YarnIcon />
+    yarn
+    </TabsTrigger>
+    <TabsTrigger value="bun">
+    <BunIcon />
+    bun
+    </TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="npm">
+
+```bash title="npm"
 npx keyloom doctor
 ```
+
+  </TabsContent>
+  <TabsContent value="pnpm">
+
+```bash title="pnpm"
+pnpm dlx keyloom doctor
+```
+
+  </TabsContent>
+  <TabsContent value="yarn">
+
+```bash title="yarn"
+yarn dlx keyloom doctor
+```
+
+  </TabsContent>
+  <TabsContent value="bun">
+
+```bash title="bun"
+bunx keyloom doctor
+```
+
+  </TabsContent>
+
+</Tabs>
 
 **Sample Output:**
 ```text
@@ -225,9 +385,56 @@ Run with --fix to automatically resolve issues
 
 ### Automated Fix
 
-```bash
+<Tabs defaultValue="npm">
+  <TabsList>
+    <TabsTrigger value="npm">
+    <NpmIcon />
+    npm
+    </TabsTrigger>
+    <TabsTrigger value="pnpm">
+    <PnpmIcon />
+    pnpm
+    </TabsTrigger>
+    <TabsTrigger value="yarn">
+    <YarnIcon />
+    yarn
+    </TabsTrigger>
+    <TabsTrigger value="bun">
+    <BunIcon />
+    bun
+    </TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="npm">
+
+```bash title="npm"
 npx keyloom doctor --fix
 ```
+
+  </TabsContent>
+  <TabsContent value="pnpm">
+
+```bash title="pnpm"
+pnpm dlx keyloom doctor --fix
+```
+
+  </TabsContent>
+  <TabsContent value="yarn">
+
+```bash title="yarn"
+yarn dlx keyloom doctor --fix
+```
+
+  </TabsContent>
+  <TabsContent value="bun">
+
+```bash title="bun"
+bunx keyloom doctor --fix
+```
+
+  </TabsContent>
+
+</Tabs>
 
 **Sample Output:**
 ```text
@@ -243,9 +450,56 @@ Please review the changes and set provider credentials
 
 ### JSON Output for CI/CD
 
-```bash
+<Tabs defaultValue="npm">
+  <TabsList>
+    <TabsTrigger value="npm">
+    <NpmIcon />
+    npm
+    </TabsTrigger>
+    <TabsTrigger value="pnpm">
+    <PnpmIcon />
+    pnpm
+    </TabsTrigger>
+    <TabsTrigger value="yarn">
+    <YarnIcon />
+    yarn
+    </TabsTrigger>
+    <TabsTrigger value="bun">
+    <BunIcon />
+    bun
+    </TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="npm">
+
+```bash title="npm"
 npx keyloom doctor --json --no-env-access
 ```
+
+  </TabsContent>
+  <TabsContent value="pnpm">
+
+```bash title="pnpm"
+pnpm dlx keyloom doctor --json --no-env-access
+```
+
+  </TabsContent>
+  <TabsContent value="yarn">
+
+```bash title="yarn"
+yarn dlx keyloom doctor --json --no-env-access
+```
+
+  </TabsContent>
+  <TabsContent value="bun">
+
+```bash title="bun"
+bunx keyloom doctor --json --no-env-access
+```
+
+  </TabsContent>
+
+</Tabs>
 
 Use in GitHub Actions or other CI/CD pipelines:
 

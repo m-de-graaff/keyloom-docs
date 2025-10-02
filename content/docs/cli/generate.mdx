@@ -3,6 +3,13 @@ title: keyloom generate
 description: Generate database migrations, schemas, and RBAC scaffolding for different adapters with automatic adapter detection.
 ---
 
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "fumadocs-ui/components/tabs";
+
 # keyloom generate
 
 Generate database migrations, schemas, and RBAC scaffolding for different adapters with automatic adapter detection and framework-specific templates.
@@ -13,13 +20,72 @@ The `keyloom generate` command automatically detects your database adapter and g
 
 ## Usage
 
-```bash
+<Tabs defaultValue="npm">
+  <TabsList>
+    <TabsTrigger value="npm">
+    <NpmIcon />
+    npm
+    </TabsTrigger>
+    <TabsTrigger value="pnpm">
+    <PnpmIcon />
+    pnpm
+    </TabsTrigger>
+    <TabsTrigger value="yarn">
+    <YarnIcon />
+    yarn
+    </TabsTrigger>
+    <TabsTrigger value="bun">
+    <BunIcon />
+    bun
+    </TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="npm">
+
+```bash title="npm"
 # Generate migrations for detected adapter
 npx keyloom generate migration
 
 # Legacy command (deprecated)
 npx keyloom generate prisma-rbac
 ```
+
+  </TabsContent>
+  <TabsContent value="pnpm">
+
+```bash title="pnpm"
+# Generate migrations for detected adapter
+pnpm dlx keyloom generate migration
+
+# Legacy command (deprecated)
+pnpm dlx keyloom generate prisma-rbac
+```
+
+  </TabsContent>
+  <TabsContent value="yarn">
+
+```bash title="yarn"
+# Generate migrations for detected adapter
+yarn dlx keyloom generate migration
+
+# Legacy command (deprecated)
+yarn dlx keyloom generate prisma-rbac
+```
+
+  </TabsContent>
+  <TabsContent value="bun">
+
+```bash title="bun"
+# Generate migrations for detected adapter
+bunx keyloom generate migration
+
+# Legacy command (deprecated)
+bunx keyloom generate prisma-rbac
+```
+
+  </TabsContent>
+
+</Tabs>
 
 ## Subcommands
 

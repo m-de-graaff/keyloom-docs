@@ -3,6 +3,13 @@ title: keyloom ui
 description: Set up Keyloom UI components and scaffold authentication interfaces with Tailwind CSS integration and component generation.
 ---
 
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "fumadocs-ui/components/tabs";
+
 # keyloom ui
 
 Set up Keyloom UI components and scaffold authentication interfaces with automatic Tailwind CSS integration, component generation, and framework-specific templates.
@@ -13,7 +20,29 @@ The `keyloom ui` command streamlines the setup and scaffolding of Keyloom's UI c
 
 ## Usage
 
-```bash
+<Tabs defaultValue="npm">
+  <TabsList>
+    <TabsTrigger value="npm">
+    <NpmIcon />
+    npm
+    </TabsTrigger>
+    <TabsTrigger value="pnpm">
+    <PnpmIcon />
+    pnpm
+    </TabsTrigger>
+    <TabsTrigger value="yarn">
+    <YarnIcon />
+    yarn
+    </TabsTrigger>
+    <TabsTrigger value="bun">
+    <BunIcon />
+    bun
+    </TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="npm">
+
+```bash title="npm"
 # Interactive UI setup
 npx keyloom ui
 
@@ -26,15 +55,114 @@ npx keyloom ui add user-button
 npx keyloom ui add org
 ```
 
+  </TabsContent>
+  <TabsContent value="pnpm">
+
+```bash title="pnpm"
+# Interactive UI setup
+pnpm dlx keyloom ui
+
+# Set up Tailwind and CSS variables
+pnpm dlx keyloom ui setup
+
+# Add specific UI components
+pnpm dlx keyloom ui add sign-in
+pnpm dlx keyloom ui add user-button
+pnpm dlx keyloom ui add org
+```
+
+  </TabsContent>
+  <TabsContent value="yarn">
+
+```bash title="yarn"
+# Interactive UI setup
+yarn dlx keyloom ui
+
+# Set up Tailwind and CSS variables
+yarn dlx keyloom ui setup
+
+# Add specific UI components
+yarn dlx keyloom ui add sign-in
+yarn dlx keyloom ui add user-button
+yarn dlx keyloom ui add org
+```
+
+  </TabsContent>
+  <TabsContent value="bun">
+
+```bash title="bun"
+# Interactive UI setup
+bunx keyloom ui
+
+# Set up Tailwind and CSS variables
+bunx keyloom ui setup
+
+# Add specific UI components
+bunx keyloom ui add sign-in
+bunx keyloom ui add user-button
+bunx keyloom ui add org
+```
+
+  </TabsContent>
+
+</Tabs>
+
 ## Commands
 
 ### `ui setup`
 
 Configure Tailwind CSS preset and import CSS variables for Keyloom UI components.
 
-```bash
+<Tabs defaultValue="npm">
+  <TabsList>
+    <TabsTrigger value="npm">
+    <NpmIcon />
+    npm
+    </TabsTrigger>
+    <TabsTrigger value="pnpm">
+    <PnpmIcon />
+    pnpm
+    </TabsTrigger>
+    <TabsTrigger value="yarn">
+    <YarnIcon />
+    yarn
+    </TabsTrigger>
+    <TabsTrigger value="bun">
+    <BunIcon />
+    bun
+    </TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="npm">
+
+```bash title="npm"
 npx keyloom ui setup
 ```
+
+  </TabsContent>
+  <TabsContent value="pnpm">
+
+```bash title="pnpm"
+pnpm dlx keyloom ui setup
+```
+
+  </TabsContent>
+  <TabsContent value="yarn">
+
+```bash title="yarn"
+yarn dlx keyloom ui setup
+```
+
+  </TabsContent>
+  <TabsContent value="bun">
+
+```bash title="bun"
+bunx keyloom ui setup
+```
+
+  </TabsContent>
+
+</Tabs>
 
 **What it does:**
 1. Installs required dependencies
@@ -80,9 +208,56 @@ module.exports = {
 
 Generate a complete sign-in page with form, OAuth providers, and responsive design.
 
-```bash
+<Tabs defaultValue="npm">
+  <TabsList>
+    <TabsTrigger value="npm">
+    <NpmIcon />
+    npm
+    </TabsTrigger>
+    <TabsTrigger value="pnpm">
+    <PnpmIcon />
+    pnpm
+    </TabsTrigger>
+    <TabsTrigger value="yarn">
+    <YarnIcon />
+    yarn
+    </TabsTrigger>
+    <TabsTrigger value="bun">
+    <BunIcon />
+    bun
+    </TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="npm">
+
+```bash title="npm"
 npx keyloom ui add sign-in
 ```
+
+  </TabsContent>
+  <TabsContent value="pnpm">
+
+```bash title="pnpm"
+pnpm dlx keyloom ui add sign-in
+```
+
+  </TabsContent>
+  <TabsContent value="yarn">
+
+```bash title="yarn"
+yarn dlx keyloom ui add sign-in
+```
+
+  </TabsContent>
+  <TabsContent value="bun">
+
+```bash title="bun"
+bunx keyloom ui add sign-in
+```
+
+  </TabsContent>
+
+</Tabs>
 
 **Generated Files:**
 ```text
@@ -176,9 +351,56 @@ export default function AuthLayout({
 
 Generate a user button component with dropdown menu and profile management.
 
-```bash
+<Tabs defaultValue="npm">
+  <TabsList>
+    <TabsTrigger value="npm">
+    <NpmIcon />
+    npm
+    </TabsTrigger>
+    <TabsTrigger value="pnpm">
+    <PnpmIcon />
+    pnpm
+    </TabsTrigger>
+    <TabsTrigger value="yarn">
+    <YarnIcon />
+    yarn
+    </TabsTrigger>
+    <TabsTrigger value="bun">
+    <BunIcon />
+    bun
+    </TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="npm">
+
+```bash title="npm"
 npx keyloom ui add user-button
 ```
+
+  </TabsContent>
+  <TabsContent value="pnpm">
+
+```bash title="pnpm"
+pnpm dlx keyloom ui add user-button
+```
+
+  </TabsContent>
+  <TabsContent value="yarn">
+
+```bash title="yarn"
+yarn dlx keyloom ui add user-button
+```
+
+  </TabsContent>
+  <TabsContent value="bun">
+
+```bash title="bun"
+bunx keyloom ui add user-button
+```
+
+  </TabsContent>
+
+</Tabs>
 
 **Generated Files:**
 ```text
@@ -260,9 +482,56 @@ export function Header() {
 
 Generate organization management interface with switcher, member management, and invitation system.
 
-```bash
+<Tabs defaultValue="npm">
+  <TabsList>
+    <TabsTrigger value="npm">
+    <NpmIcon />
+    npm
+    </TabsTrigger>
+    <TabsTrigger value="pnpm">
+    <PnpmIcon />
+    pnpm
+    </TabsTrigger>
+    <TabsTrigger value="yarn">
+    <YarnIcon />
+    yarn
+    </TabsTrigger>
+    <TabsTrigger value="bun">
+    <BunIcon />
+    bun
+    </TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="npm">
+
+```bash title="npm"
 npx keyloom ui add org
 ```
+
+  </TabsContent>
+  <TabsContent value="pnpm">
+
+```bash title="pnpm"
+pnpm dlx keyloom ui add org
+```
+
+  </TabsContent>
+  <TabsContent value="yarn">
+
+```bash title="yarn"
+yarn dlx keyloom ui add org
+```
+
+  </TabsContent>
+  <TabsContent value="bun">
+
+```bash title="bun"
+bunx keyloom ui add org
+```
+
+  </TabsContent>
+
+</Tabs>
 
 **Generated Files:**
 ```text

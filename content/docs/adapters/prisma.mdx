@@ -186,7 +186,41 @@ DATABASE_URL=postgresql://user:password@localhost:5432/keyloom?schema=public
 
 ## Setup and migrations
 
-```bash
+<Tabs defaultValue="npm">
+  <TabsList>
+    <TabsTrigger value="npm">
+    <NpmIcon />
+    npm
+    </TabsTrigger>
+    <TabsTrigger value="pnpm">
+    <PnpmIcon />
+    pnpm
+    </TabsTrigger>
+    <TabsTrigger value="yarn">
+    <YarnIcon />
+    yarn
+    </TabsTrigger>
+    <TabsTrigger value="bun">
+    <BunIcon />
+    bun
+    </TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="npm">
+
+```bash title="npm"
+# Generate client
+npx prisma generate
+# Create initial migration
+npx prisma migrate dev --name init
+# Deploy prod migrations (CI/CD)
+npx prisma migrate deploy
+```
+
+  </TabsContent>
+  <TabsContent value="pnpm">
+
+```bash title="pnpm"
 # Generate client
 pnpm prisma generate
 # Create initial migration
@@ -194,6 +228,34 @@ pnpm prisma migrate dev --name init
 # Deploy prod migrations (CI/CD)
 pnpm prisma migrate deploy
 ```
+
+  </TabsContent>
+  <TabsContent value="yarn">
+
+```bash title="yarn"
+# Generate client
+yarn prisma generate
+# Create initial migration
+yarn prisma migrate dev --name init
+# Deploy prod migrations (CI/CD)
+yarn prisma migrate deploy
+```
+
+  </TabsContent>
+  <TabsContent value="bun">
+
+```bash title="bun"
+# Generate client
+bunx prisma generate
+# Create initial migration
+bunx prisma migrate dev --name init
+# Deploy prod migrations (CI/CD)
+bunx prisma migrate deploy
+```
+
+  </TabsContent>
+
+</Tabs>
 
 ## Using the adapter
 
@@ -228,9 +290,56 @@ model User {
   plan    String? // new column
 }
 ```
-```bash
+<Tabs defaultValue="npm">
+  <TabsList>
+    <TabsTrigger value="npm">
+    <NpmIcon />
+    npm
+    </TabsTrigger>
+    <TabsTrigger value="pnpm">
+    <PnpmIcon />
+    pnpm
+    </TabsTrigger>
+    <TabsTrigger value="yarn">
+    <YarnIcon />
+    yarn
+    </TabsTrigger>
+    <TabsTrigger value="bun">
+    <BunIcon />
+    bun
+    </TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="npm">
+
+```bash title="npm"
+npx prisma migrate dev --name add-user-plan
+```
+
+  </TabsContent>
+  <TabsContent value="pnpm">
+
+```bash title="pnpm"
 pnpm prisma migrate dev --name add-user-plan
 ```
+
+  </TabsContent>
+  <TabsContent value="yarn">
+
+```bash title="yarn"
+yarn prisma migrate dev --name add-user-plan
+```
+
+  </TabsContent>
+  <TabsContent value="bun">
+
+```bash title="bun"
+bunx prisma migrate dev --name add-user-plan
+```
+
+  </TabsContent>
+
+</Tabs>
 
 - Add new index for performance
 ```prisma
