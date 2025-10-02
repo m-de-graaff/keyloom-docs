@@ -494,7 +494,7 @@ Common issues:
   A[User clicks Sign in] --> B[POST /api/auth/signin/:provider]
   B --> C[Redirect to Provider]
   C --> D[GET /api/auth/callback/:provider]
-  D --> E[Issue session (cookie)]
+  D --> E[Issue session cookie]
   E --> F[App requests protected page]
   F --> G[Middleware checks cookie]
   G -->|valid| H[Allow]

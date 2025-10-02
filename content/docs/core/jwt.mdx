@@ -3,6 +3,8 @@ title: Core JWT
 description: Core JWT utilities - claims, signing, verification, keystores, JWKS, and refresh token rotation.
 ---
 
+import { Table } from "@/components/Table";
+
 # Core JWT
 
 Low-level JWT utilities from `@keyloom/core/jwt` for signing, verification, keystore management, and refresh rotation.
@@ -144,19 +146,77 @@ import { validateJwtClaims, newAccessClaims } from "@keyloom/core/jwt";
 
 ## API reference
 
-| Function                                        | Parameters                                                                 | Returns                                             | Throws                                                                        |
-| ----------------------------------------------- | -------------------------------------------------------------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------- | --------------------------------- |
-| `createSigner(privateKey, publicKey, kid, alg)` | `CryptoKey`, `CryptoKey`, `string`, `'EdDSA'                               | 'ES256'`                                            | `{ sign(claims): Promise<string> }`                                           | Errors from WebCrypto export/sign |
-| `sign(header, claims, privateKey)`              | `JwtHeader`, `JwtClaims`, `CryptoKey`                                      | `Promise<string>`                                   | JWT_ERRORS on invalid input                                                   |
-| `verify(token, jwks)`                           | `string`, `Jwk[]`                                                          | `Promise<{ header: JwtHeader; claims: JwtClaims }>` | `JWT_MALFORMED`, signature errors                                             |
-| `verifyFull(token, jwks, opts)`                 | `string`, `Jwk[]`, `{ clockSkewSec?, expectedIssuer?, expectedAudience? }` | same as above                                       | `JWT_EXPIRED`, `JWT_NOT_BEFORE`, `JWT_INVALID_ISSUER`, `JWT_INVALID_AUDIENCE` |
-| `newKeystore(opts)`                             | `{ alg: 'EdDSA'                                                            | 'ES256' }`                                          | `Promise<Keystore>`                                                           | WebCrypto errors                  |
-| `rotateKeys(keystore, policy)`                  | `Keystore`, `{ rotationDays: number; overlapDays: number }`                | `Promise<Keystore>`                                 | if keystore invalid                                                           |
-| `exportPublicKeys(keystore)`                    | `Keystore`                                                                 | `Jwk[]`                                             | -                                                                             |
-| `exportJwks(keystore)`                          | `Keystore`                                                                 | `{ keys: Jwk[] }`                                   | -                                                                             |
-| `genKeyPair(alg)`                               | `'EdDSA'                                                                   | 'ES256'`                                            | `Promise<{ privateKey: CryptoKey; publicKey: CryptoKey; kid: string }>`       | WebCrypto errors                  |
-| `newRefreshToken({ userId, ttl })`              | `{ userId: string; ttl: string }`                                          | `Promise<RefreshTokenRecord>`                       | -                                                                             |
-| `TokenRotator(store)`                           | `{ findByJti, save, revoke }` like interface                               | `{ rotate(rec): Promise<{ next, revoke }>} `        | -                                                                             |
+<Table
+  headers={["Function", "Parameters", "Returns", "Throws"]}
+  rows={[
+    [
+      "<code>createSigner(privateKey, publicKey, kid, alg)</code>",
+      "<code>CryptoKey</code>, <code>CryptoKey</code>, <code>string</code>, <code>'EdDSA' | 'ES256'</code>",
+      "<code>{ sign(claims): Promise&lt;string&gt; }</code>",
+      "Errors from WebCrypto export/sign"
+    ],
+    [
+      "<code>sign(header, claims, privateKey)</code>",
+      "<code>JwtHeader</code>, <code>JwtClaims</code>, <code>CryptoKey</code>",
+      "<code>Promise&lt;string&gt;</code>",
+      "JWT_ERRORS on invalid input"
+    ],
+    [
+      "<code>verify(token, jwks)</code>",
+      "<code>string</code>, <code>Jwk[]</code>",
+      "<code>Promise&lt;{ header: JwtHeader; claims: JwtClaims }&gt;</code>",
+      "<code>JWT_MALFORMED</code>, signature errors"
+    ],
+    [
+      "<code>verifyFull(token, jwks, opts)</code>",
+      "<code>string</code>, <code>Jwk[]</code>, <code>{ clockSkewSec?, expectedIssuer?, expectedAudience? }</code>",
+      "same as above",
+      "<code>JWT_EXPIRED</code>, <code>JWT_NOT_BEFORE</code>, <code>JWT_INVALID_ISSUER</code>, <code>JWT_INVALID_AUDIENCE</code>"
+    ],
+    [
+      "<code>newKeystore(opts)</code>",
+      "<code>{ alg: 'EdDSA' | 'ES256' }</code>",
+      "<code>Promise&lt;Keystore&gt;</code>",
+      "WebCrypto errors"
+    ],
+    [
+      "<code>rotateKeys(keystore, policy)</code>",
+      "<code>Keystore</code>, <code>{ rotationDays: number; overlapDays: number }</code>",
+      "<code>Promise&lt;Keystore&gt;</code>",
+      "if keystore invalid"
+    ],
+    [
+      "<code>exportPublicKeys(keystore)</code>",
+      "<code>Keystore</code>",
+      "<code>Jwk[]</code>",
+      "-"
+    ],
+    [
+      "<code>exportJwks(keystore)</code>",
+      "<code>Keystore</code>",
+      "<code>{ keys: Jwk[] }</code>",
+      "-"
+    ],
+    [
+      "<code>genKeyPair(alg)</code>",
+      "<code>'EdDSA' | 'ES256'</code>",
+      "<code>Promise&lt;{ privateKey: CryptoKey; publicKey: CryptoKey; kid: string }&gt;</code>",
+      "WebCrypto errors"
+    ],
+    [
+      "<code>newRefreshToken({ userId, ttl })</code>",
+      "<code>{ userId: string; ttl: string }</code>",
+      "<code>Promise&lt;RefreshTokenRecord&gt;</code>",
+      "-"
+    ],
+    [
+      "<code>TokenRotator(store)</code>",
+      "<code>{ findByJti, save, revoke }</code> like interface",
+      "<code>{ rotate(rec): Promise&lt;{ next, revoke }&gt;}</code>",
+      "-"
+    ]
+  ]}
+/>
 
 ## Runnable example: key rotation and JWKS
 

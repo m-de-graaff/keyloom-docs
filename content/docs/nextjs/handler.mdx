@@ -3,6 +3,8 @@ title: Next.js Handler (API routes)
 description: The createNextHandler API and the built-in endpoints exposed under /api/auth/[[...keyloom]].
 ---
 
+import { Table } from "@/components/Table";
+
 # Handler: createNextHandler
 
 Exports GET/POST handlers for the Keyloom API routes in the App Router.
@@ -79,14 +81,47 @@ function SignInPage() {
 
 ## Request/response schemas (summary)
 
-| Method   | Path                             | Success                                                    | Errors                                   |
-| -------- | -------------------------------- | ---------------------------------------------------------- | ---------------------------------------- | ------------------------------ |
-| GET      | /api/auth/session                | 200 `{ user, session }` or `{ user: null, session: null }` | 401 `{ error: 'unauthorized' }`          |
-| GET      | /api/auth/csrf                   | 200 `{ token }` and Set-Cookie                             | -                                        |
-| POST     | /api/auth/login                  | 200 `{ sessionId }` and Set-Cookie                         | 400 `{ error: 'invalid_request' }`       |
-| POST     | /api/auth/logout                 | 200 `{ ok: true }` and clears cookies                      | -                                        |
-| GET/POST | /api/auth/oauth/:provider/(start | callback)                                                  | 302 Redirect with cookies set on success | 400/401 provider error details |
-| GET      | /api/auth/jwks                   | 200 `{ keys: Jwk[] }`                                      | -                                        |
+<Table
+  headers={["Method", "Path", "Success", "Errors"]}
+  rows={[
+    [
+      "GET",
+      "<code>/api/auth/session</code>",
+      "200 <code>{ user, session }</code> or <code>{ user: null, session: null }</code>",
+      "401 <code>{ error: 'unauthorized' }</code>"
+    ],
+    [
+      "GET",
+      "<code>/api/auth/csrf</code>",
+      "200 <code>{ token }</code> and Set-Cookie",
+      "-"
+    ],
+    [
+      "POST",
+      "<code>/api/auth/login</code>",
+      "200 <code>{ sessionId }</code> and Set-Cookie",
+      "400 <code>{ error: 'invalid_request' }</code>"
+    ],
+    [
+      "POST",
+      "<code>/api/auth/logout</code>",
+      "200 <code>{ ok: true }</code> and clears cookies",
+      "-"
+    ],
+    [
+      "GET/POST",
+      "<code>/api/auth/oauth/:provider/(start|callback)</code>",
+      "302 Redirect with cookies set on success",
+      "400/401 provider error details"
+    ],
+    [
+      "GET",
+      "<code>/api/auth/jwks</code>",
+      "200 <code>{ keys: Jwk[] }</code>",
+      "-"
+    ]
+  ]}
+/>
 
 See Server overview for deeper schemas.
 

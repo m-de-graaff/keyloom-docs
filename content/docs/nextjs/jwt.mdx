@@ -3,6 +3,8 @@ title: Next.js JWT Utilities
 description: Verify and consume Keyloom JWTs on the server and in middleware using @keyloom/nextjs/jwt-server.
 ---
 
+import { Table } from "@/components/Table";
+
 # JWT Utilities (server)
 
 Utilities for verifying JWT access/refresh tokens issued by Keyloom.
@@ -93,15 +95,46 @@ export function middleware(req: NextRequest) {
 
 ## API reference
 
-| Function                      | Signature                                                                                             | Returns                               |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------- | ---------------------------- |
-| `createJwtConfig(env)`        | `({ KEYLOOM_JWT_JWKS_URL, KEYLOOM_JWT_ISSUER?, KEYLOOM_JWT_AUDIENCE?, KEYLOOM_JWT_CLOCK_SKEW_SEC? })` | `JwtVerifyOptions`                    |
-| `verifyJwtToken(token, opts)` | `(string, { jwksUrl, expectedIssuer?, expectedAudience?, clockSkewSec? })`                            | `{ valid: boolean; claims?; error? }` |
-| `getJwtSession(opts?)`        | `({ jwksUrl, expectedIssuer?, expectedAudience? })`                                                   | `{ user, session, claims }`           |
-| `requireJwtAuth(opts?)`       | same as above                                                                                         | throws on unauthenticated             |
-| `extractAccessToken()`        | `() => string                                                                                         | null`                                 | from cookie or Authorization |
-| `extractRefreshToken()`       | `() => string                                                                                         | null`                                 | from cookie                  |
-| `clearServerJwksCache()`      | `() => void`                                                                                          | clears cache                          |
+<Table
+  headers={["Function", "Signature", "Returns"]}
+  rows={[
+    [
+      "<code>createJwtConfig(env)</code>",
+      "<code>({ KEYLOOM_JWT_JWKS_URL, KEYLOOM_JWT_ISSUER?, KEYLOOM_JWT_AUDIENCE?, KEYLOOM_JWT_CLOCK_SKEW_SEC? })</code>",
+      "<code>JwtVerifyOptions</code>"
+    ],
+    [
+      "<code>verifyJwtToken(token, opts)</code>",
+      "<code>(string, { jwksUrl, expectedIssuer?, expectedAudience?, clockSkewSec? })</code>",
+      "<code>{ valid: boolean; claims?; error? }</code>"
+    ],
+    [
+      "<code>getJwtSession(opts?)</code>",
+      "<code>({ jwksUrl, expectedIssuer?, expectedAudience? })</code>",
+      "<code>{ user, session, claims }</code>"
+    ],
+    [
+      "<code>requireJwtAuth(opts?)</code>",
+      "same as above",
+      "throws on unauthenticated"
+    ],
+    [
+      "<code>extractAccessToken()</code>",
+      "<code>() =&gt; string | null</code>",
+      "from cookie or Authorization"
+    ],
+    [
+      "<code>extractRefreshToken()</code>",
+      "<code>() =&gt; string | null</code>",
+      "from cookie"
+    ],
+    [
+      "<code>clearServerJwksCache()</code>",
+      "<code>() =&gt; void</code>",
+      "clears cache"
+    ]
+  ]}
+/>
 
 ## Runnable examples
 
