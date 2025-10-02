@@ -3,6 +3,13 @@ title: PostgreSQL Adapter
 description: Use PostgreSQL with Keyloom via pg driver. Complete setup, schema, migrations, performance optimization, and troubleshooting.
 ---
 
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "fumadocs-ui/components/tabs";
+
 # PostgreSQL Adapter
 
 Use PostgreSQL database with Keyloom via the pg driver for robust, ACID-compliant authentication data persistence.
@@ -15,11 +22,56 @@ Use PostgreSQL database with Keyloom via the pg driver for robust, ACID-complian
 
 ## Install
 
-```bash
-pnpm add @keyloom/adapters-postgres pg @types/pg
-# or
-npm install @keyloom/adapters-postgres pg @types/pg
+<Tabs defaultValue="npm">
+  <TabsList>
+    <TabsTrigger value="npm">
+    <NpmIcon />
+    npm
+    </TabsTrigger>
+    <TabsTrigger value="pnpm">
+    <PnpmIcon />
+    pnpm
+    </TabsTrigger>
+    <TabsTrigger value="yarn">
+    <YarnIcon />
+    yarn
+    </TabsTrigger>
+    <TabsTrigger value="bun">
+    <BunIcon />
+    bun
+    </TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="npm">
+
+```bash title="npm"
+npm install @keyloom/adapters pg @types/pg
 ```
+
+  </TabsContent>
+  <TabsContent value="pnpm">
+
+```bash title="pnpm"
+pnpm add @keyloom/adapters pg @types/pg
+```
+
+  </TabsContent>
+  <TabsContent value="yarn">
+
+```bash title="yarn"
+yarn add @keyloom/adapters pg @types/pg
+```
+
+  </TabsContent>
+  <TabsContent value="bun">
+
+```bash title="bun"
+bun add @keyloom/adapters pg @types/pg
+```
+
+  </TabsContent>
+
+</Tabs>
 
 ## Database Connection
 
@@ -56,7 +108,7 @@ process.on("SIGINT", async () => {
 
 ```ts title="keyloom.config.ts"
 import { defineKeyloom } from "@keyloom/core";
-import { postgresAdapter } from "@keyloom/adapters-postgres";
+import { postgresAdapter } from "@keyloom/adapters/postgres";
 import { pool } from "@/src/db/postgres";
 
 export default defineKeyloom({

@@ -3,6 +3,13 @@ title: Prisma Adapter
 description: Use Prisma with Keyloom. Complete schema, setup, migrations, configuration, performance, and troubleshooting.
 ---
 
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "fumadocs-ui/components/tabs";
+
 # Prisma Adapter
 
 Use Prisma to persist users, accounts, sessions, tokens, refresh tokens, and memberships. This page provides a complete schema and production setup.
@@ -15,10 +22,60 @@ Use Prisma to persist users, accounts, sessions, tokens, refresh tokens, and mem
 
 ## Install
 
-```bash
+<Tabs defaultValue="npm">
+  <TabsList>
+    <TabsTrigger value="npm">
+    <NpmIcon />
+    npm
+    </TabsTrigger>
+    <TabsTrigger value="pnpm">
+    <PnpmIcon />
+    pnpm
+    </TabsTrigger>
+    <TabsTrigger value="yarn">
+    <YarnIcon />
+    yarn
+    </TabsTrigger>
+    <TabsTrigger value="bun">
+    <BunIcon />
+    bun
+    </TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="npm">
+
+```bash title="npm"
+npm install @prisma/client
+npx prisma init
+```
+
+  </TabsContent>
+  <TabsContent value="pnpm">
+
+```bash title="pnpm"
 pnpm add @prisma/client
 pnpm dlx prisma init
 ```
+
+  </TabsContent>
+  <TabsContent value="yarn">
+
+```bash title="yarn"
+yarn add @prisma/client
+yarn dlx prisma init
+```
+
+  </TabsContent>
+  <TabsContent value="bun">
+
+```bash title="bun"
+bun add @prisma/client
+bunx prisma init
+```
+
+  </TabsContent>
+
+</Tabs>
 
 ## Prisma schema (PostgreSQL)
 

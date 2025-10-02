@@ -3,6 +3,13 @@ title: Core Overview
 description: The @keyloom/core package — primitives, configuration, runtime flows, guards, JWT, RBAC, tokens, and utilities.
 ---
 
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "fumadocs-ui/components/tabs";
+
 # @keyloom/core
 
 Keyloom Core provides the framework‑agnostic building blocks: configuration, runtime auth flows, session model, OAuth helpers, JWT tools, RBAC, CSRF/rate‑limit guards, token issuance, and error types.
@@ -13,9 +20,56 @@ Keyloom Core provides the framework‑agnostic building blocks: configuration, r
 
 ## Install
 
-```bash
+<Tabs defaultValue="npm">
+  <TabsList>
+    <TabsTrigger value="npm">
+    <NpmIcon />
+    npm
+    </TabsTrigger>
+    <TabsTrigger value="pnpm">
+    <PnpmIcon />
+    pnpm
+    </TabsTrigger>
+    <TabsTrigger value="yarn">
+    <YarnIcon />
+    yarn
+    </TabsTrigger>
+    <TabsTrigger value="bun">
+    <BunIcon />
+    bun
+    </TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="npm">
+
+```bash title="npm"
+npm install @keyloom/core
+```
+
+  </TabsContent>
+  <TabsContent value="pnpm">
+
+```bash title="pnpm"
 pnpm add @keyloom/core
 ```
+
+  </TabsContent>
+  <TabsContent value="yarn">
+
+```bash title="yarn"
+yarn add @keyloom/core
+```
+
+  </TabsContent>
+  <TabsContent value="bun">
+
+```bash title="bun"
+bun add @keyloom/core
+```
+
+  </TabsContent>
+
+</Tabs>
 
 ## Quick Start
 

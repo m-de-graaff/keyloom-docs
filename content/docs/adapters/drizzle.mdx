@@ -3,6 +3,13 @@ title: Drizzle Adapter
 description: Use Drizzle ORM with Keyloom. Complete schema definitions, setup, migrations with Drizzle Kit, performance, and troubleshooting.
 ---
 
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "fumadocs-ui/components/tabs";
+
 # Drizzle Adapter
 
 Use Drizzle ORM to persist users, accounts, sessions, tokens, refresh tokens, and memberships.
@@ -15,13 +22,72 @@ Use Drizzle ORM to persist users, accounts, sessions, tokens, refresh tokens, an
 
 ## Install
 
-```bash
+<Tabs defaultValue="npm">
+  <TabsList>
+    <TabsTrigger value="npm">
+    <NpmIcon />
+    npm
+    </TabsTrigger>
+    <TabsTrigger value="pnpm">
+    <PnpmIcon />
+    pnpm
+    </TabsTrigger>
+    <TabsTrigger value="yarn">
+    <YarnIcon />
+    yarn
+    </TabsTrigger>
+    <TabsTrigger value="bun">
+    <BunIcon />
+    bun
+    </TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="npm">
+
+```bash title="npm"
+npm install drizzle-orm drizzle-kit
+# choose a driver
+npm install pg @vercel/postgres                # Postgres (example)
+# npm install mysql2                           # MySQL
+# npm install better-sqlite3                   # SQLite
+```
+
+  </TabsContent>
+  <TabsContent value="pnpm">
+
+```bash title="pnpm"
 pnpm add drizzle-orm drizzle-kit
 # choose a driver
 pnpm add pg @vercel/postgres                # Postgres (example)
 # pnpm add mysql2                           # MySQL
 # pnpm add better-sqlite3                   # SQLite
 ```
+
+  </TabsContent>
+  <TabsContent value="yarn">
+
+```bash title="yarn"
+yarn add drizzle-orm drizzle-kit
+# choose a driver
+yarn add pg @vercel/postgres                # Postgres (example)
+# yarn add mysql2                           # MySQL
+# yarn add better-sqlite3                   # SQLite
+```
+
+  </TabsContent>
+  <TabsContent value="bun">
+
+```bash title="bun"
+bun add drizzle-orm drizzle-kit
+# choose a driver
+bun add pg @vercel/postgres                # Postgres (example)
+# bun add mysql2                           # MySQL
+# bun add better-sqlite3                   # SQLite
+```
+
+  </TabsContent>
+
+</Tabs>
 
 ## Drizzle config (example)
 
@@ -128,15 +194,62 @@ export const db = drizzle(sql);
 
 ## Install Drizzle Adapter
 
-```bash
-pnpm add @keyloom/adapter-drizzle
+<Tabs defaultValue="npm">
+  <TabsList>
+    <TabsTrigger value="npm">
+    <NpmIcon />
+    npm
+    </TabsTrigger>
+    <TabsTrigger value="pnpm">
+    <PnpmIcon />
+    pnpm
+    </TabsTrigger>
+    <TabsTrigger value="yarn">
+    <YarnIcon />
+    yarn
+    </TabsTrigger>
+    <TabsTrigger value="bun">
+    <BunIcon />
+    bun
+    </TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="npm">
+
+```bash title="npm"
+npm install @keyloom/adapters
 ```
+
+  </TabsContent>
+  <TabsContent value="pnpm">
+
+```bash title="pnpm"
+pnpm add @keyloom/adapters
+```
+
+  </TabsContent>
+  <TabsContent value="yarn">
+
+```bash title="yarn"
+yarn add @keyloom/adapters
+```
+
+  </TabsContent>
+  <TabsContent value="bun">
+
+```bash title="bun"
+bun add @keyloom/adapters
+```
+
+  </TabsContent>
+
+</Tabs>
 
 ## Using the adapter
 
 ```ts title="keyloom.config.ts"
 import { defineKeyloom } from "@keyloom/core";
-import { drizzleAdapter } from "@keyloom/adapter-drizzle";
+import { drizzleAdapter } from "@keyloom/adapters/drizzle";
 import { db } from "@/src/db/client";
 
 export default defineKeyloom({

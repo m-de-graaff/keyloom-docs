@@ -3,6 +3,13 @@ title: MySQL2 Adapter
 description: Use MySQL with Keyloom via mysql2 driver. Complete setup, schema, migrations, performance optimization, and troubleshooting.
 ---
 
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "fumadocs-ui/components/tabs";
+
 # MySQL2 Adapter
 
 Use MySQL database with Keyloom via the mysql2 driver for high-performance authentication data persistence.
@@ -15,11 +22,56 @@ Use MySQL database with Keyloom via the mysql2 driver for high-performance authe
 
 ## Install
 
-```bash
-pnpm add @keyloom/adapters-mysql2 mysql2
-# or
-npm install @keyloom/adapters-mysql2 mysql2
+<Tabs defaultValue="npm">
+  <TabsList>
+    <TabsTrigger value="npm">
+    <NpmIcon />
+    npm
+    </TabsTrigger>
+    <TabsTrigger value="pnpm">
+    <PnpmIcon />
+    pnpm
+    </TabsTrigger>
+    <TabsTrigger value="yarn">
+    <YarnIcon />
+    yarn
+    </TabsTrigger>
+    <TabsTrigger value="bun">
+    <BunIcon />
+    bun
+    </TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="npm">
+
+```bash title="npm"
+npm install @keyloom/adapters mysql2
 ```
+
+  </TabsContent>
+  <TabsContent value="pnpm">
+
+```bash title="pnpm"
+pnpm add @keyloom/adapters mysql2
+```
+
+  </TabsContent>
+  <TabsContent value="yarn">
+
+```bash title="yarn"
+yarn add @keyloom/adapters mysql2
+```
+
+  </TabsContent>
+  <TabsContent value="bun">
+
+```bash title="bun"
+bun add @keyloom/adapters mysql2
+```
+
+  </TabsContent>
+
+</Tabs>
 
 ## Database Connection
 
@@ -45,7 +97,7 @@ export const pool = mysql.createPool({
 
 ```ts title="keyloom.config.ts"
 import { defineKeyloom } from "@keyloom/core";
-import { mysql2Adapter } from "@keyloom/adapters-mysql2";
+import { mysql2Adapter } from "@keyloom/adapters/mysql2";
 import { pool } from "@/src/db/mysql";
 
 export default defineKeyloom({

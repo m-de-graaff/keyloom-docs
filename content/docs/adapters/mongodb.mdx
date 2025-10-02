@@ -3,6 +3,13 @@ title: MongoDB Adapter
 description: Use MongoDB with Keyloom. Complete setup, collections, indexes, performance optimization, and troubleshooting.
 ---
 
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "fumadocs-ui/components/tabs";
+
 # MongoDB Adapter
 
 Use MongoDB to persist users, accounts, sessions, tokens, refresh tokens, and memberships with Keyloom.
@@ -15,11 +22,56 @@ Use MongoDB to persist users, accounts, sessions, tokens, refresh tokens, and me
 
 ## Install
 
-```bash
-pnpm add @keyloom/adapters-mongo mongodb
-# or
-npm install @keyloom/adapters-mongo mongodb
+<Tabs defaultValue="npm">
+  <TabsList>
+    <TabsTrigger value="npm">
+    <NpmIcon />
+    npm
+    </TabsTrigger>
+    <TabsTrigger value="pnpm">
+    <PnpmIcon />
+    pnpm
+    </TabsTrigger>
+    <TabsTrigger value="yarn">
+    <YarnIcon />
+    yarn
+    </TabsTrigger>
+    <TabsTrigger value="bun">
+    <BunIcon />
+    bun
+    </TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="npm">
+
+```bash title="npm"
+npm install @keyloom/adapters mongodb
 ```
+
+  </TabsContent>
+  <TabsContent value="pnpm">
+
+```bash title="pnpm"
+pnpm add @keyloom/adapters mongodb
+```
+
+  </TabsContent>
+  <TabsContent value="yarn">
+
+```bash title="yarn"
+yarn add @keyloom/adapters mongodb
+```
+
+  </TabsContent>
+  <TabsContent value="bun">
+
+```bash title="bun"
+bun add @keyloom/adapters mongodb
+```
+
+  </TabsContent>
+
+</Tabs>
 
 ## Database Connection
 
@@ -38,7 +90,7 @@ export const db = client.db(process.env.MONGODB_DATABASE || "keyloom");
 
 ```ts title="keyloom.config.ts"
 import { defineKeyloom } from "@keyloom/core";
-import { mongoAdapter } from "@keyloom/adapters-mongo";
+import { mongoAdapter } from "@keyloom/adapters/mongo";
 import { db } from "@/src/db/mongodb";
 
 export default defineKeyloom({
