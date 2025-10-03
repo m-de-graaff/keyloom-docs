@@ -50,6 +50,46 @@ Secret key for encryption and signing. Use base64url encoding for best security.
 secrets: {
   authSecret: process.env.AUTH_SECRET! // Generate with: openssl rand -base64url 32
 }
+
+#### `magicLink?: MagicLinkConfig` (optional)
+Magic link (passwordless) authentication configuration.
+
+```ts
+magicLink: {
+  enabled: true,
+  defaultTtlMinutes: 15,
+  autoCreateUser: true,
+  verifyPath: "/auth/magic-link/verify",
+}
+```
+
+#### `email?: EmailConfig` (optional)
+Email provider configuration for magic link authentication.
+
+```ts
+email: {
+  provider: {
+    type: "smtp", // or "resend"
+    config: {
+      host: process.env.SMTP_HOST!,
+      port: parseInt(process.env.SMTP_PORT!),
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER!,
+        pass: process.env.SMTP_PASS!,
+      },
+    },
+  },
+  from: process.env.EMAIL_FROM!,
+}
+```
+
+#### `appName?: string` (optional)
+Application name used in email templates and user-facing messages.
+
+```ts
+appName: "My App"
+```
 ```
 
 ### Session Configuration

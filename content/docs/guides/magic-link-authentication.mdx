@@ -1,0 +1,430 @@
+---
+title: Magic Link Authentication
+description: Implement passwordless authentication with magic links. Complete setup guide for SMTP and Resend email providers, security features, and customization options.
+---
+
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "fumadocs-ui/components/tabs";
+import { Callout } from "fumadocs-ui/components/callout";
+import { Steps } from "fumadocs-ui/components/steps";
+
+# Magic Link Authentication
+
+Magic link authentication allows users to sign in without passwords by clicking a secure link sent to their email address. This guide covers complete setup, configuration, and customization.
+
+## Overview
+
+Magic link authentication works through a simple flow:
+
+1. User enters their email address
+2. System generates a secure token and sends an email with a magic link
+3. User clicks the link in their email
+4. System verifies the token and creates a session
+
+## Prerequisites
+
+- Keyloom app with `@keyloom/core` and `@keyloom/nextjs` installed
+- Email provider (SMTP server or Resend account)
+- Database adapter configured (PrismaAdapter recommended)
+
+## Quick Start
+
+<Steps>
+
+### Install dependencies
+
+```bash title="Terminal"
+npm install @keyloom/core @keyloom/nextjs @keyloom/ui
+```
+
+### Configure email provider
+
+Choose between SMTP or Resend for sending emails.
+
+<Tabs defaultValue="smtp">
+  <TabsList>
+    <TabsTrigger value="smtp">SMTP</TabsTrigger>
+    <TabsTrigger value="resend">Resend</TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="smtp">
+
+```ini title=".env.local"
+# SMTP Configuration (Gmail example)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+EMAIL_FROM=noreply@yourapp.com
+```
+
+  </TabsContent>
+  <TabsContent value="resend">
+
+```ini title=".env.local"
+# Resend Configuration
+RESEND_API_KEY=re_your_api_key_here
+EMAIL_FROM=noreply@yourapp.com
+```
+
+  </TabsContent>
+</Tabs>
+
+### Update Keyloom configuration
+
+```ts title="keyloom.config.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { PrismaAdapter } from "@keyloom/adapters";
+
+export default defineKeyloom({
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
+  adapter: PrismaAdapter(db),
+  appName: "My App",
+  
+  // Magic link configuration
+  magicLink: {
+    enabled: true,
+    defaultTtlMinutes: 15,
+    autoCreateUser: true,
+    verifyPath: "/auth/magic-link/verify",
+  },
+  
+  // Email provider configuration
+  email: {
+    provider: {
+      type: "smtp", // or "resend"
+      config: {
+        host: process.env.SMTP_HOST!,
+        port: parseInt(process.env.SMTP_PORT!),
+        secure: false,
+        auth: {
+          user: process.env.SMTP_USER!,
+          pass: process.env.SMTP_PASS!,
+        },
+      },
+    },
+    from: process.env.EMAIL_FROM!,
+  },
+  
+  secrets: {
+    authSecret: process.env.AUTH_SECRET!,
+  },
+});
+```
+
+### Add UI component
+
+```tsx title="app/auth/signin/page.tsx"
+import { MagicLinkForm } from "@keyloom/ui/auth";
+import { AuthUIProvider } from "@keyloom/ui";
+
+export default function SignInPage() {
+  return (
+    <AuthUIProvider config={{ apiBasePath: "/api/auth" }}>
+      <div className="max-w-md mx-auto mt-8">
+        <h1 className="text-2xl font-bold mb-6">Sign In</h1>
+        <MagicLinkForm
+          onSuccess={() => console.log("Magic link sent!")}
+          onError={(error) => console.error("Error:", error)}
+        />
+      </div>
+    </AuthUIProvider>
+  );
+}
+```
+
+</Steps>
+
+## Email Provider Configuration
+
+### SMTP Provider
+
+Configure any SMTP server for sending emails. Common presets are available for popular providers.
+
+<Tabs defaultValue="gmail">
+  <TabsList>
+    <TabsTrigger value="gmail">Gmail</TabsTrigger>
+    <TabsTrigger value="outlook">Outlook</TabsTrigger>
+    <TabsTrigger value="custom">Custom SMTP</TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="gmail">
+
+```ts title="keyloom.config.ts"
+import { smtpPresets } from "@keyloom/core/email";
+
+export default defineKeyloom({
+  // ... other config
+  email: {
+    provider: {
+      type: "smtp",
+      config: {
+        ...smtpPresets.gmail,
+        auth: {
+          user: process.env.GMAIL_USER!,
+          pass: process.env.GMAIL_APP_PASSWORD!, // Use App Password, not regular password
+        },
+      },
+    },
+    from: "noreply@yourapp.com",
+  },
+});
+```
+
+<Callout type="info">
+Gmail requires an App Password instead of your regular password. Generate one in your Google Account settings under Security → 2-Step Verification → App passwords.
+</Callout>
+
+  </TabsContent>
+  <TabsContent value="outlook">
+
+```ts title="keyloom.config.ts"
+import { smtpPresets } from "@keyloom/core/email";
+
+export default defineKeyloom({
+  // ... other config
+  email: {
+    provider: {
+      type: "smtp",
+      config: {
+        ...smtpPresets.outlook,
+        auth: {
+          user: process.env.OUTLOOK_USER!,
+          pass: process.env.OUTLOOK_PASS!,
+        },
+      },
+    },
+    from: "noreply@yourapp.com",
+  },
+});
+```
+
+  </TabsContent>
+  <TabsContent value="custom">
+
+```ts title="keyloom.config.ts"
+export default defineKeyloom({
+  // ... other config
+  email: {
+    provider: {
+      type: "smtp",
+      config: {
+        host: "smtp.yourprovider.com",
+        port: 587,
+        secure: false, // true for 465, false for other ports
+        auth: {
+          user: process.env.SMTP_USER!,
+          pass: process.env.SMTP_PASS!,
+        },
+      },
+    },
+    from: "noreply@yourapp.com",
+  },
+});
+```
+
+  </TabsContent>
+</Tabs>
+
+### Resend Provider
+
+Resend provides a modern email API with excellent deliverability.
+
+```ts title="keyloom.config.ts"
+export default defineKeyloom({
+  // ... other config
+  email: {
+    provider: {
+      type: "resend",
+      config: {
+        apiKey: process.env.RESEND_API_KEY!,
+      },
+    },
+    from: "noreply@yourapp.com", // Must be a verified domain in Resend
+  },
+});
+```
+
+<Callout type="info">
+With Resend, the `from` address must use a domain you've verified in your Resend account. You can use `onboarding@resend.dev` for testing.
+</Callout>
+
+## Configuration Options
+
+### Magic Link Settings
+
+```ts title="keyloom.config.ts"
+export default defineKeyloom({
+  // ... other config
+  magicLink: {
+    enabled: true,                    // Enable magic link authentication
+    defaultTtlMinutes: 15,           // Token expiration (default: 15 minutes)
+    defaultSessionTtlMinutes: 10080, // Session duration (default: 7 days)
+    autoCreateUser: true,            // Auto-create users if they don't exist
+    requireEmailVerification: false, // Require email verification for new users
+    verifyPath: "/auth/magic-link/verify", // Verification endpoint path
+  },
+});
+```
+
+### Email Template Customization
+
+Customize the magic link email template:
+
+```ts title="keyloom.config.ts"
+export default defineKeyloom({
+  // ... other config
+  email: {
+    // ... provider config
+    template: {
+      subject: (data) => `Sign in to ${data.appName}`,
+      html: (data) => `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1>Welcome ${data.userName ? data.userName : 'back'}!</h1>
+          <p>Click the button below to sign in to ${data.appName}:</p>
+          <a href="${data.magicLinkUrl}" 
+             style="display: inline-block; background: #007bff; color: white; 
+                    padding: 12px 24px; text-decoration: none; border-radius: 4px;">
+            Sign In
+          </a>
+          <p style="color: #666; font-size: 14px;">
+            This link expires in ${data.expirationMinutes} minutes.
+          </p>
+        </div>
+      `,
+      text: (data) => `
+        Welcome ${data.userName ? data.userName : 'back'}!
+        
+        Click this link to sign in to ${data.appName}:
+        ${data.magicLinkUrl}
+        
+        This link expires in ${data.expirationMinutes} minutes.
+      `,
+    },
+  },
+});
+```
+
+## Security Features
+
+Magic link authentication includes several built-in security measures:
+
+### Rate Limiting
+
+- **Request endpoint**: 3 requests per IP, refills at 0.1/second (1 every 10 seconds)
+- **Verification endpoint**: 10 attempts per IP, refills at 0.5/second
+
+### Token Security
+
+- Cryptographically secure random tokens
+- Tokens are hashed before database storage
+- Single-use tokens (deleted after verification)
+- Configurable expiration (default: 15 minutes)
+
+### CSRF Protection
+
+All POST endpoints require CSRF tokens using the double-submit cookie pattern.
+
+<Callout type="warning">
+Always use HTTPS in production to protect magic links in transit. Magic links provide account access and should be treated as sensitive.
+</Callout>
+
+## API Reference
+
+### Core Functions
+
+#### `requestMagicLink(input, context, config?)`
+
+Generates and sends a magic link to the specified email address.
+
+```ts
+import { requestMagicLink } from "@keyloom/core/magic-link";
+
+const result = await requestMagicLink(
+  { email: "user@example.com" },
+  {
+    adapter,
+    emailService,
+    baseUrl: "https://yourapp.com",
+    appName: "My App",
+  },
+  {
+    ttlMinutes: 10,
+    autoCreateUser: true,
+  }
+);
+```
+
+#### `verifyMagicLink(input, context, config?)`
+
+Verifies a magic link token and creates a user session.
+
+```ts
+import { verifyMagicLink } from "@keyloom/core/magic-link";
+
+const result = await verifyMagicLink(
+  { email: "user@example.com", token: "abc123" },
+  { adapter },
+  {
+    sessionTtlMinutes: 10080,
+    autoCreateUser: true,
+  }
+);
+```
+
+### API Endpoints
+
+When using `@keyloom/nextjs`, these endpoints are automatically available:
+
+- `POST /api/auth/magic-link/request` - Request a magic link
+- `GET /api/auth/magic-link/verify` - Verify magic link (from email)
+- `POST /api/auth/magic-link/verify` - Verify magic link (programmatically)
+
+## Troubleshooting
+
+### Common Issues
+
+**Email not sending**
+- Verify SMTP credentials and server settings
+- Check firewall and network connectivity
+- For Gmail, ensure you're using an App Password
+- For Resend, verify your API key and domain
+
+**Magic link not working**
+- Ensure `verifyPath` matches your API route configuration
+- Check that the base URL is correctly configured
+- Verify the token hasn't expired
+
+**Rate limiting errors**
+- Users should wait between requests
+- Consider adjusting rate limits for your use case
+- Implement user feedback for rate limit errors
+
+**CSRF errors**
+- Ensure CSRF tokens are properly included in requests
+- Check that cookies are being set correctly
+- Verify same-site cookie settings
+
+### Testing
+
+Test your magic link implementation:
+
+```ts title="test-magic-link.ts"
+import { requestMagicLink, verifyMagicLink } from "@keyloom/core/magic-link";
+
+// Test magic link request
+const result = await requestMagicLink(
+  { email: "test@example.com" },
+  { adapter, emailService, baseUrl: "http://localhost:3000", appName: "Test App" }
+);
+
+console.log("Magic link result:", result);
+```
+
+<Callout type="info">
+Use a test email service or capture emails in development to test the complete flow without sending real emails.
+</Callout>

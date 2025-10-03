@@ -97,6 +97,35 @@ export default function SignInPage() {
 - `endpoint?: string` - API endpoint for sign-in (default: "/api/auth/login")
 - `onSuccess?: (res: any) => void` - Success callback
 
+### MagicLinkForm
+
+Passwordless authentication form that sends magic links via email.
+
+```tsx title="app/auth/magic-link/page.tsx"
+import { MagicLinkForm } from "@keyloom/ui/auth";
+import { Card } from "@keyloom/ui/components/card";
+
+export default function MagicLinkPage() {
+  return (
+    <div className="min-h-screen grid place-items-center p-6">
+      <Card className="w-full max-w-md p-6">
+        <h1 className="text-2xl font-semibold mb-6">Sign in with Magic Link</h1>
+        <MagicLinkForm
+          onSuccess={() => console.log("Magic link sent!")}
+          onError={(error) => console.error("Error:", error)}
+        />
+      </Card>
+    </div>
+  );
+}
+```
+
+**Props:**
+
+- `onSuccess?: () => void` - Success callback when magic link is sent
+- `onError?: (error: string) => void` - Error callback
+- `className?: string` - Additional CSS classes
+
 ### SignUpForm
 
 User registration form with email/password and validation.

@@ -1,0 +1,691 @@
+---
+title: Magic Link Examples
+description: Practical examples for implementing magic link authentication in Next.js applications with App Router and Pages Router.
+---
+
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "fumadocs-ui/components/tabs";
+import { Callout } from "fumadocs-ui/components/callout";
+import { Steps } from "fumadocs-ui/components/steps";
+
+# Magic Link Examples
+
+Practical examples for implementing magic link authentication in different Next.js configurations and use cases.
+
+## Next.js App Router Example
+
+Complete implementation using the App Router with TypeScript.
+
+### Project Structure
+
+```
+app/
+├── api/auth/[...keyloom]/route.ts
+├── auth/signin/page.tsx
+├── dashboard/page.tsx
+├── layout.tsx
+└── globals.css
+lib/
+├── auth.ts
+└── db.ts
+```
+
+### Configuration
+
+```ts title="lib/auth.ts"
+import { defineKeyloom } from "@keyloom/core";
+import { PrismaAdapter } from "@keyloom/adapters";
+import { PrismaClient } from "@prisma/client";
+
+const db = new PrismaClient();
+
+export const keyloom = defineKeyloom({
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL!,
+  adapter: PrismaAdapter(db),
+  appName: "Magic Link Demo",
+  
+  session: {
+    strategy: "database",
+    ttlMinutes: 60 * 24 * 7, // 7 days
+    rolling: true,
+  },
+  
+  magicLink: {
+    enabled: true,
+    defaultTtlMinutes: 15,
+    autoCreateUser: true,
+    verifyPath: "/auth/magic-link/verify",
+  },
+  
+  email: {
+    provider: {
+      type: "smtp",
+      config: {
+        host: process.env.SMTP_HOST!,
+        port: parseInt(process.env.SMTP_PORT!),
+        secure: false,
+        auth: {
+          user: process.env.SMTP_USER!,
+          pass: process.env.SMTP_PASS!,
+        },
+      },
+    },
+    from: process.env.EMAIL_FROM!,
+  },
+  
+  secrets: {
+    authSecret: process.env.AUTH_SECRET!,
+  },
+});
+```
+
+### API Route
+
+```ts title="app/api/auth/[...keyloom]/route.ts"
+import { createKeyloomHandler } from "@keyloom/nextjs";
+import { keyloom } from "@/lib/auth";
+
+const handler = createKeyloomHandler(keyloom);
+
+export { handler as GET, handler as POST };
+```
+
+### Sign In Page
+
+```tsx title="app/auth/signin/page.tsx"
+"use client";
+
+import { useState } from "react";
+import { MagicLinkForm } from "@keyloom/ui/auth";
+import { AuthUIProvider } from "@keyloom/ui";
+
+export default function SignInPage() {
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  return (
+    <AuthUIProvider
+      config={{
+        apiBasePath: "/api/auth",
+        localization: {
+          magicLinkForm: {
+            title: "Sign in with Magic Link",
+            emailLabel: "Email address",
+            emailPlaceholder: "Enter your email",
+            submitButton: "Send Magic Link",
+            submittingButton: "Sending...",
+            successMessage: "Check your email for a magic link!",
+            errorMessage: "Something went wrong. Please try again.",
+          },
+        },
+      }}
+    >
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full space-y-8 p-8">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold text-gray-900">
+              Sign in to your account
+            </h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Enter your email to receive a magic link
+            </p>
+          </div>
+          
+          {!isSubmitted ? (
+            <MagicLinkForm
+              onSuccess={() => setIsSubmitted(true)}
+              onError={(error) => console.error("Magic link error:", error)}
+              className="mt-8 space-y-6"
+            />
+          ) : (
+            <div className="text-center space-y-4">
+              <div className="rounded-md bg-green-50 p-4">
+                <h3 className="text-lg font-medium text-green-800">
+                  Check your email!
+                </h3>
+                <p className="mt-2 text-sm text-green-700">
+                  We've sent you a magic link. Click it to sign in.
+                </p>
+              </div>
+              <button
+                onClick={() => setIsSubmitted(false)}
+                className="text-sm text-blue-600 hover:text-blue-500"
+              >
+                Send another link
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </AuthUIProvider>
+  );
+}
+```
+
+### Protected Dashboard
+
+```tsx title="app/dashboard/page.tsx"
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { getCurrentSession } from "@keyloom/core/runtime/current-session";
+import { keyloom } from "@/lib/auth";
+
+async function getSession() {
+  const cookieStore = cookies();
+  const sessionId = cookieStore.get("__keyloom_session")?.value;
+  
+  if (!sessionId) return null;
+  
+  try {
+    return await getCurrentSession(sessionId, {
+      adapter: keyloom.adapter,
+    });
+  } catch {
+    return null;
+  }
+}
+
+export default async function DashboardPage() {
+  const session = await getSession();
+  
+  if (!session) {
+    redirect("/auth/signin");
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="px-4 py-6 sm:px-0">
+          <div className="border-4 border-dashed border-gray-200 rounded-lg p-8">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">
+              Welcome to your dashboard!
+            </h1>
+            <p className="text-gray-600 mb-4">
+              You're signed in as: <strong>{session.user.email}</strong>
+            </p>
+            <form action="/api/auth/logout" method="POST">
+              <button
+                type="submit"
+                className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+              >
+                Sign Out
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+## Next.js Pages Router Example
+
+Implementation using the Pages Router with server-side rendering.
+
+<Tabs defaultValue="pages">
+  <TabsList>
+    <TabsTrigger value="pages">Pages Structure</TabsTrigger>
+    <TabsTrigger value="api">API Route</TabsTrigger>
+    <TabsTrigger value="signin">Sign In Page</TabsTrigger>
+    <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="pages">
+
+```
+pages/
+├── api/auth/[...keyloom].ts
+├── auth/signin.tsx
+├── dashboard.tsx
+├── _app.tsx
+└── index.tsx
+lib/
+├── auth.ts
+└── db.ts
+```
+
+  </TabsContent>
+  <TabsContent value="api">
+
+```ts title="pages/api/auth/[...keyloom].ts"
+import { createKeyloomHandler } from "@keyloom/nextjs";
+import { keyloom } from "@/lib/auth";
+
+export default createKeyloomHandler(keyloom);
+```
+
+  </TabsContent>
+  <TabsContent value="signin">
+
+```tsx title="pages/auth/signin.tsx"
+import { useState } from "react";
+import { GetServerSideProps } from "next";
+import { MagicLinkForm } from "@keyloom/ui/auth";
+import { AuthUIProvider } from "@keyloom/ui";
+import { getCurrentSession } from "@keyloom/core/runtime/current-session";
+import { keyloom } from "@/lib/auth";
+
+export default function SignInPage() {
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  return (
+    <AuthUIProvider config={{ apiBasePath: "/api/auth" }}>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="max-w-md w-full space-y-8">
+          <h1 className="text-2xl font-bold text-center">Sign In</h1>
+          
+          {!isSubmitted ? (
+            <MagicLinkForm
+              onSuccess={() => setIsSubmitted(true)}
+              onError={(error) => console.error(error)}
+            />
+          ) : (
+            <div className="text-center">
+              <p>Check your email for a magic link!</p>
+              <button
+                onClick={() => setIsSubmitted(false)}
+                className="mt-4 text-blue-600"
+              >
+                Send another link
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </AuthUIProvider>
+  );
+}
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const sessionId = context.req.cookies["__keyloom_session"];
+  
+  if (sessionId) {
+    try {
+      const session = await getCurrentSession(sessionId, {
+        adapter: keyloom.adapter,
+      });
+      
+      if (session) {
+        return {
+          redirect: {
+            destination: "/dashboard",
+            permanent: false,
+          },
+        };
+      }
+    } catch {
+      // Session invalid, continue to sign in page
+    }
+  }
+  
+  return { props: {} };
+};
+```
+
+  </TabsContent>
+  <TabsContent value="dashboard">
+
+```tsx title="pages/dashboard.tsx"
+import { GetServerSideProps } from "next";
+import { getCurrentSession } from "@keyloom/core/runtime/current-session";
+import { keyloom } from "@/lib/auth";
+
+interface DashboardProps {
+  user: {
+    id: string;
+    email: string;
+  };
+}
+
+export default function Dashboard({ user }: DashboardProps) {
+  const handleSignOut = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.href = "/auth/signin";
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto py-6">
+        <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
+        <p className="mb-4">Welcome, {user.email}!</p>
+        <button
+          onClick={handleSignOut}
+          className="bg-red-600 text-white px-4 py-2 rounded"
+        >
+          Sign Out
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const sessionId = context.req.cookies["__keyloom_session"];
+  
+  if (!sessionId) {
+    return {
+      redirect: {
+        destination: "/auth/signin",
+        permanent: false,
+      },
+    };
+  }
+
+  try {
+    const session = await getCurrentSession(sessionId, {
+      adapter: keyloom.adapter,
+    });
+
+    if (!session) {
+      return {
+        redirect: {
+          destination: "/auth/signin",
+          permanent: false,
+        },
+      };
+    }
+
+    return {
+      props: {
+        user: {
+          id: session.userId,
+          email: session.user.email,
+        },
+      },
+    };
+  } catch {
+    return {
+      redirect: {
+        destination: "/auth/signin",
+        permanent: false,
+      },
+    };
+  }
+};
+```
+
+  </TabsContent>
+</Tabs>
+
+## Custom Magic Link Flow
+
+Example of implementing a custom magic link flow without using the UI components.
+
+```tsx title="components/CustomMagicLinkForm.tsx"
+"use client";
+
+import { useState } from "react";
+
+interface CustomMagicLinkFormProps {
+  onSuccess?: () => void;
+  onError?: (error: string) => void;
+}
+
+export function CustomMagicLinkForm({ onSuccess, onError }: CustomMagicLinkFormProps) {
+  const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setMessage("");
+
+    try {
+      // Get CSRF token
+      const csrfResponse = await fetch("/api/auth/csrf");
+      const { token: csrfToken } = await csrfResponse.json();
+
+      // Request magic link
+      const response = await fetch("/api/auth/magic-link/request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Keyloom-CSRF": csrfToken,
+        },
+        body: JSON.stringify({
+          email,
+          redirectTo: "/dashboard",
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        setMessage("Magic link sent! Check your email.");
+        onSuccess?.();
+      } else {
+        const errorMessage = result.error || "Failed to send magic link";
+        setMessage(errorMessage);
+        onError?.(errorMessage);
+      }
+    } catch (error) {
+      const errorMessage = "Network error. Please try again.";
+      setMessage(errorMessage);
+      onError?.(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          Email address
+        </label>
+        <input
+          id="email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          placeholder="Enter your email"
+        />
+      </div>
+      
+      <button
+        type="submit"
+        disabled={isLoading}
+        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+      >
+        {isLoading ? "Sending..." : "Send Magic Link"}
+      </button>
+      
+      {message && (
+        <div className={`text-sm ${message.includes("sent") ? "text-green-600" : "text-red-600"}`}>
+          {message}
+        </div>
+      )}
+    </form>
+  );
+}
+```
+
+## Environment Configuration
+
+Complete environment variable setup for different scenarios.
+
+<Tabs defaultValue="development">
+  <TabsList>
+    <TabsTrigger value="development">Development</TabsTrigger>
+    <TabsTrigger value="production">Production</TabsTrigger>
+    <TabsTrigger value="testing">Testing</TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="development">
+
+```ini title=".env.local"
+# App Configuration
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+AUTH_SECRET=dev-secret-change-in-production
+
+# Database
+DATABASE_URL=postgresql://user:password@localhost:5432/keyloom_dev
+
+# Email (Gmail for development)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-dev-email@gmail.com
+SMTP_PASS=your-app-password
+EMAIL_FROM=noreply@localhost
+
+# Alternative: Resend for development
+# RESEND_API_KEY=re_dev_api_key
+# EMAIL_FROM=onboarding@resend.dev
+```
+
+  </TabsContent>
+  <TabsContent value="production">
+
+```ini title=".env.production"
+# App Configuration
+NEXT_PUBLIC_APP_URL=https://yourapp.com
+AUTH_SECRET=your-base64url-encoded-production-secret
+
+# Database
+DATABASE_URL=postgresql://user:password@prod-db:5432/keyloom_prod
+
+# Email (Resend for production)
+RESEND_API_KEY=re_prod_api_key
+EMAIL_FROM=noreply@yourapp.com
+
+# Alternative: Production SMTP
+# SMTP_HOST=smtp.yourprovider.com
+# SMTP_PORT=587
+# SMTP_USER=your-prod-email@yourapp.com
+# SMTP_PASS=your-secure-password
+# EMAIL_FROM=noreply@yourapp.com
+```
+
+  </TabsContent>
+  <TabsContent value="testing">
+
+```ini title=".env.test"
+# App Configuration
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+AUTH_SECRET=test-secret
+
+# Database (Test database)
+DATABASE_URL=postgresql://user:password@localhost:5432/keyloom_test
+
+# Email (Mock or test service)
+SMTP_HOST=localhost
+SMTP_PORT=1025
+SMTP_USER=test
+SMTP_PASS=test
+EMAIL_FROM=test@localhost
+
+# Use Ethereal Email for testing
+# SMTP_HOST=smtp.ethereal.email
+# SMTP_PORT=587
+# SMTP_USER=your-ethereal-user
+# SMTP_PASS=your-ethereal-pass
+# EMAIL_FROM=test@ethereal.email
+```
+
+  </TabsContent>
+</Tabs>
+
+<Callout type="info">
+For testing, consider using [Ethereal Email](https://ethereal.email/) which provides a fake SMTP service that captures emails without sending them.
+</Callout>
+
+## Advanced Customization
+
+### Custom Email Template with Branding
+
+```ts title="lib/email-template.ts"
+import type { EmailTemplate } from "@keyloom/core/email";
+
+export const customMagicLinkTemplate: EmailTemplate = {
+  subject: (data) => `🔐 Sign in to ${data.appName}`,
+  
+  html: (data) => `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Sign in to ${data.appName}</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+        <h1 style="color: white; margin: 0; font-size: 28px;">Welcome ${data.userName ? data.userName : 'back'}!</h1>
+      </div>
+      
+      <div style="background: white; padding: 30px; border: 1px solid #ddd; border-top: none; border-radius: 0 0 10px 10px;">
+        <p style="font-size: 16px; margin-bottom: 25px;">
+          Click the button below to securely sign in to ${data.appName}:
+        </p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${data.magicLinkUrl}" 
+             style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; font-size: 16px;">
+            Sign In to ${data.appName}
+          </a>
+        </div>
+        
+        <p style="font-size: 14px; color: #666; margin-top: 25px;">
+          This link will expire in ${data.expirationMinutes} minutes for your security.
+        </p>
+        
+        <p style="font-size: 12px; color: #999; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+          If you didn't request this email, you can safely ignore it.
+        </p>
+      </div>
+    </body>
+    </html>
+  `,
+  
+  text: (data) => `
+    Welcome ${data.userName ? data.userName : 'back'}!
+    
+    Click this link to sign in to ${data.appName}:
+    ${data.magicLinkUrl}
+    
+    This link will expire in ${data.expirationMinutes} minutes for your security.
+    
+    If you didn't request this email, you can safely ignore it.
+  `,
+};
+```
+
+### Rate Limiting Customization
+
+To customize rate limiting, you can modify the handler implementation:
+
+```ts title="lib/custom-handler.ts"
+import { createKeyloomHandler } from "@keyloom/nextjs";
+import { rateLimit } from "@keyloom/core/guard/rate-limit";
+import { keyloom } from "./auth";
+
+// Create custom handler with different rate limits
+export const customHandler = createKeyloomHandler(keyloom, {
+  customRateLimit: (req, endpoint) => {
+    const ip = req.headers.get("x-forwarded-for") || "unknown";
+    
+    if (endpoint === "magic_link_request") {
+      // More restrictive for magic link requests
+      return rateLimit(`magic:${ip}`, { capacity: 2, refillPerSec: 0.05 });
+    }
+    
+    if (endpoint === "magic_link_verify") {
+      // More lenient for verification
+      return rateLimit(`verify:${ip}`, { capacity: 20, refillPerSec: 1 });
+    }
+    
+    // Default rate limiting for other endpoints
+    return rateLimit(`default:${ip}`, { capacity: 10, refillPerSec: 0.5 });
+  },
+});
+```
+
+<Callout type="warning">
+Custom rate limiting requires modifying the handler implementation. This is an advanced feature and should be done carefully to maintain security.
+</Callout>

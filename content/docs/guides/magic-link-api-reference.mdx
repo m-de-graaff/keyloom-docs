@@ -1,0 +1,436 @@
+---
+title: Magic Link API Reference
+description: Complete API reference for magic link authentication functions, types, and HTTP endpoints.
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+# Magic Link API Reference
+
+Complete reference for magic link authentication functions, TypeScript types, and HTTP endpoints.
+
+## Core Functions
+
+### `requestMagicLink()`
+
+Generates a secure token and sends a magic link email to the specified address.
+
+```ts
+function requestMagicLink(
+  input: MagicLinkRequestInput,
+  context: MagicLinkRequestContext,
+  config?: Partial<MagicLinkConfig>
+): Promise<MagicLinkRequestResult>
+```
+
+#### Parameters
+
+**`input: MagicLinkRequestInput`**
+```ts
+interface MagicLinkRequestInput {
+  email: string;           // User's email address
+  redirectTo?: string;     // Optional redirect URL after verification
+  ttlMinutes?: number;     // Optional custom token expiration
+}
+```
+
+**`context: MagicLinkRequestContext`**
+```ts
+interface MagicLinkRequestContext {
+  adapter: KeyloomAdapter;     // Database adapter
+  emailService: EmailService; // Email service instance
+  baseUrl: string;            // Application base URL
+  appName: string;            // Application name for emails
+}
+```
+
+**`config?: Partial<MagicLinkConfig>`**
+```ts
+interface MagicLinkConfig {
+  enabled: boolean;                    // Enable magic link auth (default: true)
+  defaultTtlMinutes: number;          // Token expiration (default: 15)
+  defaultSessionTtlMinutes: number;   // Session duration (default: 10080)
+  autoCreateUser: boolean;            // Auto-create users (default: true)
+  requireEmailVerification: boolean;  // Require email verification (default: false)
+  verifyPath: string;                 // Verification path (default: "/auth/magic-link/verify")
+}
+```
+
+#### Return Value
+
+```ts
+interface MagicLinkRequestResult {
+  success: boolean;
+  email: string;
+  error?: string;
+}
+```
+
+#### Example
+
+```ts
+import { requestMagicLink } from "@keyloom/core/magic-link";
+
+const result = await requestMagicLink(
+  { 
+    email: "user@example.com",
+    redirectTo: "/dashboard",
+    ttlMinutes: 10
+  },
+  {
+    adapter: prismaAdapter,
+    emailService: emailService,
+    baseUrl: "https://myapp.com",
+    appName: "My App"
+  },
+  {
+    autoCreateUser: true,
+    requireEmailVerification: false
+  }
+);
+
+if (result.success) {
+  console.log(`Magic link sent to ${result.email}`);
+} else {
+  console.error(`Error: ${result.error}`);
+}
+```
+
+### `verifyMagicLink()`
+
+Verifies a magic link token and creates a user session.
+
+```ts
+function verifyMagicLink(
+  input: MagicLinkVerifyInput,
+  context: MagicLinkVerifyContext,
+  config?: Partial<MagicLinkConfig>
+): Promise<MagicLinkVerifyResult>
+```
+
+#### Parameters
+
+**`input: MagicLinkVerifyInput`**
+```ts
+interface MagicLinkVerifyInput {
+  email: string;              // User's email address
+  token: string;              // Magic link token
+  sessionTtlMinutes?: number; // Optional custom session duration
+}
+```
+
+**`context: MagicLinkVerifyContext`**
+```ts
+interface MagicLinkVerifyContext {
+  adapter: KeyloomAdapter; // Database adapter
+}
+```
+
+#### Return Value
+
+```ts
+interface MagicLinkVerifyResult {
+  success: boolean;
+  user?: User;
+  session?: Session;
+  error?: string;
+}
+```
+
+#### Example
+
+```ts
+import { verifyMagicLink } from "@keyloom/core/magic-link";
+
+const result = await verifyMagicLink(
+  { 
+    email: "user@example.com",
+    token: "abc123def456",
+    sessionTtlMinutes: 10080 // 7 days
+  },
+  { adapter: prismaAdapter },
+  { autoCreateUser: true }
+);
+
+if (result.success) {
+  console.log(`User ${result.user?.email} signed in`);
+  console.log(`Session ID: ${result.session?.id}`);
+} else {
+  console.error(`Verification failed: ${result.error}`);
+}
+```
+
+### `generateMagicLinkUrl()`
+
+Generates a magic link URL for a given token and email.
+
+```ts
+function generateMagicLinkUrl(
+  baseUrl: string,
+  email: string,
+  token: string,
+  verifyPath?: string,
+  redirectTo?: string
+): string
+```
+
+#### Parameters
+
+- `baseUrl`: Application base URL
+- `email`: User's email address
+- `token`: Magic link token
+- `verifyPath`: Verification endpoint path (optional, default: "/auth/magic-link/verify")
+- `redirectTo`: Redirect URL after verification (optional)
+
+#### Example
+
+```ts
+import { generateMagicLinkUrl } from "@keyloom/core/magic-link";
+
+const magicLinkUrl = generateMagicLinkUrl(
+  "https://myapp.com",
+  "user@example.com",
+  "abc123def456",
+  "/auth/magic-link/verify",
+  "/dashboard"
+);
+
+console.log(magicLinkUrl);
+// https://myapp.com/auth/magic-link/verify?email=user%40example.com&token=abc123def456&redirectTo=%2Fdashboard
+```
+
+## Email Service Types
+
+### `EmailService`
+
+Interface for email service implementations.
+
+```ts
+interface EmailService {
+  sendMagicLink(data: MagicLinkEmailData): Promise<EmailResult>;
+  sendEmail(message: EmailMessage): Promise<EmailResult>;
+  getProvider(): EmailProvider;
+}
+```
+
+### `MagicLinkEmailData`
+
+Data passed to magic link email templates.
+
+```ts
+interface MagicLinkEmailData {
+  email: string;              // Recipient email
+  magicLinkUrl: string;       // Magic link URL
+  appName: string;            // Application name
+  expirationMinutes: number;  // Token expiration time
+  userName?: string;          // Optional user name
+}
+```
+
+### `EmailResult`
+
+Result of email sending operations.
+
+```ts
+interface EmailResult {
+  success: boolean;
+  messageId?: string;
+  error?: string;
+}
+```
+
+### `EmailProvider`
+
+Base interface for email providers.
+
+```ts
+interface EmailProvider {
+  id: string;
+  send(message: EmailMessage): Promise<EmailResult>;
+}
+```
+
+## HTTP Endpoints
+
+When using `@keyloom/nextjs`, these endpoints are automatically available:
+
+### `POST /api/auth/magic-link/request`
+
+Request a magic link to be sent to an email address.
+
+#### Request Body
+
+```json
+{
+  "email": "user@example.com",
+  "redirectTo": "/dashboard",
+  "ttlMinutes": 15
+}
+```
+
+#### Response
+
+**Success (200)**
+```json
+{
+  "success": true,
+  "email": "user@example.com"
+}
+```
+
+**Error (400/429/500)**
+```json
+{
+  "error": "invalid_email" | "rate_limited" | "email_send_failed"
+}
+```
+
+#### Rate Limiting
+
+- **Capacity**: 3 requests per IP
+- **Refill Rate**: 0.1 tokens/second (1 request every 10 seconds)
+
+### `GET /api/auth/magic-link/verify`
+
+Verify a magic link token (typically called when user clicks email link).
+
+#### Query Parameters
+
+- `email`: User's email address (URL encoded)
+- `token`: Magic link token
+- `redirectTo`: Optional redirect URL after successful verification
+
+#### Response
+
+**Success**: Redirects to specified URL or default success page
+**Error**: Redirects to error page with error parameter
+
+### `POST /api/auth/magic-link/verify`
+
+Programmatically verify a magic link token.
+
+#### Request Body
+
+```json
+{
+  "email": "user@example.com",
+  "token": "abc123def456",
+  "sessionTtlMinutes": 10080
+}
+```
+
+#### Response
+
+**Success (200)**
+```json
+{
+  "success": true,
+  "user": {
+    "id": "user_123",
+    "email": "user@example.com"
+  },
+  "session": {
+    "id": "session_456",
+    "userId": "user_123",
+    "expiresAt": "2024-01-01T00:00:00.000Z"
+  }
+}
+```
+
+**Error (400/429/500)**
+```json
+{
+  "error": "invalid_request" | "invalid_token" | "rate_limited"
+}
+```
+
+#### Rate Limiting
+
+- **Capacity**: 10 requests per IP
+- **Refill Rate**: 0.5 tokens/second (1 request every 2 seconds)
+
+## Configuration Types
+
+### `KeyloomConfig` Extensions
+
+Magic link configuration is added to the main Keyloom configuration:
+
+```ts
+interface KeyloomConfig {
+  // ... existing config
+  appName?: string;
+  magicLink?: MagicLinkConfig;
+  email?: EmailConfig;
+}
+```
+
+### `EmailConfig`
+
+Email provider configuration.
+
+```ts
+interface EmailConfig {
+  provider: {
+    type: 'smtp' | 'resend';
+    config: SMTPConfig | ResendConfig;
+  };
+  from: string;
+  template?: EmailTemplate;
+}
+```
+
+### `SMTPConfig`
+
+SMTP provider configuration.
+
+```ts
+interface SMTPConfig {
+  host: string;
+  port: number;
+  secure: boolean;
+  auth: {
+    user: string;
+    pass: string;
+  };
+  // Additional nodemailer options
+  [key: string]: any;
+}
+```
+
+### `ResendConfig`
+
+Resend provider configuration.
+
+```ts
+interface ResendConfig {
+  apiKey: string;
+  baseUrl?: string; // Optional custom API base URL
+}
+```
+
+### `EmailTemplate`
+
+Custom email template configuration.
+
+```ts
+interface EmailTemplate {
+  subject: (data: MagicLinkEmailData) => string;
+  html: (data: MagicLinkEmailData) => string;
+  text: (data: MagicLinkEmailData) => string;
+}
+```
+
+## Error Types
+
+Magic link operations can throw or return these error types:
+
+- `invalid_email`: Email address format is invalid
+- `user_not_found`: User doesn't exist and auto-creation is disabled
+- `email_send_failed`: Email service failed to send the message
+- `invalid_token`: Token is invalid, expired, or already used
+- `rate_limited`: Too many requests from the same IP address
+- `csrf`: CSRF token validation failed
+
+<Callout type="info">
+All magic link functions validate input parameters and return structured error responses rather than throwing exceptions, making error handling predictable and consistent.
+</Callout>

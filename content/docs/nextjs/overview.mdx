@@ -47,6 +47,9 @@ When you export `{ GET, POST }` from `createNextHandler`, the following endpoint
 - `GET /api/auth/callback/:provider` - OAuth callback
 - `POST /api/auth/logout` - end session
 - `GET /api/auth/jwks` - JWKS for JWT verification
+- `POST /api/auth/magic-link/request` - request magic link (passwordless auth)
+- `GET /api/auth/magic-link/verify` - verify magic link from email
+- `POST /api/auth/magic-link/verify` - verify magic link programmatically
 
 See the Handler reference for full schemas and examples.
 
