@@ -12,8 +12,8 @@ Allow: /sponsors/
 # Disallow crawling of API routes and internal files
 Disallow: /api/
 Disallow: /_next/
-Disallow: /llms.txt
-Disallow: /llms-full.txt
+Allow: /llms.txt
+Allow: /llms-full.txt
 
 # Allow crawling of sitemap and important files
 Allow: /sitemap.xml
