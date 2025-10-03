@@ -7,6 +7,36 @@ export const metadata: Metadata = {
   title: "Showcase - Keyloom",
   description:
     "Discover amazing projects and applications built with Keyloom authentication framework.",
+  robots: {
+    index: true,
+    follow: true,
+  },
+  alternates: {
+    canonical: "https://keyloom.markdegraaff.com/showcase",
+  },
+  openGraph: {
+    title: "Showcase - Keyloom",
+    description:
+      "Discover amazing projects and applications built with Keyloom authentication framework.",
+    url: "https://keyloom.markdegraaff.com/showcase",
+    siteName: "Keyloom",
+    type: "website",
+    images: [
+      {
+        url: "/keyloom_banner.png",
+        width: 850,
+        height: 250,
+        alt: "Keyloom Showcase",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Showcase - Keyloom",
+    description:
+      "Discover amazing projects and applications built with Keyloom authentication framework.",
+    images: ["/keyloom_banner.png"],
+  },
 };
 
 interface ShowcaseCardProps {

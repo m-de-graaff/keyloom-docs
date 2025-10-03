@@ -4,25 +4,25 @@ import { notFound } from "next/navigation";
 import type { NextRequest } from "next/server";
 
 export async function GET(
-	_req: NextRequest,
-	{ params }: { params: Promise<{ slug?: string[] }> },
+  _req: NextRequest,
+  { params }: { params: Promise<{ slug?: string[] }> }
 ) {
-	const { slug } = await params;
-	if (!slug) notFound();
+  const { slug } = await params;
+  if (!slug) notFound();
 
-	const page = source.getPage(slug.slice(0, -1));
-	if (!page) notFound();
+  const page = source.getPage(slug.slice(0, -1));
+  if (!page) notFound();
 
-	return generateOGImage({
-		title: page.data.title,
-		description: page.data.description,
-		site: "My App",
-	});
+  return generateOGImage({
+    title: page.data.title,
+    description: page.data.description,
+    site: "Keyloom",
+  });
 }
 
 export function generateStaticParams() {
-	return source.generateParams().map((page) => ({
-		...page,
-		slug: [...page.slug, "image.png"],
-	}));
+  return source.generateParams().map((page) => ({
+    ...page,
+    slug: [...page.slug, "image.png"],
+  }));
 }

@@ -1,0 +1,28 @@
+# Robots.txt for Keyloom Documentation
+# https://keyloom.markdegraaff.com
+
+User-agent: *
+Allow: /
+
+# Allow all search engines to crawl the site
+Allow: /docs/
+Allow: /showcase/
+Allow: /sponsors/
+
+# Disallow crawling of API routes and internal files
+Disallow: /api/
+Disallow: /_next/
+Disallow: /llms.txt
+Disallow: /llms-full.txt
+
+# Allow crawling of sitemap and important files
+Allow: /sitemap.xml
+Allow: /manifest.json
+Allow: /keyloom.png
+Allow: /keyloom_banner.png
+
+# Sitemap location
+Sitemap: https://keyloom.markdegraaff.com/sitemap.xml
+
+# Crawl-delay for respectful crawling (optional)
+# Crawl-delay: 1
